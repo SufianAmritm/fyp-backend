@@ -11,7 +11,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { DOMAIN_ENTITY, JWT } from 'src/common/constants';
+import { DOMAIN_ENTITY, JWT, UserRoles } from 'src/common/constants';
+import { Roles } from '../../common/decorators/role-metadata.decorator';
 import { IdDto } from '../../common/dtos/request/id.dto';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
@@ -23,6 +24,7 @@ import { IDivisionService } from './interfaces/division.interface';
 @ApiTags(DOMAIN_ENTITY.DIVISION)
 @ApiBearerAuth(JWT)
 @UseGuards(AuthGuard, RolesGuard)
+@Roles([UserRoles.ADMIN])
 @Controller('divisions')
 export class DivisionController {
   constructor(

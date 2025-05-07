@@ -20,6 +20,7 @@ import { EnvModule } from './modules/env/env.module';
 import { EventsModule } from './modules/events/events.module';
 import { RolePermissionModule } from './modules/role-permission/role-permission.module';
 import { RoleModule } from './modules/role/role.module';
+import { StationModule } from './modules/station/station.module';
 import { UserModule } from './modules/user/user.module';
 
 @Module({
@@ -41,7 +42,6 @@ import { UserModule } from './modules/user/user.module';
     AutomapperModule.forRoot({
       strategyInitializer: classes(),
       namingConventions: new CamelCaseNamingConvention(),
-
     }),
     /* Add Module in Alphabetical Order */
     AuthModule,
@@ -51,6 +51,7 @@ import { UserModule } from './modules/user/user.module';
     RoleModule,
     RolePermissionModule,
     SeederModule,
+    StationModule,
     UserModule,
     EventsModule,
   ],

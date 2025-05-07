@@ -89,10 +89,8 @@ export const YearMonthMap = {
 };
 
 
-export const Roles={
-ADMIN:'admin',
-STATION_MANAGER:"station_manager",
-EMPLOYEE:'employee'
-
-
-}
+export const UserRoles = {
+  ADMIN: 'admin',
+  STATION_MANAGER: 'station_manager',
+  EMPLOYEE: 'employee',
+};

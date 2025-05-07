@@ -11,18 +11,20 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { DOMAIN_ENTITY, JWT } from 'src/common/constants';
-import { AuthGuard } from '../../common/guards/auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { IStationService } from './interfaces/station.interface';
+import { DOMAIN_ENTITY, JWT, UserRoles } from 'src/common/constants';
+import { Roles } from '../../common/decorators/role-metadata.decorator';
 import { IdDto } from '../../common/dtos/request/id.dto';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
+import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { CreateStationDto } from './dto/create-station.dto';
 import { UpdateStationDto } from './dto/update-station.dto';
+import { IStationService } from './interfaces/station.interface';
 
 @ApiTags(DOMAIN_ENTITY.STATIONS)
 @ApiBearerAuth(JWT)
 @UseGuards(AuthGuard, RolesGuard)
+@Roles([UserRoles.ADMIN])
 @Controller('stations')
 export class StationController {
   constructor(
