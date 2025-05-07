@@ -1,4 +1,5 @@
 export enum TABLES {
-  OTP='otps',
-  USER='users',
+  OTP = 'otps',
+  USER = 'users',
+  DIVISIONS = 'divisions',
 }

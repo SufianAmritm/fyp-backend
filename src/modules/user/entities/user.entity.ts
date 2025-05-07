@@ -11,6 +11,7 @@ import {
   Unique
 } from 'typeorm';
 import { TABLES } from '../../../common/database/tables';
+import { Division } from '../../division/entities/division.entity';
 import { Otp } from '../../otp/entities/otp.entity';
 import { AppSetting } from './settings.entity';
 
@@ -60,7 +61,6 @@ export class User extends BaseEntity {
   })
   role: Role;
 
-
   @AutoMap()
   @OneToMany(() => Otp, (otp) => otp.user)
   otps: Otp[];
@@ -68,4 +68,8 @@ export class User extends BaseEntity {
   @AutoMap()
   @OneToOne(() => AppSetting, (setting) => setting.user)
   setting: AppSetting;
+
+  @AutoMap()
+  @OneToMany(() => Division, (i) => i.createdBy)
+  divisions: Division[];
 }

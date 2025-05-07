@@ -6,26 +6,29 @@ import { BaseRepository } from 'src/common/database/repositories/base/base.repos
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { Repository } from 'typeorm';
-import { Division } from '../entities/division.entity';
-import { IDivisionRepository } from './interface/division-repository.interface';
+import { AppContext } from '../../../common/interfaces/context';
+import { Station } from '../entities/station.entity';
+import { IStationRepository } from './interface/station-repository.interface';
 
 @Injectable()
-export class DivisionRepository
-  extends BaseRepository<Division>
-  implements IDivisionRepository
+export class StationRepository
+  extends BaseRepository<Station>
+  implements IStationRepository
 {
   constructor(
-    @InjectRepository(Division)
-    public readonly repository: Repository<Division>,
+    @InjectRepository(Station)
+    public readonly repository: Repository<Station>,
   ) {
     super(repository);
   }
 
-  async findAll(paginationDto: PaginationDto): Promise<PagedList<Division>> {
-    const findOption = new FindOptionsBuilder<Division>()
+  async findAll(
+    paginationDto: PaginationDto,
+    ctx: AppContext,
+  ): Promise<PagedList<Station>> {
+    const findOption = new FindOptionsBuilder<Station>()
       .where({
-        deletedAt: null,
-      })
+        deletedAt: null })
       .order({ id: ORDER_BY.DESC })
       .build();
     return this.findWithPagination(paginationDto, findOption);

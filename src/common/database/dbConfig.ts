@@ -6,6 +6,7 @@ import { Role } from 'src/modules/role/entities/role.entity';
 import { User } from 'src/modules/user/entities/user.entity';
 import { DataSource } from 'typeorm';
 import { AppLog } from '../../modules/app-log/entities/app-log.entity';
+import { Division } from '../../modules/division/entities/division.entity';
 import { Otp } from '../../modules/otp/entities/otp.entity';
 import { AppSetting } from '../../modules/user/entities/settings.entity';
 import { Seed } from './seeders/entities/seed.entity';
@@ -36,7 +37,8 @@ const dataSource = new DataSource({
     // UserNotification,
     AppSetting,
     AppLog,
-    Otp
+    Otp,
+    Division,
   ],
   synchronize: false,
   logging: false,

@@ -12,14 +12,15 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './common/database';
 import { SeederModule } from './common/database/seeders/seed.module';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
+import { AdminModule, AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DivisionModule } from './modules/division/division.module';
 import { envSchema } from './modules/env/env';
 import { EnvModule } from './modules/env/env.module';
 import { EventsModule } from './modules/events/events.module';
 import { RolePermissionModule } from './modules/role-permission/role-permission.module';
 import { RoleModule } from './modules/role/role.module';
 import { UserModule } from './modules/user/user.module';
-import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { AdminModule } from './modules/admin/admin.module';
     /* Add Module in Alphabetical Order */
     AuthModule,
     AdminModule,
+    DivisionModule,
     EnvModule,
     RoleModule,
     RolePermissionModule,

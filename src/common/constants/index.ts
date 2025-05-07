@@ -48,7 +48,8 @@ export const DOMAIN_ENTITY = {
   AUTH: 'Auth',
   ROLE_PERMISSION: 'RolePermission',
   NOTIFICATIONS: 'Notifications',
-  ADMIN:'Admin'
+  ADMIN: 'Admin',
+  DIVISION: 'Division',
 };
 
 
