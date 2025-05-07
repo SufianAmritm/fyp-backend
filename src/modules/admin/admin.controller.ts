@@ -8,8 +8,6 @@ import { IAdminService } from './interfaces/admin.interface';
 @ApiTags(DOMAIN_ENTITY.ADMIN)
 @ApiBearerAuth(X_API_KEY)
 @UseGuards(ApiKeyGuard)
-// @ApiBearerAuth(JWT)
-// @UseGuards(AuthGuard)
 @Controller('admin')
 export class AdminController {
   constructor(
@@ -17,18 +15,18 @@ export class AdminController {
     private readonly adminService: IAdminService,
   ) {}
 
-@Post()
-create(@Body() createAdminDto: CreateAdminDto) {
-  return this.adminService.create(createAdminDto);
-}
+  @Post()
+  create(@Body() createAdminDto: CreateAdminDto) {
+    return this.adminService.create(createAdminDto);
+  }
 
- // @Get()
- // findAll(
- //   @Query() paginationDto: PaginationDto,
- //   @Context() context: AppContext,
- // ) {
- //   return this.adminService.findAll(paginationDto, context);
- // }
+  // @Get()
+  // findAll(
+  //   @Query() paginationDto: PaginationDto,
+  //   @Context() context: AppContext,
+  // ) {
+  //   return this.adminService.findAll(paginationDto, context);
+  // }
 
   // @Get(':id')
   // findOne(@Param() idDto: IdDto) {

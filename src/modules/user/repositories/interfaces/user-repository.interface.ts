@@ -8,4 +8,5 @@ export const IUserRepository = Symbol('IUserRepository');
 type DefaultEntity = User;
 export interface IUserRepository<T = DefaultEntity> extends IBaseRepository<T> {
   findAll(paginationDto: PaginationDto): Promise<PagedList<User>>;
+  updateManagerPicture(userId: number, picture: string): Promise<void>;
 }

@@ -1,9 +1,20 @@
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
-import { Inject, Injectable } from '@nestjs/common';
-import { RESPONSE_MESSAGES } from '../../common/constants';
+import { PutObjectCommandInput } from '@aws-sdk/client-s3';
+import {
+  BadRequestException,
+  HttpException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
+import { UserRoles } from '../../common/constants/enums';
+import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
+import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
-import { AppContext } from '../../common/interfaces/context';
+import { UtilsService } from '../../common/utils/UtilsService';
+import { IS3Service } from '../aws/interface/aws-s3.interface';
+import { IUserService } from '../user/interfaces/user.interface';
+import { NewManagerUserReturn } from '../user/types';
 import { CreateManagersDto } from './dto/create-managers.dto';
 import { UpdateManagersDto } from './dto/update-managers.dto';
 import { Manager } from './entities/managers.entity';
@@ -15,41 +26,132 @@ export class ManagersService implements IManagersService {
   constructor(
     @Inject(IManagersRepository)
     private readonly managersRepository: IManagersRepository,
+    @Inject(IUserService)
+    private readonly userService: IUserService,
+    @Inject(IS3Service)
+    private readonly s3Service: IS3Service,
+    private readonly utilService: UtilsService,
     @InjectMapper() private readonly managersMapper: Mapper,
   ) {}
 
   async create(
     createManagersDto: CreateManagersDto,
+    picture?: Express.Multer.File,
+  ) {
+    const { runner, user, transactionManager, emailData } =
+      (await this.userService.createUser(
+        createManagersDto,
+        UserRoles.MANAGER,
+      )) as NewManagerUserReturn;
+    try {
+      if (picture) {
+        const key = this.utilService.awsUploadKeyBuilder(
+          picture.originalname,
+          'profile',
+        );
+        const uploadOptions: PutObjectCommandInput = {
+          Bucket: 'RESIDENCE_BUCKET',
+          Body: picture.buffer,
+          Key: key,
+        };
+        const url = await this.s3Service.uploadFile(uploadOptions);
+        createManagersDto.picture = this.utilService.awsPublicUrlBuilder(
+          url.bucket,
+          url.key,
+        );
+      }
+
+      const newManager = this.managersMapper.map(
+        createManagersDto,
+        CreateManagersDto,
+        Manager,
+      );
+      newManager.userId = user.id;
+      const manager = await this.managersRepository.createWithTransaction(
+        newManager,
+        Manager,
+        transactionManager,
+      );
+      await this.userService.sendManagerEmail(user, emailData);
+      runner.end();
+      user.password = undefined;
+      return { ...user, ...manager };
+    } catch (error) {
+      console.log(error);
+      if (runner) {
+        await runner.rollbackTransaction();
+      }
+      if (error instanceof HttpException) throw error;
+      throw new Error(error.message);
+    }
+  }
+
+  async findAll(paginationDto: PaginationDto) {
+    const managers = await this.managersRepository.findAll(paginationDto);
+    managers.items = managers.items.map((item) => {
+      item.user.password = undefined;
+      return { ...item.user, ...item };
+    });
+    return managers;
+  }
+
+  async findOne(id: number) {
+    const findOptions = new FindOptionsBuilder<Manager>()
+      .where({ id })
+      .relations({
+        user: true,
+      })
+      .build();
+    const manager =
+      await this.managersRepository.findOneWithBuilderOption(findOptions);
+    manager.user.password = undefined;
+    return { ...manager.user, ...manager };
+  }
+
+  async update(
+    id: number,
+    updateManagersDto: UpdateManagersDto,
     picture: Express.Multer.File,
   ) {
-    const newManagers = this.managersMapper.map(
-      createManagersDto,
-      CreateManagersDto,
-      Manager,
-    );
-    return this.managersRepository.create(newManagers);
-  }
+    const manager = await this.managersRepository.findOne({ id });
+    if (!manager) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Manager'));
+    }
+    if (picture) {
+      const key = this.utilService.awsUploadKeyBuilder(
+        picture.originalname,
+        'profile',
+      );
+      const uploadOptions: PutObjectCommandInput = {
+        Bucket: 'RESIDENCE_BUCKET',
+        Body: picture.buffer,
+        Key: key,
+      };
+      const url = await this.s3Service.uploadFile(uploadOptions);
+      updateManagersDto.picture = this.utilService.awsPublicUrlBuilder(
+        url.bucket,
+        url.key,
+      );
+    }
 
-  findAll(paginationDto: PaginationDto, ctx: AppContext) {
-    return this.managersRepository.findAll(paginationDto, ctx);
-  }
+    await this.userService.update(manager.userId, updateManagersDto);
 
-  findOne(id: number) {
-    return this.managersRepository.findOne({ id });
-  }
-
-  async update(id: number, updateManagersDto: UpdateManagersDto) {
     const managersUpdate = this.managersMapper.map(
       updateManagersDto,
       CreateManagersDto,
       Manager,
     );
     await this.managersRepository.update({ id }, managersUpdate);
-    return RESPONSE_MESSAGES.UPDATED;
+    const man = await this.managersRepository.findOne(
+      { id },
+      {},
+      { user: true },
+    );
+    return { ...man.user, ...man };
   }
 
-  async remove(id: number) {
-    await this.managersRepository.softDelete({ id });
-    return RESPONSE_MESSAGES.DELETED;
-  }
+  // async remove(id: number) {
+  //   await this.managersRepository.softDelete({ id });
+  //   return RESPONSE_MESSAGES.DELETED;
+  // }
 }

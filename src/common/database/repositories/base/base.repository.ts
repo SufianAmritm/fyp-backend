@@ -4,6 +4,7 @@ import {
   DeepPartial,
   DeleteResult,
   EntityManager,
+  EntityTarget,
   FindManyOptions,
   FindOptionsOrder,
   FindOptionsRelations,
@@ -72,13 +73,11 @@ export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
 
   async createWithTransaction<T>(
     item: DeepPartial<T>,
-    repository: Repository<T>,
+    target: EntityTarget<T>,
     transactionManager: EntityManager,
   ): Promise<T> {
     try {
-      return await transactionManager
-        .getRepository(repository.target)
-        .save(item);
+      return await transactionManager.getRepository(target).save(item);
     } catch (error) {
       throw new Error(error.message);
     }
@@ -94,13 +93,11 @@ export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
 
   async bulkCreateWithTransaction<T>(
     item: T[],
-    repository: Repository<T>,
+    target: EntityTarget<T>,
     transactionManager: EntityManager,
   ): Promise<T[]> {
     try {
-      return await transactionManager
-        .getRepository(repository.target)
-        .save(item);
+      return await transactionManager.getRepository(target).save(item);
     } catch (error) {
       throw new Error(error.message);
     }
@@ -108,11 +105,11 @@ export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
 
   async deleteWithTransaction<T>(
     where: FindOptionsWhere<T>,
-    repository: Repository<T>,
+    target: EntityTarget<T>,
     transactionManager: EntityManager,
   ): Promise<DeleteResult> {
     try {
-      const repo = transactionManager.getRepository(repository.target);
+      const repo = transactionManager.getRepository(target);
       return await repo.delete(where);
     } catch (error) {
       throw new Error(error.message);
@@ -129,12 +126,12 @@ export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
   async updateWithTransaction<T>(
     conditions: FindOptionsWhere<T>,
     updates: QueryDeepPartialEntity<T>,
-    repository: Repository<T>,
+    target: EntityTarget<T>,
     transactionManager: EntityManager,
   ): Promise<void> {
     try {
       await transactionManager
-        .getRepository(repository.target)
+        .getRepository(target)
         .update(conditions, updates);
     } catch (error) {
       throw new Error(error.message);

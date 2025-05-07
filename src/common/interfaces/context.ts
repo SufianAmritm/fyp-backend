@@ -5,8 +5,8 @@ export interface Context {
 export interface ApplicationContext extends Context {
   get UserId(): number;
   get Email(): string;
-  get RoleId(): number;
-  get TenantId(): number;
+  get Role(): string;
+  get EmailVerified(): boolean;
 }
 
 export class AppContext implements ApplicationContext {
@@ -14,20 +14,27 @@ export class AppContext implements ApplicationContext {
 
   private readonly email: string;
 
-  private readonly roleId: number;
+  private readonly role: string;
 
-  private readonly tenantId: number;
+  private readonly emailVerified: boolean;
 
   constructor(data: {
     id: number;
     email: string;
-    roleId: number;
-    tenantId: number;
+    role: string;
+    emailVerified: boolean;
   }) {
     this.userId = data.id;
     this.email = data.email;
-    this.roleId = data.roleId;
-    this.tenantId = data.tenantId;
+    this.role = data.role;
+    this.emailVerified = data.emailVerified;
+  }
+  [key: string]: any;
+  get Role(): string {
+    return this.role;
+  }
+  get EmailVerified(): boolean {
+    return this.emailVerified;
   }
 
   get UserId(): number {
@@ -36,13 +43,5 @@ export class AppContext implements ApplicationContext {
 
   get Email(): string {
     return this.email;
-  }
-
-  get RoleId(): number {
-    return this.roleId;
-  }
-
-  get TenantId(): number {
-    return this.tenantId;
   }
 }

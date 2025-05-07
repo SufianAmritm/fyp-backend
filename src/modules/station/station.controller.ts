@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { DOMAIN_ENTITY, JWT, UserRoles } from 'src/common/constants';
+import { DOMAIN_ENTITY, JWT } from 'src/common/constants';
 import { Context } from '../../common/decorators/context';
 import { Roles } from '../../common/decorators/role-metadata.decorator';
 import { IdDto } from '../../common/dtos/request/id.dto';
@@ -22,6 +22,7 @@ import { AppContext } from '../../common/interfaces/context';
 import { CreateStationDto } from './dto/create-station.dto';
 import { UpdateStationDto } from './dto/update-station.dto';
 import { IStationService } from './interfaces/station.interface';
+import { UserRoles } from '../../common/constants/enums';
 
 @ApiTags(DOMAIN_ENTITY.STATIONS)
 @ApiBearerAuth(JWT)

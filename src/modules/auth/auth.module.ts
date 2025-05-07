@@ -7,6 +7,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { IAuthService } from './interface/auth.interface';
 import { UtilsModule } from '../../common/utils/UtilsModule';
+import { OtpModule } from '../otp/otp.module';
 
 const authServiceProvider = [
   {
@@ -29,6 +30,7 @@ const authServiceProvider = [
     }),
     UserModule,
     UtilsModule,
+    OtpModule,
   ],
   controllers: [AuthController],
   providers: [...authServiceProvider, AuthService],

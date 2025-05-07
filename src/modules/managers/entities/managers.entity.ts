@@ -1,6 +1,13 @@
 import { AutoMap } from '@automapper/classes';
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToOne,
+} from 'typeorm';
 import { TABLES } from '../../../common/database/tables';
 import { Station } from '../../station/entities/station.entity';
 import { User } from '../../user/entities/user.entity';
@@ -36,4 +43,11 @@ export class Manager extends BaseEntity {
     foreignKeyConstraintName: 'managers_station_id_fk',
   })
   station: Station;
+  @OneToOne(() => User, (i) => i.manager)
+  @JoinColumn({
+    name: 'user_id',
+    referencedColumnName: 'id',
+    foreignKeyConstraintName: 'managers_user_id_fk',
+  })
+  user: User;
 }

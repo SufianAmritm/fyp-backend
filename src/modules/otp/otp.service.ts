@@ -30,6 +30,7 @@ export class OtpService implements IOtpService {
     if (previousTries.length >= 3) {
       throw new BadRequestException({
         message: APP_ERROR_MESSAGES.OTP_LIMITED_EXCEEDED,
+        statusCode: 'otp_limit_exceeded',
       });
     }
 
@@ -40,13 +41,23 @@ export class OtpService implements IOtpService {
   async verifyOtp(otp: string, type: OTP_TYPE): Promise<Otp> {
     const findOptions = new FindOptionsBuilder<Otp>()
       .where({ otp, isUsed: false, type })
-      .relations({ user: true })
+      .relations({
+        user: {
+          role: true,
+        },
+      })
       .build();
     const otpData =
       await this.otpRepository.findOneWithBuilderOption(findOptions);
 
     if (!otpData) {
       return undefined;
+    }
+    if (otpData.expireTimestamp < Date.now()) {
+      throw new BadRequestException({
+        statusCode: 'otp_expired',
+        message: APP_ERROR_MESSAGES.OTP_EXPIRED,
+      });
     }
 
     otpData.isUsed = true;

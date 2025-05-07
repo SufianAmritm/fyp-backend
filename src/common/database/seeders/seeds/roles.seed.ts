@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { In } from 'typeorm';
 import { Role } from '../../../../modules/role/entities/role.entity';
-import { UserRoles } from '../../../constants';
 import dataSource from '../../dbConfig';
+import { UserRoles } from '../../../constants/enums';
 
 @Injectable()
 export class RoleSeed {

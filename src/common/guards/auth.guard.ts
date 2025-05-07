@@ -45,6 +45,12 @@ export class AuthGuard implements CanActivate {
     }
     try {
       const decoded = await this.verifyToken(token);
+      if (!decoded.emailVerified) {
+        throw new ForbiddenException({
+          message: 'Email not verified',
+          statusCode: 'not_verified',
+        });
+      }
       req[AuthGuard.CONTEXT] = new AppContext(decoded);
       req.user = decoded;
       return true;

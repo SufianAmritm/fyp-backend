@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DbTransactionFactory } from 'src/common/database/utils/db-transaction-factory';
 import { UtilsModule } from '../../common/utils/UtilsModule';
+import { AwsModule } from '../aws/aws.module';
 import { EmailModule } from '../email/email.module';
 import { OtpModule } from '../otp/otp.module';
 import { RoleModule } from '../role/role.module';
@@ -42,7 +43,8 @@ const UserServiceProvider = [
     EmailModule,
     UtilsModule,
     RoleModule,
-    OtpModule
+    OtpModule,
+    AwsModule,
   ],
   controllers: [UserController],
   providers: [

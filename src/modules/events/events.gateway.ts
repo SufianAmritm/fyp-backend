@@ -54,9 +54,9 @@ export class EventsGateway
 
       const context = {
         userId: verified.id,
-        roleId: verified.roleId,
+        role: verified.role,
         email: verified.email,
-        tenantId: verified.tenantId,
+        emailVerified: verified.emailVerified,
       };
 
       client.handshake[this.CONTEXT] = context;

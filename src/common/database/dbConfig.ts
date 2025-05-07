@@ -7,6 +7,7 @@ import { User } from 'src/modules/user/entities/user.entity';
 import { DataSource } from 'typeorm';
 import { AppLog } from '../../modules/app-log/entities/app-log.entity';
 import { Division } from '../../modules/division/entities/division.entity';
+import { Manager } from '../../modules/managers/entities/managers.entity';
 import { Otp } from '../../modules/otp/entities/otp.entity';
 import { Station } from '../../modules/station/entities/station.entity';
 import { AppSetting } from '../../modules/user/entities/settings.entity';
@@ -41,6 +42,7 @@ const dataSource = new DataSource({
     AppLog,
     Otp,
     Division,
+    Manager,
   ],
   synchronize: false,
   logging: false,

@@ -11,8 +11,6 @@ export class ResetPasswordDto {
   @IsString()
   token: string;
 
-  tenantId?: number;
-
   @ApiProperty({
     description: 'Please provide a strong password',
     example: `${DUMMY_DATA.password}`,
@@ -21,6 +19,4 @@ export class ResetPasswordDto {
   @IsNotEmpty({ message: 'Password should not be empty' })
   @MinLength(6, { message: 'Password should be at least 6 characters long' })
   password: string;
-
-  email?: string;
 }

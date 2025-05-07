@@ -3,8 +3,8 @@ import {
   DeepPartial,
   DeleteResult,
   EntityManager,
+  EntityTarget,
   FindOptionsWhere,
-  Repository,
   UpdateResult,
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
@@ -14,12 +14,12 @@ export interface IWrite<T> {
   bulkCreate(item: T[]): Promise<T[]>;
   bulkCreateWithTransaction<T>(
     item: T[],
-    repository: Repository<T>,
+    target: EntityTarget<T>,
     transactionManager: EntityManager,
   ): Promise<T[]>;
   deleteWithTransaction<T>(
     where: FindOptionsWhere<T>,
-    repository: Repository<T>,
+    target: EntityTarget<T>,
     transactionManager: EntityManager,
   ): Promise<DeleteResult>;
   update(
@@ -38,13 +38,13 @@ export interface IWrite<T> {
   truncate(): Promise<void>;
   createWithTransaction<T>(
     item: DeepPartial<T>,
-    repository: Repository<T>,
+    target: EntityTarget<T>,
     transactionManager: EntityManager,
   ): Promise<T>;
   updateWithTransaction<T>(
     conditions: FindOptionsWhere<T>,
     updates: QueryDeepPartialEntity<T>,
-    repository: Repository<T>,
+    target: EntityTarget<T>,
     transactionManager: EntityManager,
   ): Promise<void>;
 }

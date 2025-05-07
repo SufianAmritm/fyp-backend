@@ -58,4 +58,7 @@ export const APP_ERROR_MESSAGES = {
   OTP_LIMITED_EXCEEDED: `You have exceeded the maximum number of OTP attempts. Please try again later.`,
   IN_USE: (entity: string, relations: string[]) =>
     `${entity} is currently in use by ${relations.join(', ')}.`,
+  INVALID_OTP_TYPE: 'Invalid OTP type.',
+  INVALID_OTP: 'Invalid OTP.',
+  OTP_EXPIRED: 'The OTP has expired. Please request a new one.',
 };

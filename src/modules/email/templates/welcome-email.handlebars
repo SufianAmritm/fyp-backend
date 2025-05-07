@@ -1,30 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
     <title>Welcome to Railway Residency Portal</title>
-</head>
-<body style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
-    <table style="max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);">
-        <tr>
-            <td>
-                <h2 style="margin-bottom: 10px;">Welcome to Railway Residency Portal, {{name}}!</h2>
-                <p style="margin-bottom: 10px;">You have been added as a <strong>{{role}}</strong> in Railway Residency Portal.</p>
-                <p>Email: <strong>{{email}}</strong></p>
+  </head>
+  <body
+    style='font-family: Arial, sans-serif; text-align: center; padding: 20px;'
+  >
+    <table
+      style='max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);'
+    >
+      <tr>
+        <td>
+          <h2 style='margin-bottom: 10px;'>Welcome to Railway Residency Portal,
+            {{name}}!</h2>
+          <p style='margin-bottom: 10px;'>You have been added as a
+            <strong>{{role}}</strong>
+            in Railway Residency Portal.</p>
+          <p>Email: <strong>{{email}}</strong></p>
 
-               {{#if otp}}
-<p style="margin: 20px 0; font-weight: bold;">
-    You have been provided an OTP to verify your email on the portal. Please use the following code: <strong>{{otp}}</strong>.
-</p>
-{{/if}}
+          {{#if otp}}
+            <p style='margin: 20px 0; font-weight: bold;'>
+              You have been provided an OTP to verify your email on the portal.
+              Please use the following code:
+              <strong>{{otp}}</strong>.
+            </p>
+          {{/if}}
+          {{#if frontendBaseUrl}}
+            <a
+              href='{{frontendBaseUrl}}'
+              style='display: inline-block; margin-top: 15px; padding: 10px 20px; font-size: 16px; color: #fff; background-color: #007bff; text-decoration: none; border-radius: 5px;'
+            >
+              Go to Railway Residency Portal
+            </a>
+          {{/if}}
 
-                <a href="{{frontendBaseUrl}}" style="display: inline-block; margin-top: 15px; padding: 10px 20px; font-size: 16px; color: #fff; background-color: #007bff; text-decoration: none; border-radius: 5px;">
-                    Go to Railway Residency Portal
-                </a>
-                <p style="margin-top: 20px;">If you have any questions, feel free to reach out to support.</p>
-            </td>
-        </tr>
+          <p style='margin-top: 20px;'>If you have any questions, feel free to
+            reach out to support.</p>
+        </td>
+      </tr>
     </table>
-</body>
+  </body>
 </html>

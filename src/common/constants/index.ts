@@ -88,10 +88,3 @@ export const YearMonthMap = {
   10: 'Nov',
   11: 'Dec',
 };
-
-
-export const UserRoles = {
-  ADMIN: 'admin',
-  STATION_MANAGER: 'station_manager',
-  EMPLOYEE: 'employee',
-};

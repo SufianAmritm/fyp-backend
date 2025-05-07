@@ -1,14 +1,16 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Managers } from './entities/managers.entity';
+import { AwsModule } from '../aws/aws.module';
+import { UserModule } from '../user/user.module';
+import { Manager } from './entities/managers.entity';
 import { IManagersService } from './interfaces/managers.interface';
-import { ManagersMappingProfile } from './mapping/managers.mapping';
 import { ManagersController } from './managers.controller';
+import { ManagersService } from './managers.service';
+import { ManagersMappingProfile } from './mapping/managers.mapping';
 import { IManagersRepository } from './repositories/interface/managers-repository.interface';
 import { ManagersRepository } from './repositories/managers.repository';
-import { ManagersService } from './managers.service';
 
-const managersEntities = [Managers];
+const managersEntities = [Manager];
 const managersRepositoryProvider = [
   {
     provide: IManagersRepository,
@@ -22,7 +24,7 @@ const managersServiceProvider = [
   },
 ];
 @Module({
-  imports: [TypeOrmModule.forFeature(managersEntities)],
+  imports: [TypeOrmModule.forFeature(managersEntities), AwsModule, UserModule],
   controllers: [ManagersController],
   providers: [
     ...managersServiceProvider,

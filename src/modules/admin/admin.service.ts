@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { UserRoles } from '../../common/constants/enums';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { IAdminService } from './interfaces/admin.interface';
@@ -10,9 +11,9 @@ export class AdminService implements IAdminService {
     private readonly userService: IUserService,
   ) {}
 
-   async create(createAdminDto: CreateAdminDto) {
-    return await this.userService.createUser(createAdminDto,true)
-   }
+  async create(createAdminDto: CreateAdminDto) {
+    return await this.userService.createUser(createAdminDto, UserRoles.ADMIN);
+  }
 
   // findAll(paginationDto: PaginationDto, ctx: AppContext) {
   //   return this.adminRepository.findAll(paginationDto, ctx);

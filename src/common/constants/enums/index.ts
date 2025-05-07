@@ -10,7 +10,7 @@ export const enum ORDER_BY {
   ASC = 'ASC',
 }
 export enum SUPPORT_TYPES {
-  AVATAR = '.(png|jpg|jpeg|svg)',
+  AVATAR = '.(png|jpg|jpeg|PNG|JPG|JPEG)',
   PDF = '.(pdf)',
   CSV = '.(csv)',
 }
@@ -34,8 +34,9 @@ export enum EMAIL_TEMPLATES {
   REGISTER = 'welcome-email',
   PASSWORD_RESET = 'password-reset',
 }
-export enum EMAIL_SUBJECTS{
+export enum EMAIL_SUBJECTS {
   REGISTER = 'Welcome to Pakistan Railway Residency Portal',
+  PASSWORD_RESET='Reset Password',
 }
 export enum DATE_FILTER {
   TODAY = 'today',
@@ -44,17 +45,26 @@ export enum DATE_FILTER {
   YEAR = 'year',
 }
 
-
 export enum NOTIFICATION_SEND_TYPE {
   DASHBOARD = 'dashboard',
   MESSAGE = 'message',
   BOTH = 'both',
 }
 export enum NOTIFICATION_TYPE {
-MOCK='mock'
+  MOCK = 'mock',
 }
 
-export enum TOGGLE_ON_OFF{
-  ON='on',
-  OFF='off'
+export enum TOGGLE_ON_OFF {
+  ON = 'on',
+  OFF = 'off',
 }
+
+export enum AWS_PROVIDERS {
+  S3 = 's3',
+}
+
+export enum UserRoles {
+  ADMIN= 'admin',
+  MANAGER= 'station_manager',
+  EMPLOYEE= 'employee',
+};

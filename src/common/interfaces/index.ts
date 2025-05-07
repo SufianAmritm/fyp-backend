@@ -1,6 +1,7 @@
 export interface JwtPayload {
   id: number;
   email: string;
-  roleId: number;
-  tenantId: number;
+  role: string;
+  emailVerified:boolean
+
 }

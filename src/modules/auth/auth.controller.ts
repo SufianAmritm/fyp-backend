@@ -1,20 +1,24 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Inject, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { DOMAIN_ENTITY, X_API_KEY } from 'src/common/constants';
-import { AuthService } from './auth.service';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
-import { TokenType, TokenTypeWithUser } from './type/auth.type';
+import { SendOtpDto, VerifyOtpDto } from './dto/verify-otp.dto';
+import { IAuthService } from './interface/auth.interface';
+import { TokenTypeWithUser } from './type/auth.type';
 
 @ApiTags(DOMAIN_ENTITY.AUTH)
 @ApiBearerAuth(X_API_KEY)
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    @Inject(IAuthService) private readonly authService: IAuthService,
+  ) {}
 
   @Post('signup')
   @ApiOperation({ summary: 'Sign Up' })
-  async signUp(@Body() signupDto: SignUpDto): Promise<TokenType> {
+  async signUp(@Body() signupDto: SignUpDto): Promise<TokenTypeWithUser> {
     return this.authService.signUp(signupDto);
   }
 
@@ -33,9 +37,26 @@ export class AuthController {
   //   return this.authService.forgetPassword(email);
   // }
 
-  // @Patch('reset-password')
-  // @ApiOperation({ summary: 'Reset Password' })
-  // async resetPassword(@Body() resetDto: ResetPasswordDto): Promise<string> {
-  //   return this.authService.resetPassword(resetDto);
-  // }
+  @Patch('reset-password')
+  @ApiOperation({ summary: 'Reset Password' })
+  async resetPassword(
+    @Body() resetDto: ResetPasswordDto,
+  ): Promise<TokenTypeWithUser> {
+    return this.authService.resetPassword(resetDto);
+  }
+  @Post('verify-otp')
+  @ApiOperation({ summary: 'Reset Password' })
+  async verifyOtp(@Body() verifyDto: VerifyOtpDto): Promise<
+    | TokenTypeWithUser
+    | {
+        token: string;
+      }
+  > {
+    return this.authService.verifyOtp(verifyDto);
+  }
+  @Post('send-otp')
+  @ApiOperation({ summary: 'Reset Password' })
+  async sendOtp(@Body() sendDTo: SendOtpDto): Promise<string> {
+    return this.authService.sendOtp(sendDTo);
+  }
 }

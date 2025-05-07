@@ -1,9 +1,9 @@
 import { AutoMap } from '@automapper/classes';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { IsNumber, IsPositive } from 'class-validator';
 import { SignUpDto } from '../../auth/dto/sign-up.dto';
 
-export class CreateManagersDto extends SignUpDto {
+export class CreateManagersDto extends OmitType(SignUpDto, ['password']) {
   @AutoMap()
   picture: string;
   @AutoMap()

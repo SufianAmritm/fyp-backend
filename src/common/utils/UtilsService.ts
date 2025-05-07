@@ -4,6 +4,7 @@ import { compare, genSalt, hash } from 'bcryptjs';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { v4 } from 'uuid';
 
 @Injectable()
 export class UtilsService {
@@ -38,6 +39,39 @@ export class UtilsService {
     } catch (error) {
       throw new BadRequestException();
     }
+  }
+
+  awsUploadKeyBuilder(
+    fileName: string,
+    folder?: string,
+    bucket?: string,
+    orderId?: bigint,
+  ): string {
+    const fileExtension = fileName.substring(fileName.lastIndexOf('.'));
+    const sanitizedFileName = fileName
+      .replace(fileExtension, '')
+      .replace(/[^a-zA-Z0-9.]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    const uniqueIdentifier = v4().toString();
+
+    let key = `${uniqueIdentifier}-${sanitizedFileName}${orderId ? -orderId : ''}${fileExtension}`;
+    if (folder) {
+      key = `${folder}/${key}`;
+    }
+    if (bucket) {
+      key = `${bucket}/${key}`;
+    }
+    return key;
+  }
+
+  awsPublicUrlBuilder(bucket: string, key: string, folder?: string): string {
+    let url = `https://${bucket}.s3.amazonaws.com/`;
+    if (folder) {
+      url += `${folder}/`;
+    }
+    url += key;
+    return url;
   }
 
   saveFileToPublicFolder(file: Express.Multer.File): string | undefined {
@@ -78,7 +112,6 @@ export class UtilsService {
       }, 2000);
     });
   }
-
 
   getStateFromUrl(url: string): string | null {
     const params = new URLSearchParams(url);
@@ -131,9 +164,9 @@ export class UtilsService {
   getStartOfYear(year?: number): Date {
     let date: Date;
     if (year) {
-      date = new Date(year,0,1);
+      date = new Date(year, 0, 1);
     } else {
-      date = new Date(new Date().getFullYear(),0,1);
+      date = new Date(new Date().getFullYear(), 0, 1);
     }
     date.setHours(0, 0, 0, 0);
     return date;
@@ -141,9 +174,9 @@ export class UtilsService {
   getEndOfYear(year?: number): Date {
     let date: Date;
     if (year) {
-      date = new Date(year,11,31);
+      date = new Date(year, 11, 31);
     } else {
-      date = new Date(new Date().getFullYear(),11,31);
+      date = new Date(new Date().getFullYear(), 11, 31);
     }
     date.setHours(23, 59, 59, 999);
     return date;

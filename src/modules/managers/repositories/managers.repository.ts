@@ -6,29 +6,29 @@ import { BaseRepository } from 'src/common/database/repositories/base/base.repos
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { Repository } from 'typeorm';
-import { AppContext } from '../../../common/interfaces/context';
-import { Managers } from '../entities/managers.entity';
+import { Manager } from '../entities/managers.entity';
 import { IManagersRepository } from './interface/managers-repository.interface';
 
 @Injectable()
 export class ManagersRepository
-  extends BaseRepository<Managers>
+  extends BaseRepository<Manager>
   implements IManagersRepository
 {
   constructor(
-    @InjectRepository(Managers)
-    public readonly repository: Repository<Managers>,
+    @InjectRepository(Manager)
+    public readonly repository: Repository<Manager>,
   ) {
     super(repository);
   }
 
-  async findAll(
-    paginationDto: PaginationDto,
-    ctx: AppContext,
-  ): Promise<PagedList<Managers>> {
-    const findOption = new FindOptionsBuilder<Managers>()
+  async findAll(paginationDto: PaginationDto): Promise<PagedList<Manager>> {
+    const findOption = new FindOptionsBuilder<Manager>()
       .where({
-        deletedAt: null })
+        deletedAt: null,
+      })
+      .relations({
+        user: true,
+      })
       .order({ id: ORDER_BY.DESC })
       .build();
     return this.findWithPagination(paginationDto, findOption);

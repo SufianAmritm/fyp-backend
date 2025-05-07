@@ -18,6 +18,7 @@ import { DivisionModule } from './modules/division/division.module';
 import { envSchema } from './modules/env/env';
 import { EnvModule } from './modules/env/env.module';
 import { EventsModule } from './modules/events/events.module';
+import { ManagersModule } from './modules/managers/managers.module';
 import { RolePermissionModule } from './modules/role-permission/role-permission.module';
 import { RoleModule } from './modules/role/role.module';
 import { StationModule } from './modules/station/station.module';
@@ -48,6 +49,7 @@ import { UserModule } from './modules/user/user.module';
     AdminModule,
     DivisionModule,
     EnvModule,
+    ManagersModule,
     RoleModule,
     RolePermissionModule,
     SeederModule,
