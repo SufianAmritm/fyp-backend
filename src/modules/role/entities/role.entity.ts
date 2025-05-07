@@ -2,12 +2,17 @@ import { AutoMap } from '@automapper/classes';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { RolePermission } from 'src/modules/role-permission/entities/role-permission.entity';
 import { User } from 'src/modules/user/entities/user.entity';
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
+import { TABLES } from '../../../common/database/tables';
 
-@Entity('roles', { schema: 'public' })
+@Index('roles_name_uk', ['name'], {
+  unique: true,
+  where: 'deleted_at IS NOT NULL',
+})
+@Entity(TABLES.ROLES, { schema: 'public' })
 export class Role extends BaseEntity {
   @AutoMap()
-  @Column('character varying', { nullable: false, unique: true })
+  @Column('character varying', { nullable: false })
   name: string;
 
   @OneToMany(() => RolePermission, (rolePermission) => rolePermission.role)

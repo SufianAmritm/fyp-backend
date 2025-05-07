@@ -1,7 +1,16 @@
+import { AutoMap } from '@automapper/classes';
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { TABLES } from '../../../common/database/tables';
 import { Division } from '../../division/entities/division.entity';
+import { Manager } from '../../managers/entities/managers.entity';
 import { User } from '../../user/entities/user.entity';
 
 @Index('stations_name_division_id_uk', ['name', 'divisionId'], {
@@ -10,12 +19,13 @@ import { User } from '../../user/entities/user.entity';
 })
 @Entity(TABLES.STATIONS, { schema: 'public' })
 export class Station extends BaseEntity {
+  @AutoMap()
   @Column('character varying', { name: 'name', nullable: false })
   name: string;
-
+  @AutoMap()
   @Column('integer', { name: 'division_id', nullable: false })
   divisionId: number;
-
+  @AutoMap()
   @Column('integer', { name: 'created_by_id' })
   createdById: number;
 
@@ -33,4 +43,8 @@ export class Station extends BaseEntity {
     foreignKeyConstraintName: 'stations_division_id_fk',
   })
   division: Division;
+
+  @AutoMap()
+  @OneToMany(() => Manager, (i) => i.station)
+  managers: Manager[];
 }

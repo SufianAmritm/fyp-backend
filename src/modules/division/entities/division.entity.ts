@@ -17,9 +17,10 @@ import { User } from '../../user/entities/user.entity';
 })
 @Entity(TABLES.DIVISIONS, { schema: 'public' })
 export class Division extends BaseEntity {
+  @AutoMap()
   @Column('character varying', { name: 'name', nullable: false })
   name: string;
-
+  @AutoMap()
   @Column('integer', { name: 'created_by_id' })
   createdById: number;
 

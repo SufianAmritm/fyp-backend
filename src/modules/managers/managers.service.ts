@@ -6,7 +6,7 @@ import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { CreateManagersDto } from './dto/create-managers.dto';
 import { UpdateManagersDto } from './dto/update-managers.dto';
-import { Managers } from './entities/managers.entity';
+import { Manager } from './entities/managers.entity';
 import { IManagersService } from './interfaces/managers.interface';
 import { IManagersRepository } from './repositories/interface/managers-repository.interface';
 
@@ -18,31 +18,38 @@ export class ManagersService implements IManagersService {
     @InjectMapper() private readonly managersMapper: Mapper,
   ) {}
 
-   async create(createManagersDto: CreateManagersDto) {
-     const newManagers = this.managersMapper.map(createManagersDto, CreateManagersDto, Managers);
-     return this.managersRepository.create(newManagers);
-   }
+  async create(
+    createManagersDto: CreateManagersDto,
+    picture: Express.Multer.File,
+  ) {
+    const newManagers = this.managersMapper.map(
+      createManagersDto,
+      CreateManagersDto,
+      Manager,
+    );
+    return this.managersRepository.create(newManagers);
+  }
 
   findAll(paginationDto: PaginationDto, ctx: AppContext) {
     return this.managersRepository.findAll(paginationDto, ctx);
   }
 
-   findOne(id: number) {
-     return this.managersRepository.findOne({ id });
-   }
+  findOne(id: number) {
+    return this.managersRepository.findOne({ id });
+  }
 
   async update(id: number, updateManagersDto: UpdateManagersDto) {
     const managersUpdate = this.managersMapper.map(
       updateManagersDto,
       CreateManagersDto,
-      Managers,
+      Manager,
     );
     await this.managersRepository.update({ id }, managersUpdate);
     return RESPONSE_MESSAGES.UPDATED;
   }
 
-   async remove(id: number) {
-     await this.managersRepository.softDelete({ id });
-     return RESPONSE_MESSAGES.DELETED;
-   }
+  async remove(id: number) {
+    await this.managersRepository.softDelete({ id });
+    return RESPONSE_MESSAGES.DELETED;
+  }
 }

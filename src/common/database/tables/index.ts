@@ -3,4 +3,6 @@ export enum TABLES {
   USER = 'users',
   DIVISIONS = 'divisions',
   STATIONS = 'stations',
+  MANAGERS = 'managers',
+  ROLES = 'roles',
 }

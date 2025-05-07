@@ -51,6 +51,7 @@ export const DOMAIN_ENTITY = {
   ADMIN: 'Admin',
   DIVISION: 'Division',
   STATIONS: 'Stations',
+  MANAGERS: 'Managers',
 };
 
 

@@ -24,7 +24,8 @@ export class SignUpDto {
   @AutoMap()
   @ApiProperty({
     description: 'Please provide email',
-  })@Transform(({value})=>value.toLowerCase())
+  })
+  @Transform(({ value }) => value.toLowerCase())
   @IsString({ message: 'email should be a string' })
   @IsNotEmpty({ message: 'email should not be empty' })
   email: string;
@@ -32,14 +33,11 @@ export class SignUpDto {
   @ApiProperty()
   @AutoMap()
   @IsString()
-  @Matches(/^\+923[0-9]{9}$/,{
-    message:'The phone number should be a valid Pakistani phone number with format +923xxxxxxxxx'
-  }
-)
-
+  @Matches(/^\+923[0-9]{9}$/, {
+    message:
+      'The phone number should be a valid Pakistani phone number with format +923xxxxxxxxx',
+  })
   phoneNumber: string;
-
-
 }
 
 export class AddUserDto extends SignUpDto {}

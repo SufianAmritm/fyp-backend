@@ -13,8 +13,9 @@ import {
 import { TABLES } from '../../../common/database/tables';
 import { Division } from '../../division/entities/division.entity';
 import { Otp } from '../../otp/entities/otp.entity';
-import { AppSetting } from './settings.entity';
 import { Station } from '../../station/entities/station.entity';
+import { AppSetting } from './settings.entity';
+import { Manager } from '../../managers/entities/managers.entity';
 
 @Unique('user_email_ukey', ['email'])
 @Entity(TABLES.USER, { schema: 'public' })
@@ -76,4 +77,7 @@ export class User extends BaseEntity {
   @AutoMap()
   @OneToMany(() => Station, (i) => i.createdBy)
   stations: Station[];
+  @AutoMap()
+  @OneToMany(() => Manager, (i) => i.createdBy)
+  managers: Manager[];
 }
