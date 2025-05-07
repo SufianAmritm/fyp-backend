@@ -1,52 +1,62 @@
-import { Controller, Inject, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { DOMAIN_ENTITY, JWT, X_API_KEY } from 'src/common/constants';
-import { ApiKeyGuard } from 'src/common/guards/api-key.guard';
+import { DOMAIN_ENTITY, JWT } from 'src/common/constants';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { IStationService } from './interfaces/station.interface';
+import { IdDto } from '../../common/dtos/request/id.dto';
+import { PaginationDto } from '../../common/dtos/request/pagination.dto';
+import { CreateStationDto } from './dto/create-station.dto';
+import { UpdateStationDto } from './dto/update-station.dto';
 
-@ApiTags(DOMAIN_ENTITY.NOTIFICATIONS)
-@ApiBearerAuth(X_API_KEY)
-@UseGuards(ApiKeyGuard)
+@ApiTags(DOMAIN_ENTITY.STATIONS)
 @ApiBearerAuth(JWT)
-@UseGuards(AuthGuard)
-@Controller('<paren>')
+@UseGuards(AuthGuard, RolesGuard)
+@Controller('stations')
 export class StationController {
   constructor(
     @Inject(IStationService)
     private readonly stationService: IStationService,
   ) {}
 
-// @Post()
-// create(@Body() createStationDto: CreateStationDto) {
-//   return this.stationService.create(createStationDto);
-// }
+  @Post()
+  create(@Body() createStationDto: CreateStationDto) {
+    return this.stationService.create(createStationDto);
+  }
 
- // @Get()
- // findAll(
- //   @Query() paginationDto: PaginationDto,
- //   @Context() context: AppContext,
- // ) {
- //   return this.stationService.findAll(paginationDto, context);
- // }
+  @Get()
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.stationService.findAll(paginationDto);
+  }
 
-  // @Get(':id')
-  // findOne(@Param() idDto: IdDto) {
-  //   const { id } = idDto;
-  //   return this.stationService.findOne(+id);
-  // }
+  @Get(':id')
+  findOne(@Param() idDto: IdDto) {
+    const { id } = idDto;
+    return this.stationService.findOne(+id);
+  }
 
-  // @Patch(':id')
-  // update(@Param() idDto: IdDto, @Body() updateStationDto: UpdateStationDto) {
-  //   const { id } = idDto;
+  @Patch(':id')
+  update(@Param() idDto: IdDto, @Body() updateStationDto: UpdateStationDto) {
+    const { id } = idDto;
 
-  //   return this.stationService.update(+id, updateStationDto);
-  // }
+    return this.stationService.update(+id, updateStationDto);
+  }
 
-  // @Delete(':id')
-  // remove(@Param() idDto: IdDto) {
-  //   const { id } = idDto;
+  @Delete(':id')
+  remove(@Param() idDto: IdDto) {
+    const { id } = idDto;
 
-  //   return this.stationService.remove(+id);
-  // }
+    return this.stationService.remove(+id);
+  }
 }

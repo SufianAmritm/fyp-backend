@@ -6,7 +6,6 @@ import { BaseRepository } from 'src/common/database/repositories/base/base.repos
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { Repository } from 'typeorm';
-import { AppContext } from '../../../common/interfaces/context';
 import { Station } from '../entities/station.entity';
 import { IStationRepository } from './interface/station-repository.interface';
 
@@ -22,13 +21,11 @@ export class StationRepository
     super(repository);
   }
 
-  async findAll(
-    paginationDto: PaginationDto,
-    ctx: AppContext,
-  ): Promise<PagedList<Station>> {
+  async findAll(paginationDto: PaginationDto): Promise<PagedList<Station>> {
     const findOption = new FindOptionsBuilder<Station>()
       .where({
-        deletedAt: null })
+        deletedAt: null,
+      })
       .order({ id: ORDER_BY.DESC })
       .build();
     return this.findWithPagination(paginationDto, findOption);

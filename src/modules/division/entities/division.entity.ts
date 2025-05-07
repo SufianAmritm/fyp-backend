@@ -1,7 +1,9 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { TABLES } from '../../../common/database/tables';
 import { User } from '../../user/entities/user.entity';
+import { AutoMap } from '@automapper/classes';
+import { Station } from '../../station/entities/station.entity';
 
 @Entity(TABLES.DIVISIONS, { schema: 'public' })
 export class Division extends BaseEntity {
@@ -18,4 +20,7 @@ export class Division extends BaseEntity {
     foreignKeyConstraintName: 'divisions_created_by_id_fk',
   })
   createdBy: User;
+  @AutoMap()
+  @OneToMany(() => Station, (i) => i.division)
+  stations: Station[];
 }

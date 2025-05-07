@@ -12,7 +12,7 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './common/database';
 import { SeederModule } from './common/database/seeders/seed.module';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
-import { AdminModule, AdminModule } from './modules/admin/admin.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DivisionModule } from './modules/division/division.module';
 import { envSchema } from './modules/env/env';

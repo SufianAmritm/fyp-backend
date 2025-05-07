@@ -3,7 +3,6 @@ import { InjectMapper } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { RESPONSE_MESSAGES } from '../../common/constants';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
-import { AppContext } from '../../common/interfaces/context';
 import { CreateStationDto } from './dto/create-station.dto';
 import { UpdateStationDto } from './dto/update-station.dto';
 import { Station } from './entities/station.entity';
@@ -18,18 +17,22 @@ export class StationService implements IStationService {
     @InjectMapper() private readonly stationMapper: Mapper,
   ) {}
 
-   async create(createStationDto: CreateStationDto) {
-     const newStation = this.stationMapper.map(createStationDto, CreateStationDto, Station);
-     return this.stationRepository.create(newStation);
-   }
-
-  findAll(paginationDto: PaginationDto, ctx: AppContext) {
-    return this.stationRepository.findAll(paginationDto, ctx);
+  async create(createStationDto: CreateStationDto) {
+    const newStation = this.stationMapper.map(
+      createStationDto,
+      CreateStationDto,
+      Station,
+    );
+    return this.stationRepository.create(newStation);
   }
 
-   findOne(id: number) {
-     return this.stationRepository.findOne({ id });
-   }
+  findAll(paginationDto: PaginationDto) {
+    return this.stationRepository.findAll(paginationDto);
+  }
+
+  findOne(id: number) {
+    return this.stationRepository.findOne({ id });
+  }
 
   async update(id: number, updateStationDto: UpdateStationDto) {
     const stationUpdate = this.stationMapper.map(
@@ -41,8 +44,8 @@ export class StationService implements IStationService {
     return RESPONSE_MESSAGES.UPDATED;
   }
 
-   async remove(id: number) {
-     await this.stationRepository.softDelete({ id });
-     return RESPONSE_MESSAGES.DELETED;
-   }
+  async remove(id: number) {
+    await this.stationRepository.softDelete({ id });
+    return RESPONSE_MESSAGES.DELETED;
+  }
 }

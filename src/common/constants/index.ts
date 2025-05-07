@@ -50,6 +50,7 @@ export const DOMAIN_ENTITY = {
   NOTIFICATIONS: 'Notifications',
   ADMIN: 'Admin',
   DIVISION: 'Division',
+  STATIONS: 'Stations',
 };
 
 

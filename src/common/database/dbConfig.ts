@@ -8,6 +8,7 @@ import { DataSource } from 'typeorm';
 import { AppLog } from '../../modules/app-log/entities/app-log.entity';
 import { Division } from '../../modules/division/entities/division.entity';
 import { Otp } from '../../modules/otp/entities/otp.entity';
+import { Station } from '../../modules/station/entities/station.entity';
 import { AppSetting } from '../../modules/user/entities/settings.entity';
 import { Seed } from './seeders/entities/seed.entity';
 
@@ -34,6 +35,7 @@ const dataSource = new DataSource({
     Role,
     RolePermission,
     Seed,
+    Station,
     // UserNotification,
     AppSetting,
     AppLog,
