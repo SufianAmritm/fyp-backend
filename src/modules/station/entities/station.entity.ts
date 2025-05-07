@@ -1,9 +1,13 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { TABLES } from '../../../common/database/tables';
 import { Division } from '../../division/entities/division.entity';
 import { User } from '../../user/entities/user.entity';
 
+@Index('stations_name_division_id_uk', ['name', 'divisionId'], {
+  unique: true,
+  where: 'deleted_at IS NOT NULL',
+})
 @Entity(TABLES.STATIONS, { schema: 'public' })
 export class Station extends BaseEntity {
   @Column('character varying', { name: 'name', nullable: false })

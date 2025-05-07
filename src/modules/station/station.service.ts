@@ -1,7 +1,10 @@
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Equal, Not } from 'typeorm';
 import { RESPONSE_MESSAGES } from '../../common/constants';
+import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
+import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { CreateStationDto } from './dto/create-station.dto';
 import { UpdateStationDto } from './dto/update-station.dto';
@@ -18,6 +21,16 @@ export class StationService implements IStationService {
   ) {}
 
   async create(createStationDto: CreateStationDto) {
+    const { name, divisionId } = createStationDto;
+    const exists = await this.stationRepository.findOne({
+      name,
+      divisionId,
+    });
+    if (exists) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.ALREADY_EXISTS('Station', 'name: ' + name),
+      );
+    }
     const newStation = this.stationMapper.map(
       createStationDto,
       CreateStationDto,
@@ -35,16 +48,38 @@ export class StationService implements IStationService {
   }
 
   async update(id: number, updateStationDto: UpdateStationDto) {
+    const { name, divisionId } = updateStationDto;
+    if (name) {
+      const exists = await this.stationRepository.findOne({
+        name,
+        divisionId,
+        id: Not(Equal(id)),
+      });
+      if (exists) {
+        throw new BadRequestException(
+          APP_ERROR_MESSAGES.ALREADY_EXISTS('Station', 'name: ' + name),
+        );
+      }
+    }
     const stationUpdate = this.stationMapper.map(
       updateStationDto,
       CreateStationDto,
       Station,
     );
     await this.stationRepository.update({ id }, stationUpdate);
-    return RESPONSE_MESSAGES.UPDATED;
+    return this.stationRepository.findOne({ id });
   }
 
   async remove(id: number) {
+    const findOptions = new FindOptionsBuilder<Station>()
+      .where({ id })
+      .relations({})
+      .build();
+    const station =
+      await this.stationRepository.findOneWithBuilderOption(findOptions);
+    if (!station) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Station'));
+    }
     await this.stationRepository.softDelete({ id });
     return RESPONSE_MESSAGES.DELETED;
   }

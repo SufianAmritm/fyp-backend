@@ -12,11 +12,13 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { DOMAIN_ENTITY, JWT, UserRoles } from 'src/common/constants';
+import { Context } from '../../common/decorators/context';
 import { Roles } from '../../common/decorators/role-metadata.decorator';
 import { IdDto } from '../../common/dtos/request/id.dto';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { AppContext } from '../../common/interfaces/context';
 import { CreateDivisionDto } from './dto/create-division.dto';
 import { UpdateDivisionDto } from './dto/update-division.dto';
 import { IDivisionService } from './interfaces/division.interface';
@@ -33,7 +35,11 @@ export class DivisionController {
   ) {}
 
   @Post()
-  create(@Body() createDivisionDto: CreateDivisionDto) {
+  create(
+    @Body() createDivisionDto: CreateDivisionDto,
+    @Context() ctx: AppContext,
+  ) {
+    createDivisionDto.createdById = ctx.UserId;
     return this.divisionService.create(createDivisionDto);
   }
 

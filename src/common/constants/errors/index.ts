@@ -55,5 +55,7 @@ export const APP_ERROR_MESSAGES = {
   UNAUTHORIZED: `You are not authorized to access this information.`,
   REQUIRED: (entity: string) =>
     `${entity} is required to complete this action.`,
-  OTP_LIMITED_EXCEEDED:`You have exceeded the maximum number of OTP attempts. Please try again later.`,
+  OTP_LIMITED_EXCEEDED: `You have exceeded the maximum number of OTP attempts. Please try again later.`,
+  IN_USE: (entity: string, relations: string[]) =>
+    `${entity} is currently in use by ${relations.join(', ')}.`,
 };

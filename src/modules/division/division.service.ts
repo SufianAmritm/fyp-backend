@@ -1,7 +1,10 @@
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { Equal, Not } from 'typeorm';
 import { RESPONSE_MESSAGES } from '../../common/constants';
+import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
+import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { CreateDivisionDto } from './dto/create-division.dto';
 import { UpdateDivisionDto } from './dto/update-division.dto';
@@ -18,6 +21,15 @@ export class DivisionService implements IDivisionService {
   ) {}
 
   async create(createDivisionDto: CreateDivisionDto) {
+    const { name } = createDivisionDto;
+    const exists = await this.divisionRepository.findOne({
+      name,
+    });
+    if (exists) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.ALREADY_EXISTS('Division', 'name: ' + name),
+      );
+    }
     const newDivision = this.divisionMapper.map(
       createDivisionDto,
       CreateDivisionDto,
@@ -35,16 +47,47 @@ export class DivisionService implements IDivisionService {
   }
 
   async update(id: number, updateDivisionDto: UpdateDivisionDto) {
+    const { name } = updateDivisionDto;
+    if (name) {
+      const exists = await this.divisionRepository.findOne({
+        name: updateDivisionDto.name,
+        id: Not(Equal(id)),
+      });
+      if (exists) {
+        throw new BadRequestException(
+          APP_ERROR_MESSAGES.ALREADY_EXISTS(
+            'Division',
+            'name: ' + updateDivisionDto.name,
+          ),
+        );
+      }
+    }
     const divisionUpdate = this.divisionMapper.map(
       updateDivisionDto,
       CreateDivisionDto,
       Division,
     );
     await this.divisionRepository.update({ id }, divisionUpdate);
-    return RESPONSE_MESSAGES.UPDATED;
+    return this.divisionRepository.findOne({ id });
   }
 
   async remove(id: number) {
+    const findOptions = new FindOptionsBuilder<Division>()
+      .where({ id })
+      .relations({
+        stations: true,
+      })
+      .build();
+    const division =
+      await this.divisionRepository.findOneWithBuilderOption(findOptions);
+    if (!division) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Division'));
+    }
+    if (division.stations.length > 0) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.IN_USE('Division', ['Stations']),
+      );
+    }
     await this.divisionRepository.softDelete({ id });
     return RESPONSE_MESSAGES.DELETED;
   }

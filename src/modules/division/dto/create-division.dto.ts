@@ -10,4 +10,6 @@ export class CreateDivisionDto {
     example: 'Lahore',
   })
   name: string;
+  @AutoMap()
+  createdById: number;
 }
