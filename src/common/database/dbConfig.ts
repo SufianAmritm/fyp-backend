@@ -14,6 +14,7 @@ import { AppSetting } from '../../modules/user/entities/settings.entity';
 import { Seed } from './seeders/entities/seed.entity';
 import { Apartment } from '../../modules/apartment/entities/apartment.entity';
 import { Colony } from '../../modules/colony/entities/colony.entity';
+import { Employee } from '../../modules/employee/entities/employee.entity';
 
 config();
 
@@ -47,6 +48,7 @@ const dataSource = new DataSource({
     Manager,
     Apartment,
     Colony,
+    Employee,
   ],
   synchronize: false,
   logging: false,

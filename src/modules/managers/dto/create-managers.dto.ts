@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { ApiProperty, OmitType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import {
   IsNotEmpty,
   IsNumber,
@@ -24,7 +24,7 @@ export class CreateManagersDto extends OmitType(SignUpDto, ['password']) {
   })
   stationId: number;
   @AutoMap()
-  @ApiProperty({})
+  @ApiPropertyOptional({})
   @IsString()
   @IsNotEmpty()
   @IsOptional()

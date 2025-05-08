@@ -11,13 +11,14 @@ import {
   Unique
 } from 'typeorm';
 import { TABLES } from '../../../common/database/tables';
+import { Apartment } from '../../apartment/entities/apartment.entity';
+import { Colony } from '../../colony/entities/colony.entity';
 import { Division } from '../../division/entities/division.entity';
+import { Employee } from '../../employee/entities/employee.entity';
 import { Manager } from '../../managers/entities/managers.entity';
 import { Otp } from '../../otp/entities/otp.entity';
 import { Station } from '../../station/entities/station.entity';
 import { AppSetting } from './settings.entity';
-import { Apartment } from '../../apartment/entities/apartment.entity';
-import { Colony } from '../../colony/entities/colony.entity';
 
 @Unique('user_email_ukey', ['email'])
 @Entity(TABLES.USER, { schema: 'public' })
@@ -91,4 +92,10 @@ export class User extends BaseEntity {
   @AutoMap()
   @OneToMany(() => Colony, (i) => i.createdBy)
   colonies: Colony[];
+  @AutoMap()
+  @OneToMany(() => Employee, (i) => i.createdBy)
+  employees: Employee[];
+  @AutoMap()
+  @OneToOne(() => Employee, (i) => i.user)
+  employee: Employee;
 }

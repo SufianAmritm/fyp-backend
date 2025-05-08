@@ -5,6 +5,7 @@ import { TABLES } from '../../../common/database/tables';
 import { Apartment } from '../../apartment/entities/apartment.entity';
 import { Station } from '../../station/entities/station.entity';
 import { User } from '../../user/entities/user.entity';
+import { Employee } from '../../employee/entities/employee.entity';
 
 @Entity(TABLES.COLONIES, { schema: 'public' })
 export class Colony extends BaseEntity {
@@ -36,4 +37,7 @@ export class Colony extends BaseEntity {
   station: Station;
   @OneToMany(() => Apartment, (i) => i.colony)
   apartments: Apartment[];
+  @AutoMap()
+  @OneToMany(() => Employee, (i) => i.colony)
+  employees: Employee[];
 }

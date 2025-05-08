@@ -27,7 +27,11 @@ import { UtilsService } from '../../common/utils/UtilsService';
 import { CreateAdminDto } from '../admin/dto/create-admin.dto';
 import { IS3Service } from '../aws/interface/aws-s3.interface';
 import { IEmailService } from '../email/interfaces/email.interface';
+import { CreateEmployeeDto } from '../employee/dto/create-employee.dto';
+import { Employee } from '../employee/entities/employee.entity';
+import { NewEmployeeUserReturn } from '../employee/types';
 import { CreateManagersDto } from '../managers/dto/create-managers.dto';
+import { Otp } from '../otp/entities/otp.entity';
 import { IOtpService } from '../otp/interfaces/otp.interface';
 import { IRoleService } from '../role/interfaces/role.interface';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
@@ -35,7 +39,7 @@ import { AppSetting } from './entities/settings.entity';
 import { User } from './entities/user.entity';
 import { ISettingRepository } from './repositories/interfaces/settings-repository.interface';
 import { IUserRepository } from './repositories/interfaces/user-repository.interface';
-import { EmailData } from './types';
+import { EmailData, NewManagerUserReturn } from './types';
 
 @Injectable()
 export class UserService implements IUserService {
@@ -57,10 +61,169 @@ export class UserService implements IUserService {
     private readonly utilService: UtilsService,
     @InjectMapper() private readonly mapper: Mapper,
   ) {}
+  async createManager(
+    createManagerDto: CreateManagersDto,
+  ): Promise<NewManagerUserReturn> {
+    let runner: TransactionRunner;
+    try {
+      const { email } = createManagerDto;
+      const userExist = await this.userRepository.findOne(
+        { email },
+        { id: true },
+      );
+      if (userExist)
+        throw new Error(
+          APP_ERROR_MESSAGES.ALREADY_EXISTS(
+            DOMAIN_ENTITY.USER,
+            `email: ${email}`,
+          ),
+        );
+      const role = await this.roleService.findOneByName(UserRoles.MANAGER);
+      runner = await this.dbTransactionFactory.transactionRunner();
+      const transactionManager = runner.manager;
+
+      await runner.start();
+      const userMap = this.mapper.map(
+        createManagerDto,
+        CreateManagersDto,
+        User,
+      );
+      userMap.roleId = role.id;
+      userMap.emailVerified = true;
+      const user = await this.userRepository.createWithTransaction<User>(
+        userMap,
+        User,
+        transactionManager,
+      );
+      user.password = undefined;
+      const userWithTenant = await this.findOneById(user.id);
+      const emailData: EmailData = {
+        name: userWithTenant.name,
+        email: userWithTenant.email,
+        role: userWithTenant.role.name,
+      };
+
+      return { runner, user, transactionManager, emailData };
+    } catch (error) {
+      console.log(error);
+      if (runner) {
+        await runner.rollbackTransaction();
+      }
+      throw new Error(error.message);
+    }
+  }
+  async createEmployee(
+    createEmployeeDto: CreateEmployeeDto,
+  ): Promise<NewEmployeeUserReturn> {
+    let runner: TransactionRunner;
+    try {
+      const { email } = createEmployeeDto;
+      const userExist = await this.userRepository.findOne(
+        { email },
+        { id: true },
+      );
+      if (userExist)
+        throw new Error(
+          APP_ERROR_MESSAGES.ALREADY_EXISTS(
+            DOMAIN_ENTITY.USER,
+            `email: ${email}`,
+          ),
+        );
+      const role = await this.roleService.findOneByName(UserRoles.EMPLOYEE);
+      runner = await this.dbTransactionFactory.transactionRunner();
+      const transactionManager = runner.manager;
+
+      await runner.start();
+      const userMap = this.mapper.map(
+        createEmployeeDto,
+        CreateEmployeeDto,
+        User,
+      );
+      userMap.roleId = role.id;
+      const user = await this.userRepository.createWithTransaction<User>(
+        userMap,
+        User,
+        transactionManager,
+      );
+      user.password = undefined;
+      const userWithTenant = await this.findOneById(user.id);
+      const emailData: EmailData = {
+        name: userWithTenant.name,
+        email: userWithTenant.email,
+        role: userWithTenant.role.name,
+      };
+
+      return { runner, user, transactionManager, emailData };
+    } catch (error) {
+      console.log(error);
+      if (runner) {
+        await runner.rollbackTransaction();
+      }
+      throw new Error(error.message);
+    }
+  }
+  async createAdmin(createAdminDto: CreateAdminDto): Promise<User> {
+    let runner: TransactionRunner;
+    try {
+      const { email } = createAdminDto;
+      const userExist = await this.userRepository.findOne(
+        { email },
+        { id: true },
+      );
+      if (userExist)
+        throw new Error(
+          APP_ERROR_MESSAGES.ALREADY_EXISTS(
+            DOMAIN_ENTITY.USER,
+            `email: ${email}`,
+          ),
+        );
+      const role = await this.roleService.findOneByName(UserRoles.ADMIN);
+      runner = await this.dbTransactionFactory.transactionRunner();
+      const transactionManager = runner.manager;
+
+      await runner.start();
+      const userMap = this.mapper.map(createAdminDto, CreateAdminDto, User);
+      userMap.password = await this.utilService.hash(createAdminDto.password);
+      userMap.roleId = role.id;
+      userMap.emailVerified = true;
+      const user = await this.userRepository.createWithTransaction<User>(
+        userMap,
+        User,
+        transactionManager,
+      );
+      user.password = undefined;
+      const emailData: EmailData = {
+        name: user.name,
+        email: user.email,
+        role: role.name,
+      };
+
+      await this.emailService.send(
+        email,
+        EMAIL_SUBJECTS.REGISTER,
+        EMAIL_TEMPLATES.REGISTER,
+        emailData,
+      );
+      await runner.end();
+      const findUser = await this.findOneById(user.id);
+      findUser.password = undefined;
+      return findUser;
+    } catch (error) {
+      console.log(error);
+      if (runner) {
+        await runner.rollbackTransaction();
+      }
+      throw new Error(error.message);
+    }
+  }
+
   async updateProfile(
     id: number,
     dto: UpdateUserDto,
-    picture: Express.Multer.File,
+    cnicFront?: Express.Multer.File,
+    cnicBack?: Express.Multer.File,
+    serviceCard?: Express.Multer.File,
+    picture?: Express.Multer.File,
   ): Promise<User> {
     const findOptions = new FindOptionsBuilder<User>()
       .where({ id })
@@ -75,23 +238,22 @@ export class UserService implements IUserService {
     }
     if (dto.password) dto.password = await this.utilService.hash(dto.password);
     if (picture) {
-      const key = this.utilService.awsUploadKeyBuilder(
-        picture.originalname,
-        'profile',
-      );
-      const uploadOptions: PutObjectCommandInput = {
-        Bucket: 'RESIDENCE_BUCKET',
-        Body: picture.buffer,
-        Key: key,
-      };
-      const url = await this.s3Service.uploadFile(uploadOptions);
-      const publicUrl = this.utilService.awsPublicUrlBuilder(
-        url.bucket,
-        url.key,
-      );
-      if (user.role.name === UserRoles.MANAGER) {
-        await this.userRepository.updateManagerPicture(id, publicUrl);
-      }
+      dto.picture = await this.uploadPic(picture, 'profile');
+    }
+    if (cnicFront) {
+      dto.cnicFront = await this.uploadPic(cnicFront, 'cnic');
+    }
+    if (cnicBack) {
+      dto.cnicFront = await this.uploadPic(cnicBack, 'cnic');
+    }
+    if (serviceCard) {
+      dto.cnicFront = await this.uploadPic(serviceCard, 'serviceCard');
+    }
+    if(user.role.name===UserRoles.MANAGER){
+      await this.userRepository.updateManagerFromUser(id, dto);
+    }
+    if(user.role.name===UserRoles.EMPLOYEE){
+      await this.userRepository.updateEmployeeFromUser(id, dto);
     }
     await this.userRepository.update({ id }, dto);
     return this.getProfile(id);
@@ -109,10 +271,7 @@ export class UserService implements IUserService {
     return RESPONSE_MESSAGES.UPDATED;
   }
 
-  async createUser(
-    signUpDto: SignUpDto | CreateAdminDto | CreateManagersDto,
-    role: UserRoles,
-  ) {
+  async createUser(signUpDto: SignUpDto) {
     let runner: TransactionRunner;
     try {
       const { email } = signUpDto;
@@ -127,88 +286,55 @@ export class UserService implements IUserService {
             `email: ${email}`,
           ),
         );
-      const roles = await this.roleService.findAll();
-      const adminRoleId = roles.find(
-        (role) => role.name === UserRoles.ADMIN,
-      ).id;
-      const employeeRoleId = roles.find(
-        (role) => role.name === UserRoles.EMPLOYEE,
-      ).id;
-      const managerRoleId = roles.find(
-        (role) => role.name === UserRoles.MANAGER,
-      ).id;
+      const role = await this.roleService.findOneByName(UserRoles.EMPLOYEE);
       runner = await this.dbTransactionFactory.transactionRunner();
       const transactionManager = runner.manager;
 
       await runner.start();
       const userMap = this.mapper.map(signUpDto, SignUpDto, User);
-      if (signUpDto['password']) {
-        userMap.password = await this.utilService.hash(
-          (signUpDto as SignUpDto).password,
-        );
-      }
-      if ([UserRoles.ADMIN, UserRoles.MANAGER].includes(role)) {
-        userMap.roleId = role === UserRoles.ADMIN ? adminRoleId : managerRoleId;
-        userMap.emailVerified = true;
-      } else {
-        userMap.roleId = employeeRoleId;
-      }
+      userMap.password = await this.utilService.hash(signUpDto.password);
+      userMap.roleId = role.id;
       const user = await this.userRepository.createWithTransaction<User>(
         userMap,
         User,
         transactionManager,
       );
       user.password = undefined;
-      // if (user.roleId === ROLES.ADMIN) {
-      //   const newSettings: CreateSettingsDto = {
-
-      //     userId: user.id,
-      //     enableSuggestions: false,
-      //   };
-
-      //   const settingsRepository = transactionManager.getRepository(AppSetting);
-      //   const settings = this.mapper.map(
-      //     newSettings,
-      //     CreateSettingsDto,
-      //     AppSetting,
-      //   );
-      //   await this.settingRepository.createWithTransaction(
-      //     settings,
-      //     settingsRepository,
-      //     transactionManager,
-      //   );
-      // }
-      if (role !== UserRoles.MANAGER) {
-        await runner.end();
-      }
-      const userWithTenant = await this.findOneById(user.id);
-      const emailData: EmailData = {
-        name: userWithTenant.name,
-        email: userWithTenant.email,
-        role: userWithTenant.role.name,
-      };
-      if (role === UserRoles.EMPLOYEE) {
-        const otp = await this.otpService.create({
-          userId: user.id,
-          otp: Math.random().toString(36).substring(2, 8),
-          type: OTP_TYPE.REGISTRATION,
-          expireTimestamp: BigInt(Date.now() + 15 * 60 * 1000),
-        });
-        emailData.otp = otp.otp;
-      }
-
-      if (role !== UserRoles.MANAGER) {
-        await this.emailService.send(
-          email,
-          EMAIL_SUBJECTS.REGISTER,
-          EMAIL_TEMPLATES.REGISTER,
-          emailData,
+      const employee =
+        await this.userRepository.createWithTransaction<Employee>(
+          {
+            userId: user.id,
+          },
+          Employee,
+          transactionManager,
         );
-      }
-      if (role === UserRoles.MANAGER) {
-        return { runner, user, transactionManager, emailData };
-      }
-      return user;
+      const emailData: EmailData = {
+        name: user.name,
+        email: user.email,
+        role: role.name,
+      };
+      const otpData = {
+        userId: user.id,
+        otp: Math.random().toString(36).substring(2, 8),
+        type: OTP_TYPE.REGISTRATION,
+        expireTimestamp: BigInt(Date.now() + 15 * 60 * 1000),
+      };
+      const otp = await this.userRepository.createWithTransaction<Otp>(
+        otpData,
+        Otp,
+        transactionManager,
+      );
+      emailData.otp = otp.otp;
+
+      await this.emailService.send(
+        email,
+        EMAIL_SUBJECTS.REGISTER,
+        EMAIL_TEMPLATES.REGISTER,
+        emailData,
+      );
+      await runner.end();
+
+      return { ...user, ...employee };
     } catch (error) {
       console.log(error);
       if (runner) {
@@ -241,7 +367,7 @@ export class UserService implements IUserService {
       emailData,
     );
   }
-  async sendManagerEmail(user: User, emailData: EmailData) {
+  async sendEmailForNoPassword(user: User, emailData: EmailData) {
     const otp = await this.otpService.create({
       userId: user.id,
       otp: Math.random().toString(36).substring(2, 8),
@@ -319,12 +445,13 @@ export class UserService implements IUserService {
       .relations({
         role: true,
         manager: true,
+        employee: true,
       })
       .build();
     const user =
       await this.userRepository.findOneWithBuilderOption(findOptions);
     if (user) user.password = undefined;
-    return { ...user, ...user.manager };
+    return { ...user, ...user.manager, ...user.employee };
   }
 
   // private async sendSignUpEmailVerification(
@@ -370,4 +497,14 @@ export class UserService implements IUserService {
   //     data,
   //   );
   // }
+  private async uploadPic(file: Express.Multer.File, folder: string) {
+    const key = this.utilService.awsUploadKeyBuilder(file.originalname, folder);
+    const uploadOptions: PutObjectCommandInput = {
+      Bucket: 'RESIDENCE_BUCKET',
+      Body: file.buffer,
+      Key: key,
+    };
+    const url = await this.s3Service.uploadFile(uploadOptions);
+    return this.utilService.awsPublicUrlBuilder(url.bucket, url.key);
+  }
 }

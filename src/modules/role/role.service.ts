@@ -2,6 +2,7 @@ import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { Inject, Injectable } from '@nestjs/common';
 import { RESPONSE_MESSAGES } from 'src/common/constants';
+import { UserRoles } from '../../common/constants/enums';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { Role } from './entities/role.entity';
@@ -14,6 +15,11 @@ export class RoleService implements IRoleService {
     @Inject(IRoleRepository) private readonly roleRepository: IRoleRepository,
     @InjectMapper() private readonly roleMapper: Mapper,
   ) {}
+  findOneByName(name: UserRoles): Promise<Role> {
+    return this.roleRepository.findOne({
+      name,
+    });
+  }
 
   async create(createRoleDto: CreateRoleDto) {
     const newRole = this.roleMapper.map(createRoleDto, CreateRoleDto, Role);

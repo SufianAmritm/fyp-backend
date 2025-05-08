@@ -27,7 +27,7 @@ export class Manager extends BaseEntity {
   @Column('integer', { name: 'station_id', nullable: false })
   stationId: number;
   @AutoMap()
-  @Column('integer', { nullable: false })
+  @Column('integer', { name: 'user_id', nullable: false })
   userId: number;
   @AutoMap()
   @Column('integer', { name: 'created_by_id' })

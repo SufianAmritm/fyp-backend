@@ -1,6 +1,15 @@
 import { AutoMap } from '@automapper/classes';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Matches, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  Matches,
+  MinLength,
+} from 'class-validator';
 import { DUMMY_DATA } from '../../../common/constants';
 
 export class CreateUserDto {
@@ -27,6 +36,49 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'Password should not be empty' })
   @MinLength(6, { message: 'Password should be at least 6 characters long' })
   password: string;
+  @AutoMap()
+  @ApiPropertyOptional({})
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  description: string;
+
+  @AutoMap()
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 'razabad',
+  })
+  address?: string;
+  @AutoMap()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  @IsPositive()
+  @IsNotEmpty()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 1,
+  })
+  colonyId: number;
+  @AutoMap()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  @IsPositive()
+  @IsNotEmpty()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: 1,
+  })
+  members?: number;
+  @AutoMap()
+  picture: string;
+  @AutoMap()
+  cnicFront: string;
+  @AutoMap()
+  cnicBack: string;
+  @AutoMap()
+  serviceCard: string;
   @AutoMap()
   emailVerified: boolean;
 }

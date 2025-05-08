@@ -7,14 +7,12 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
-import { UserRoles } from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { UtilsService } from '../../common/utils/UtilsService';
 import { IS3Service } from '../aws/interface/aws-s3.interface';
 import { IUserService } from '../user/interfaces/user.interface';
-import { NewManagerUserReturn } from '../user/types';
 import { CreateManagersDto } from './dto/create-managers.dto';
 import { UpdateManagersDto } from './dto/update-managers.dto';
 import { Manager } from './entities/managers.entity';
@@ -39,10 +37,7 @@ export class ManagersService implements IManagersService {
     picture?: Express.Multer.File,
   ) {
     const { runner, user, transactionManager, emailData } =
-      (await this.userService.createUser(
-        createManagersDto,
-        UserRoles.MANAGER,
-      )) as NewManagerUserReturn;
+      await this.userService.createManager(createManagersDto);
     try {
       if (picture) {
         const key = this.utilService.awsUploadKeyBuilder(
@@ -72,7 +67,7 @@ export class ManagersService implements IManagersService {
         Manager,
         transactionManager,
       );
-      await this.userService.sendManagerEmail(user, emailData);
+      await this.userService.sendEmailForNoPassword(user, emailData);
       runner.end();
       user.password = undefined;
       return { ...user, ...manager };
