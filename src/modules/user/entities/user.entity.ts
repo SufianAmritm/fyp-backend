@@ -16,6 +16,8 @@ import { Manager } from '../../managers/entities/managers.entity';
 import { Otp } from '../../otp/entities/otp.entity';
 import { Station } from '../../station/entities/station.entity';
 import { AppSetting } from './settings.entity';
+import { Apartment } from '../../apartment/entities/apartment.entity';
+import { Colony } from '../../colony/entities/colony.entity';
 
 @Unique('user_email_ukey', ['email'])
 @Entity(TABLES.USER, { schema: 'public' })
@@ -83,4 +85,10 @@ export class User extends BaseEntity {
   @AutoMap()
   @OneToOne(() => Manager, (i) => i.user)
   manager: Manager;
+  @AutoMap()
+  @OneToMany(() => Apartment, (i) => i.createdBy)
+  apartments: Apartment[];
+  @AutoMap()
+  @OneToMany(() => Colony, (i) => i.createdBy)
+  colonies: Colony[];
 }

@@ -6,30 +6,30 @@ import { BaseRepository } from 'src/common/database/repositories/base/base.repos
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { FindOptionsWhere, ILike, Repository } from 'typeorm';
-import { GetDivisionsDto } from '../dto/request/get.dto';
-import { Division } from '../entities/division.entity';
-import { IDivisionRepository } from './interface/division-repository.interface';
+import { GetColonyDto } from '../dto/request/get.dto';
+import { Colony } from '../entities/colony.entity';
+import { IColonyRepository } from './interface/colony-repository.interface';
 
 @Injectable()
-export class DivisionRepository
-  extends BaseRepository<Division>
-  implements IDivisionRepository
+export class ColonyRepository
+  extends BaseRepository<Colony>
+  implements IColonyRepository
 {
   constructor(
-    @InjectRepository(Division)
-    public readonly repository: Repository<Division>,
+    @InjectRepository(Colony)
+    public readonly repository: Repository<Colony>,
   ) {
     super(repository);
   }
 
   async findAll(
-    getDivisionDto: GetDivisionsDto,
+    getColonyDto: GetColonyDto,
     paginationDto: PaginationDto,
-  ): Promise<PagedList<Division>> {
-    const { search } = getDivisionDto;
-    const whereOptions: FindOptionsWhere<Division> = {};
+  ): Promise<PagedList<Colony>> {
+    const { search } = getColonyDto;
+    const whereOptions: FindOptionsWhere<Colony> = {};
     search && (whereOptions.name = `%${ILike(search)}%`);
-    const findOption = new FindOptionsBuilder<Division>()
+    const findOption = new FindOptionsBuilder<Colony>()
       .where(whereOptions)
       .order({ id: ORDER_BY.DESC })
       .build();

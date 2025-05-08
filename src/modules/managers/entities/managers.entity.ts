@@ -21,6 +21,9 @@ export class Manager extends BaseEntity {
   @Column('character varying', { nullable: true })
   picture: string;
   @AutoMap()
+  @Column('character varying', { nullable: true })
+  description: string;
+  @AutoMap()
   @Column('integer', { name: 'station_id', nullable: false })
   stationId: number;
   @AutoMap()

@@ -21,6 +21,9 @@ export class Division extends BaseEntity {
   @Column('character varying', { name: 'name', nullable: false })
   name: string;
   @AutoMap()
+  @Column('character varying', { nullable: false })
+  description: string;
+  @AutoMap()
   @Column('integer', { name: 'created_by_id' })
   createdById: number;
 

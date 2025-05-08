@@ -12,6 +12,7 @@ import { TABLES } from '../../../common/database/tables';
 import { Division } from '../../division/entities/division.entity';
 import { Manager } from '../../managers/entities/managers.entity';
 import { User } from '../../user/entities/user.entity';
+import { Colony } from '../../colony/entities/colony.entity';
 
 @Index('stations_name_division_id_uk', ['name', 'divisionId'], {
   unique: true,
@@ -22,6 +23,9 @@ export class Station extends BaseEntity {
   @AutoMap()
   @Column('character varying', { name: 'name', nullable: false })
   name: string;
+  @AutoMap()
+  @Column('character varying', { nullable: true })
+  description: string;
   @AutoMap()
   @Column('integer', { name: 'division_id', nullable: false })
   divisionId: number;
@@ -47,4 +51,7 @@ export class Station extends BaseEntity {
   @AutoMap()
   @OneToMany(() => Manager, (i) => i.station)
   managers: Manager[];
+  @AutoMap()
+  @OneToMany(() => Colony, (i) => i.station)
+  colonies: Colony[];
 }

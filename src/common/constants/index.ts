@@ -1,3 +1,4 @@
+import { UserRoles } from './enums';
 
 /** */
 export const PROJECT_NAME = 'LEAD-MATE BACKEND 🚀';
@@ -30,7 +31,6 @@ export const RESPONSE_MESSAGES = {
   EMAIL_SENT: 'Email sent successfully',
   CSV_UPLOAD_SUCCESS: 'Successfully uploaded csv',
   SUCCESSFUL_OPERATION: 'Operation completed successfully',
-
 };
 
 export const DUMMY_DATA = {
@@ -40,7 +40,6 @@ export const DUMMY_DATA = {
   roleName: 'Dummy Role',
   token: 'eyJhbGci',
 };
-
 
 export const DOMAIN_ENTITY = {
   USER: 'User',
@@ -52,8 +51,9 @@ export const DOMAIN_ENTITY = {
   DIVISION: 'Division',
   STATIONS: 'Stations',
   MANAGERS: 'Managers',
+  APARTMENTS: 'Apartments',
+  COLONIES: 'Colonies',
 };
-
 
 export const REGEX = {
   ISO_DATE: /\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\b/g,
@@ -88,3 +88,5 @@ export const YearMonthMap = {
   10: 'Nov',
   11: 'Dec',
 };
+
+export const ManagementRoles = [UserRoles.ADMIN, UserRoles.MANAGER];

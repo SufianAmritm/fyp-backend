@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsPositive } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsNotEmpty, IsOptional, IsPositive } from 'class-validator';
 
 export class CreateStationDto {
   @AutoMap()
@@ -18,6 +18,13 @@ export class CreateStationDto {
     example: 'Lahore Cantonment Station',
   })
   name: string;
+  @AutoMap()
+  @IsNotEmpty()
+  @ApiPropertyOptional({
+    example: 'Lahore Cantonment Station',
+  })
+  @IsOptional()
+  description: string;
 
   @AutoMap()
   createdById: number;

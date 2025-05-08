@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { DOMAIN_ENTITY, JWT } from 'src/common/constants';
+import { UserRoles } from '../../common/constants/enums';
 import { Context } from '../../common/decorators/context';
 import { Roles } from '../../common/decorators/role-metadata.decorator';
 import { IdDto } from '../../common/dtos/request/id.dto';
@@ -20,9 +21,9 @@ import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AppContext } from '../../common/interfaces/context';
 import { CreateDivisionDto } from './dto/create-division.dto';
+import { GetDivisionsDto } from './dto/request/get.dto';
 import { UpdateDivisionDto } from './dto/update-division.dto';
 import { IDivisionService } from './interfaces/division.interface';
-import { UserRoles } from '../../common/constants/enums';
 
 @ApiTags(DOMAIN_ENTITY.DIVISION)
 @ApiBearerAuth(JWT)
@@ -45,8 +46,11 @@ export class DivisionController {
   }
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.divisionService.findAll(paginationDto);
+  findAll(
+    @Query() getDivisionDto: GetDivisionsDto,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.divisionService.findAll(getDivisionDto, paginationDto);
   }
 
   @Get(':id')

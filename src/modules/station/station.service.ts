@@ -7,6 +7,7 @@ import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { CreateStationDto } from './dto/create-station.dto';
+import { GetStationDto } from './dto/request/get.dto';
 import { UpdateStationDto } from './dto/update-station.dto';
 import { Station } from './entities/station.entity';
 import { IStationService } from './interfaces/station.interface';
@@ -39,12 +40,28 @@ export class StationService implements IStationService {
     return this.stationRepository.create(newStation);
   }
 
-  findAll(paginationDto: PaginationDto) {
-    return this.stationRepository.findAll(paginationDto);
+  findAll(getStationDto: GetStationDto, paginationDto: PaginationDto) {
+    return this.stationRepository.findAll(getStationDto, paginationDto);
   }
 
-  findOne(id: number) {
-    return this.stationRepository.findOne({ id });
+  async findOne(id: number) {
+    const findOptions = new FindOptionsBuilder<Station>()
+      .where({
+        id,
+      })
+      .relations({
+        managers: {
+          user: true,
+        },
+      })
+      .build();
+
+    const stations =
+      await this.stationRepository.findOneWithBuilderOption(findOptions);
+    stations.managers = stations.managers.map((manager) => {
+      manager.user.password = undefined;
+      return { ...manager, ...manager.user };
+    });
   }
 
   async update(id: number, updateStationDto: UpdateStationDto) {

@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { DOMAIN_ENTITY, JWT } from 'src/common/constants';
+import { UserRoles } from '../../common/constants/enums';
 import { Context } from '../../common/decorators/context';
 import { Roles } from '../../common/decorators/role-metadata.decorator';
 import { IdDto } from '../../common/dtos/request/id.dto';
@@ -20,9 +21,9 @@ import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AppContext } from '../../common/interfaces/context';
 import { CreateStationDto } from './dto/create-station.dto';
+import { GetStationDto } from './dto/request/get.dto';
 import { UpdateStationDto } from './dto/update-station.dto';
 import { IStationService } from './interfaces/station.interface';
-import { UserRoles } from '../../common/constants/enums';
 
 @ApiTags(DOMAIN_ENTITY.STATIONS)
 @ApiBearerAuth(JWT)
@@ -45,8 +46,11 @@ export class StationController {
   }
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.stationService.findAll(paginationDto);
+  findAll(
+    @Query() getStationDto: GetStationDto,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.stationService.findAll(getStationDto, paginationDto);
   }
 
   @Get(':id')

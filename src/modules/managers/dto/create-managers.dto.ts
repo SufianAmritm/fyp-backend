@@ -1,6 +1,12 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty, OmitType } from '@nestjs/swagger';
-import { IsNumber, IsPositive } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+} from 'class-validator';
 import { SignUpDto } from '../../auth/dto/sign-up.dto';
 
 export class CreateManagersDto extends OmitType(SignUpDto, ['password']) {
@@ -17,4 +23,10 @@ export class CreateManagersDto extends OmitType(SignUpDto, ['password']) {
     example: 1,
   })
   stationId: number;
+  @AutoMap()
+  @ApiProperty({})
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  description: string;
 }

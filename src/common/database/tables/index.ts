@@ -5,4 +5,6 @@ export enum TABLES {
   STATIONS = 'stations',
   MANAGERS = 'managers',
   ROLES = 'roles',
+  APARTMENTS = 'apartments',
+  COLONIES = 'colonies',
 }

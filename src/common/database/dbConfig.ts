@@ -12,6 +12,8 @@ import { Otp } from '../../modules/otp/entities/otp.entity';
 import { Station } from '../../modules/station/entities/station.entity';
 import { AppSetting } from '../../modules/user/entities/settings.entity';
 import { Seed } from './seeders/entities/seed.entity';
+import { Apartment } from '../../modules/apartment/entities/apartment.entity';
+import { Colony } from '../../modules/colony/entities/colony.entity';
 
 config();
 
@@ -43,6 +45,8 @@ const dataSource = new DataSource({
     Otp,
     Division,
     Manager,
+    Apartment,
+    Colony,
   ],
   synchronize: false,
   logging: false,

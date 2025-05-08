@@ -7,6 +7,7 @@ import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { CreateDivisionDto } from './dto/create-division.dto';
+import { GetDivisionsDto } from './dto/request/get.dto';
 import { UpdateDivisionDto } from './dto/update-division.dto';
 import { Division } from './entities/division.entity';
 import { IDivisionService } from './interfaces/division.interface';
@@ -38,12 +39,21 @@ export class DivisionService implements IDivisionService {
     return this.divisionRepository.create(newDivision);
   }
 
-  findAll(paginationDto: PaginationDto) {
-    return this.divisionRepository.findAll(paginationDto);
+  findAll(getDivisionDto: GetDivisionsDto, paginationDto: PaginationDto) {
+    return this.divisionRepository.findAll(getDivisionDto, paginationDto);
   }
 
   findOne(id: number) {
-    return this.divisionRepository.findOne({ id });
+    const findOptions = new FindOptionsBuilder<Division>()
+      .where({
+        id,
+      })
+      .relations({
+        stations: true,
+      })
+      .build();
+      
+    return this.divisionRepository.findOneWithBuilderOption(findOptions);
   }
 
   async update(id: number, updateDivisionDto: UpdateDivisionDto) {

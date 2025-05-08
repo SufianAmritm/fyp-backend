@@ -1,11 +1,10 @@
 import { AutoMap } from '@automapper/classes';
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 import {
   NOTIFICATION_SEND_TYPE,
   NOTIFICATION_TYPE,
 } from '../../../common/constants/enums';
-import { User } from '../../user/entities/user.entity';
 
 @Entity('notifications', { schema: 'public' })
 export class UserNotification extends BaseEntity {
