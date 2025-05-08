@@ -248,8 +248,7 @@ export class UserService implements IUserService {
       type: OTP_TYPE.RESET_PASSWORD,
       expireTimestamp: BigInt(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
-    const encryptOtp = this.utilService.encrypt(otp.otp);
-    emailData.frontendBaseUrl = `${this.configService.get('FRONTEND_PASSWORD_OTP_RESET_URL')}?otp=${encryptOtp}`;
+    emailData.frontendBaseUrl = `${this.configService.get('FRONTEND_PASSWORD_OTP_RESET_URL')}?otp=${otp.otp}`;
     await this.emailService.send(
       user.email,
       EMAIL_SUBJECTS.REGISTER,
