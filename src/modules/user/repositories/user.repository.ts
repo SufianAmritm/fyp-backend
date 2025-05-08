@@ -6,6 +6,8 @@ import { BaseRepository } from 'src/common/database/repositories/base/base.repos
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { Repository } from 'typeorm';
+import { UpdateEmployeeDto } from '../../employee/dto/update-employee.dto';
+import { UpdateManagersDto } from '../../managers/dto/update-managers.dto';
 import { User } from '../entities/user.entity';
 import { IUserRepository } from './interfaces/user-repository.interface';
 
@@ -31,11 +33,83 @@ export class UserRepository
     return this.findWithPagination(paginationDto, findOption);
   }
 
-  async updateManagerPicture(userId: number, picture: string): Promise<void> {
-    await this.repository.query(
-      `
-      UPDATE managers set picture = $1 where user_id = $2`,
-      [picture, userId],
-    );
+  async updateManagerFromUser(
+    userId: number,
+    dto: UpdateManagersDto,
+  ): Promise<void> {
+    const { picture, description } = dto;
+    let index = 0;
+    const params = [];
+    let query = `UPDATE managers set `;
+    if (picture) {
+      query += `picture = $${++index},`;
+      params.push(picture);
+    }
+    if (description) {
+      query += `description = $${++index},`;
+      params.push(description);
+    }
+    query.replace(/,$/, '');
+    query += ` where user_id = $${++index}`;
+    params.push(userId);
+    if (index > 1) await this.repository.query(query, params);
+    return;
+  }
+
+  async updateEmployeeFromUser(
+    userId: number,
+    dto: UpdateEmployeeDto,
+  ): Promise<void> {
+    const {
+      picture,
+      serviceCard,
+      cnicBack,
+      cnicFront,
+      colonyId,
+      address,
+      members,
+      profileComplete,
+    } = dto;
+
+    let index = 0;
+    const params = [];
+    let query = `UPDATE employees set `;
+    if (picture) {
+      query += `picture = $${++index},`;
+      params.push(picture);
+    }
+    if (serviceCard) {
+      query += `service_card = $${++index},`;
+      params.push(serviceCard);
+    }
+    if (cnicBack) {
+      query += `cnic_back = $${++index},`;
+      params.push(cnicBack);
+    }
+    if (cnicFront) {
+      query += `cnic_front = $${++index},`;
+      params.push(cnicFront);
+    }
+    if (colonyId) {
+      query += `colony_id = $${++index},`;
+      params.push(colonyId);
+    }
+    if (address) {
+      query += `address = $${++index},`;
+      params.push(address);
+    }
+    if (members) {
+      query += `members = $${++index},`;
+      params.push(members);
+    }
+    if (profileComplete) {
+      query += `profile_complete = $${++index},`;
+      params.push(profileComplete);
+    }
+    query.replace(/,$/, '');
+    query += ` where user_id = $${++index}`;
+    params.push(userId);
+    if (index > 1) await this.repository.query(query, params);
+    return;
   }
 }

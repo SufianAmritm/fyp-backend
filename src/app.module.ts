@@ -17,6 +17,7 @@ import { ApartmentModule } from './modules/apartment/apartment.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ColonyModule } from './modules/colony/colony.module';
 import { DivisionModule } from './modules/division/division.module';
+import { EmployeeModule } from './modules/employee/employee.module';
 import { envSchema } from './modules/env/env';
 import { EnvModule } from './modules/env/env.module';
 import { EventsModule } from './modules/events/events.module';
@@ -52,6 +53,7 @@ import { UserModule } from './modules/user/user.module';
     ApartmentModule,
     ColonyModule,
     DivisionModule,
+    EmployeeModule,
     EnvModule,
     ManagersModule,
     RoleModule,

@@ -7,4 +7,5 @@ export enum TABLES {
   ROLES = 'roles',
   APARTMENTS = 'apartments',
   COLONIES = 'colonies',
+  EMPLOYEES = 'employees',
 }

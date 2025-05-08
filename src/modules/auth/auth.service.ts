@@ -12,7 +12,6 @@ import { APP_ERROR_MESSAGES } from 'src/common/constants/errors';
 import { OTP_TYPE, UserRoles } from '../../common/constants/enums';
 import { UtilsService } from '../../common/utils/UtilsService';
 import { IOtpService } from '../otp/interfaces/otp.interface';
-import { User } from '../user/entities/user.entity';
 import { IUserService } from '../user/interfaces/user.interface';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SignInDto } from './dto/sign-in.dto';
@@ -62,10 +61,7 @@ export class AuthService implements IAuthService {
 
   async signUp(signupDto: SignUpDto): Promise<TokenTypeWithUser> {
     signupDto.password = await this.utilService.hash(signupDto.password);
-    const user = (await this.userService.createUser(
-      signupDto,
-      UserRoles.EMPLOYEE,
-    )) as User;
+    const user = await this.userService.createUser(signupDto);
 
     const { id, email, role, emailVerified } = user;
     const tokens = await this.getTokens(id, email, role.name, emailVerified);
@@ -94,7 +90,7 @@ export class AuthService implements IAuthService {
     if (!isPasswordMatch) {
       throw new UnauthorizedException(APP_ERROR_MESSAGES.INVALID_PASSWORD);
     }
-    delete user.password;
+    user.password = undefined;
     const { id, role, emailVerified } = user;
     const tokens = await this.getTokens(id, email, role.name, emailVerified);
     return {
@@ -121,6 +117,7 @@ export class AuthService implements IAuthService {
     );
     const { id, email, role, emailVerified } = user;
     const tokens = await this.getTokens(id, email, role.name, emailVerified);
+    user.password = undefined;
     return {
       ...tokens,
       user,
@@ -128,12 +125,12 @@ export class AuthService implements IAuthService {
   }
 
   async sendOtp(sendOtpDto: SendOtpDto): Promise<string> {
-    const { email,type } = sendOtpDto;
+    const { email, type } = sendOtpDto;
     const user = await this.userService.findOneByEmail(email);
     if (!user) {
       throw new NotFoundException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
     }
-    await this.userService.sendPasswordResetEmail(user,type);
+    await this.userService.sendPasswordResetEmail(user, type);
     return RESPONSE_MESSAGES.EMAIL_SENT;
   }
 
@@ -196,7 +193,7 @@ export class AuthService implements IAuthService {
     ]);
     return token;
   }
-private  async verifyToken(
+  private async verifyToken(
     token: string,
   ): Promise<{ email: string; purpose: OTP_TYPE } | undefined> {
     try {
