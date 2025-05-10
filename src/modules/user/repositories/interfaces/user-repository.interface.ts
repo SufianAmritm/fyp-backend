@@ -12,4 +12,5 @@ export interface IUserRepository<T = DefaultEntity> extends IBaseRepository<T> {
   findAll(paginationDto: PaginationDto): Promise<PagedList<User>>;
   updateManagerFromUser(userId: number, dto: UpdateManagersDto): Promise<void>;
   updateEmployeeFromUser(userId: number, dto: UpdateEmployeeDto): Promise<void>;
+  isEmployeeProfileComplete(userId: number): Promise<boolean>;
 }

@@ -1,5 +1,5 @@
 import { AutoMap } from '@automapper/classes';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsNotEmpty,
@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import { SignUpDto } from '../../auth/dto/sign-up.dto';
 
-export class CreateEmployeeDto extends SignUpDto {
+export class CreateEmployeeDto extends OmitType(SignUpDto, ['password']) {
   @AutoMap()
   @IsString()
   @IsNotEmpty()
@@ -20,8 +20,8 @@ export class CreateEmployeeDto extends SignUpDto {
   })
   address?: string;
   @AutoMap()
-  @IsNumber()
   @Transform(({ value }) => Number(value))
+  @IsNumber()
   @IsPositive()
   @IsNotEmpty()
   @ApiProperty({
@@ -29,8 +29,8 @@ export class CreateEmployeeDto extends SignUpDto {
   })
   colonyId: number;
   @AutoMap()
-  @IsNumber()
   @Transform(({ value }) => Number(value))
+  @IsNumber()
   @IsPositive()
   @IsNotEmpty()
   @IsOptional()

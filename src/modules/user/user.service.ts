@@ -102,9 +102,15 @@ export class UserService implements IUserService {
         role: role.name,
       };
 
-      return { runner, user:{
-        ...user,role
-      }, transactionManager, emailData };
+      return {
+        runner,
+        user: {
+          ...user,
+          role,
+        },
+        transactionManager,
+        emailData,
+      };
     } catch (error) {
       console.log(error);
       if (runner) {
@@ -245,28 +251,47 @@ export class UserService implements IUserService {
       throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
     }
     if (dto.password) dto.password = await this.utilService.hash(dto.password);
+    const uploadOperations = [];
+
     if (picture) {
-      dto.picture = await this.uploadPic(picture, 'profile');
+      uploadOperations.push(this.uploadPic(picture, 'profile', 'picture'));
     }
     if (cnicFront) {
-      dto.cnicFront = await this.uploadPic(cnicFront, 'cnic');
+      uploadOperations.push(this.uploadPic(cnicFront, 'cnic', 'cnicFront'));
     }
     if (cnicBack) {
-      dto.cnicFront = await this.uploadPic(cnicBack, 'cnic');
+      uploadOperations.push(this.uploadPic(cnicBack, 'cnic', 'cnicBack'));
     }
     if (serviceCard) {
-      dto.cnicFront = await this.uploadPic(serviceCard, 'serviceCard');
+      uploadOperations.push(this.uploadPic(serviceCard, 'serviceCard', 'serviceCard'));
     }
-    if(user.role.name===UserRoles.MANAGER){
+
+    const uploadResults = await Promise.all(uploadOperations);
+
+    uploadResults.forEach(({ field, url }) => {
+      dto[field] = url;
+    });
+
+    if (user.role.name === UserRoles.MANAGER) {
       await this.userRepository.updateManagerFromUser(id, dto);
     }
-    if(user.role.name===UserRoles.EMPLOYEE){
-      await this.userRepository.updateEmployeeFromUser(id, dto);
+    if (user.role.name === UserRoles.EMPLOYEE) {
+      console.log('Updating employee')
+      console.log(dto)
+      await this.userRepository.updateEmployeeFromUser
+      (id, dto);
+      await this.isEmployeeProfileComplete(id)
     }
     await this.userRepository.update({ id }, dto);
+
     return this.getProfile(id);
   }
 
+  async isEmployeeProfileComplete(id: number): Promise<boolean> {
+  const isComplete = await this.userRepository.isEmployeeProfileComplete(id);
+  if(isComplete) await this.userRepository.updateEmployeeFromUser(id, { profileComplete: true });
+  return isComplete;
+  }
   async getSettings(userId: number): Promise<AppSetting> {
     return this.settingRepository.findOne({ userId });
   }
@@ -342,7 +367,7 @@ export class UserService implements IUserService {
       );
       await runner.end();
 
-      return { ...user, role, ...employee };
+      return { ...user, role, employee };
     } catch (error) {
       console.log(error);
       if (runner) {
@@ -459,7 +484,7 @@ export class UserService implements IUserService {
     const user =
       await this.userRepository.findOneWithBuilderOption(findOptions);
     if (user) user.password = undefined;
-    return { ...user, ...user.manager, ...user.employee };
+    return user;
   }
 
   // private async sendSignUpEmailVerification(
@@ -505,7 +530,8 @@ export class UserService implements IUserService {
   //     data,
   //   );
   // }
-  private async uploadPic(file: Express.Multer.File, folder: string) {
+  private async uploadPic(file: Express.Multer.File, folder: string,field:string) {
+    console.log('file', file);
     const key = this.utilService.awsUploadKeyBuilder(file.originalname, folder);
     const uploadOptions: PutObjectCommandInput = {
       Bucket: 'RESIDENCE_BUCKET',
@@ -513,6 +539,6 @@ export class UserService implements IUserService {
       Key: key,
     };
     const url = await this.s3Service.uploadFile(uploadOptions);
-    return this.utilService.awsPublicUrlBuilder(url.bucket, url.key);
+    return {url:this.utilService.awsPublicUrlBuilder(url.bucket, url.key),field};
   }
 }

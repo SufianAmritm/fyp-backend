@@ -49,7 +49,7 @@ export class Employee extends BaseEntity {
   @JoinColumn({
     name: 'colony_id',
     referencedColumnName: 'id',
-    foreignKeyConstraintName: 'managers_station_id_fk',
+    foreignKeyConstraintName: 'employees_colony_id_fk',
   })
   colony: Colony;
   @OneToOne(() => User, (i) => i.employee)

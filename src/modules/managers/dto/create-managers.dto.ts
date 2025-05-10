@@ -8,6 +8,7 @@ import {
   IsString,
 } from 'class-validator';
 import { SignUpDto } from '../../auth/dto/sign-up.dto';
+import { Transform } from 'class-transformer';
 
 export class CreateManagersDto extends OmitType(SignUpDto, ['password']) {
   @AutoMap()
@@ -17,6 +18,7 @@ export class CreateManagersDto extends OmitType(SignUpDto, ['password']) {
   @AutoMap()
   userId: number;
   @AutoMap()
+  @Transform(({ value }) => Number(value))
   @IsNumber()
   @IsPositive()
   @ApiProperty({

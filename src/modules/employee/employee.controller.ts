@@ -1,25 +1,21 @@
 import {
-  BadRequestException,
   Body,
   Controller,
-  FileTypeValidator,
   Inject,
-  MaxFileSizeValidator,
-  ParseFilePipe,
   Post,
-  UploadedFile,
+  UploadedFiles,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { DOMAIN_ENTITY, JWT, ManagementRoles } from 'src/common/constants';
 import { MAX_FILE_SIZES, SUPPORT_TYPES } from '../../common/constants/enums';
-import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { Context } from '../../common/decorators/context';
 import { MultiFile } from '../../common/decorators/multi-file.decorator';
 import { Roles } from '../../common/decorators/role-metadata.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AppContext } from '../../common/interfaces/context';
+import { MultiFileValidatorPipe } from '../../common/pipes/multi-file-validation.pipe';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { IEmployeeService } from './interfaces/employee.interface';
 
@@ -55,7 +51,7 @@ export class EmployeeController {
           'The phone number should be a valid Pakistani phone number with format +923xxxxxxxxx',
       },
       colonyId: {
-        type: 'integer',
+        type: 'string',
         example: 1,
         description: 'colony ID associated with the user',
         minimum: 1,
@@ -66,107 +62,49 @@ export class EmployeeController {
         description: 'Please provide address',
       },
       members: {
-        type: 'integer',
+        type: 'string',
         example: 1,
         description: 'Number of family members',
         minimum: 1,
       },
     },
-    [
-      'name',
-      'email',
-      'phoneNumber',
-      'colonyId',
-      'cnic-front',
-      'cnic-back',
-      'service-card',
-    ],
+    // [
+    //   'name',
+    //   'email',
+    //   'phoneNumber',
+    //   'colonyId',
+    //   'cnic-front',
+    //   'cnic-back',
+    //   'service-card',
+    // ],
   )
   create(
     @Body() createEmployeeDto: CreateEmployeeDto,
-    @UploadedFile(
-      'picture',
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({
-            maxSize: MAX_FILE_SIZES.AVATAR,
-          }),
-          new FileTypeValidator({
-            fileType: SUPPORT_TYPES.AVATAR,
-          }),
-        ],
-        fileIsRequired: false,
-      }),
+    @UploadedFiles(
+      new MultiFileValidatorPipe(
+        ['picture', 'cnic_front', 'cnic_back', 'service_card'].map((value) => ({
+          field: value,
+          validations: {
+            maxFileSize: MAX_FILE_SIZES.AVATAR,
+            fileType: new RegExp(SUPPORT_TYPES.AVATAR),
+            required: value === 'picture' ? false : true,
+          },
+        })),
+      ),
     )
-    picture: Express.Multer.File,
-    @UploadedFile(
-      'cnic-front',
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({
-            maxSize: MAX_FILE_SIZES.AVATAR,
-          }),
-          new FileTypeValidator({
-            fileType: SUPPORT_TYPES.AVATAR,
-          }),
-        ],
-        exceptionFactory: (error) => {
-          if (error.includes('required')) {
-            throw new BadRequestException(
-              APP_ERROR_MESSAGES.REQUIRED('Cnic Front'),
-            );
-          }
-        },
-        fileIsRequired: true,
-      }),
-    )
-    cnicFront: Express.Multer.File,
-    @UploadedFile(
-      'cnic-back',
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({
-            maxSize: MAX_FILE_SIZES.AVATAR,
-          }),
-          new FileTypeValidator({
-            fileType: SUPPORT_TYPES.AVATAR,
-          }),
-        ],
-        exceptionFactory: (error) => {
-          if (error.includes('required')) {
-            throw new BadRequestException(
-              APP_ERROR_MESSAGES.REQUIRED('Cnic Back'),
-            );
-          }
-        },
-        fileIsRequired: true,
-      }),
-    )
-    cnicBack: Express.Multer.File,
-    @UploadedFile(
-      'service-card',
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({
-            maxSize: MAX_FILE_SIZES.AVATAR,
-          }),
-          new FileTypeValidator({
-            fileType: SUPPORT_TYPES.AVATAR,
-          }),
-        ],
-        exceptionFactory: (error) => {
-          if (error.includes('required')) {
-            throw new BadRequestException(
-              APP_ERROR_MESSAGES.REQUIRED('Service Card'),
-            );
-          }
-        },
-        fileIsRequired: true,
-      }),
-    )
-    serviceCard: Express.Multer.File,
+    files: {
+      picture?: Express.Multer.File[];
+      cnic_front?: Express.Multer.File[];
+      cnic_back?: Express.Multer.File[];
+      service_card?: Express.Multer.File[];
+    },
+
     @Context() context: AppContext,
   ) {
+    const picture = files.picture?.[0];
+    const cnicFront = files.cnic_front?.[0];
+    const cnicBack = files.cnic_back?.[0];
+    const serviceCard = files.service_card?.[0];
     createEmployeeDto.createdById = context.UserId;
     return this.employeeService.create(
       createEmployeeDto,

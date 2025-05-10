@@ -1,5 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsNotEmpty,
   IsNumber,
@@ -39,6 +40,7 @@ export class CreateApartmentDto {
   @IsOptional()
   description: string;
   @AutoMap()
+  @Transform(({ value }) => Number(value))
   @IsNumber()
   @IsNotEmpty()
   @IsPositive()

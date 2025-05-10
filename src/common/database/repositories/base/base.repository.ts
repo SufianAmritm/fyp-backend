@@ -65,6 +65,7 @@ export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
 
   async create(item: T): Promise<T> {
     try {
+
       return await this.repository.save(this.repository.create(item));
     } catch (error) {
       throw new Error(error.message);
@@ -120,7 +121,14 @@ export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
     conditions: FindOptionsWhere<T>,
     updates: QueryDeepPartialEntity<T>,
   ): Promise<UpdateResult> {
-    return this.repository.update(conditions, updates);
+    const columns = this.repository.metadata.columns;
+    const validUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
+      if (columns.find((column) => column.propertyName === key)) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as QueryDeepPartialEntity<T>);
+    return this.repository.update(conditions, validUpdates);
   }
 
   async updateWithTransaction<T>(
@@ -130,9 +138,16 @@ export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
     transactionManager: EntityManager,
   ): Promise<void> {
     try {
+      const columns = this.repository.metadata.columns;
+      const validUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
+        if (columns.find((column) => column.propertyName === key)) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as QueryDeepPartialEntity<T>);
       await transactionManager
         .getRepository(target)
-        .update(conditions, updates);
+        .update(conditions, validUpdates);
     } catch (error) {
       throw new Error(error.message);
     }

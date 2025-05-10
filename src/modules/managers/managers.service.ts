@@ -70,7 +70,7 @@ export class ManagersService implements IManagersService {
       await this.userService.sendEmailForNoPassword(user, emailData);
       runner.end();
       user.password = undefined;
-      return { ...user, ...manager };
+      return { user, manager };
     } catch (error) {
       console.log(error);
       if (runner) {
@@ -85,7 +85,7 @@ export class ManagersService implements IManagersService {
     const managers = await this.managersRepository.findAll(paginationDto);
     managers.items = managers.items.map((item) => {
       item.user.password = undefined;
-      return { ...item.user, ...item };
+      return item;
     });
     return managers;
   }
@@ -100,7 +100,7 @@ export class ManagersService implements IManagersService {
     const manager =
       await this.managersRepository.findOneWithBuilderOption(findOptions);
     manager.user.password = undefined;
-    return { ...manager.user, ...manager };
+    return manager;
   }
 
   async update(
@@ -137,12 +137,13 @@ export class ManagersService implements IManagersService {
       Manager,
     );
     await this.managersRepository.update({ id }, managersUpdate);
-    const man = await this.managersRepository.findOne(
-      { id },
-      {},
-      { user: true },
+    const findOptions = new FindOptionsBuilder<Manager>().where({ id }).relations({
+      user: true,
+    }).build();
+    const man = await this.managersRepository.findOneWithBuilderOption(
+      findOptions
     );
-    return { ...man.user, ...man };
+    return man;
   }
 
   // async remove(id: number) {

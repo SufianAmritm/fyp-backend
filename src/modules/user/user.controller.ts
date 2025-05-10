@@ -1,31 +1,26 @@
 import {
-  BadRequestException,
   Body,
   Controller,
-  FileTypeValidator,
   Get,
   Inject,
-  MaxFileSizeValidator,
-  ParseFilePipe,
   Patch,
-  UploadedFile,
+  UploadedFiles,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { DOMAIN_ENTITY, JWT, X_API_KEY } from 'src/common/constants';
+import { DOMAIN_ENTITY, JWT } from 'src/common/constants';
 import { Context } from 'src/common/decorators/context';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { AppContext } from 'src/common/interfaces/context';
 import { MAX_FILE_SIZES, SUPPORT_TYPES } from '../../common/constants/enums';
-import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { MultiFile } from '../../common/decorators/multi-file.decorator';
+import { MultiFileValidatorPipe } from '../../common/pipes/multi-file-validation.pipe';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { IUserService } from './interfaces/user.interface';
 
 @ApiTags(DOMAIN_ENTITY.USER)
 @ApiBearerAuth(JWT)
-@ApiBearerAuth(X_API_KEY)
 @UseGuards(AuthGuard)
 @Controller('user')
 export class UserController {
@@ -58,7 +53,7 @@ export class UserController {
         'The phone number should be a valid Pakistani phone number with format +923xxxxxxxxx',
     },
     colonyId: {
-      type: 'integer',
+      type: 'string',
       example: 1,
       description: 'colony ID associated with the user',
       minimum: 1,
@@ -78,91 +73,32 @@ export class UserController {
   @Patch('profile')
   updateProfile(
     @Body() updateUserDto: UpdateUserDto,
-    @UploadedFile(
-      'picture',
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({
-            maxSize: MAX_FILE_SIZES.AVATAR,
-          }),
-          new FileTypeValidator({
-            fileType: SUPPORT_TYPES.AVATAR,
-          }),
-        ],
-        fileIsRequired: false,
-      }),
+    @UploadedFiles(
+      new MultiFileValidatorPipe(
+        ['picture', 'cnic_front', 'cnic_back', 'service_card'].map((value) => ({
+          field: value,
+          validations: {
+            maxFileSize: MAX_FILE_SIZES.AVATAR,
+            fileType: new RegExp(SUPPORT_TYPES.AVATAR),
+            required: false,
+          },
+        })),
+      ),
     )
-    picture: Express.Multer.File,
-    @UploadedFile(
-      'cnic-front',
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({
-            maxSize: MAX_FILE_SIZES.AVATAR,
-          }),
-          new FileTypeValidator({
-            fileType: SUPPORT_TYPES.AVATAR,
-          }),
-        ],
-        exceptionFactory: (error) => {
-          if (error.includes('required')) {
-            throw new BadRequestException(
-              APP_ERROR_MESSAGES.REQUIRED('Cnic Front'),
-            );
-          }
-        },
-        fileIsRequired: false,
-      }),
-    )
-    cnicFront: Express.Multer.File,
-    @UploadedFile(
-      'cnic-back',
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({
-            maxSize: MAX_FILE_SIZES.AVATAR,
-          }),
-          new FileTypeValidator({
-            fileType: SUPPORT_TYPES.AVATAR,
-          }),
-        ],
-        exceptionFactory: (error) => {
-          if (error.includes('required')) {
-            throw new BadRequestException(
-              APP_ERROR_MESSAGES.REQUIRED('Cnic Back'),
-            );
-          }
-        },
-        fileIsRequired: false,
-      }),
-    )
-    cnicBack: Express.Multer.File,
-    @UploadedFile(
-      'service-card',
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({
-            maxSize: MAX_FILE_SIZES.AVATAR,
-          }),
-          new FileTypeValidator({
-            fileType: SUPPORT_TYPES.AVATAR,
-          }),
-        ],
-        exceptionFactory: (error) => {
-          if (error.includes('required')) {
-            throw new BadRequestException(
-              APP_ERROR_MESSAGES.REQUIRED('Service Card'),
-            );
-          }
-        },
-        fileIsRequired: false,
-      }),
-    )
-    serviceCard: Express.Multer.File,
+    files: {
+      picture?: Express.Multer.File[];
+      cnic_front?: Express.Multer.File[];
+      cnic_back?: Express.Multer.File[];
+      service_card?: Express.Multer.File[];
+    },
 
     @Context()
     user: AppContext,
   ) {
+    const picture = files.picture?.[0];
+    const cnicFront = files.cnic_front?.[0];
+    const cnicBack = files.cnic_back?.[0];
+    const serviceCard = files.service_card?.[0];
     return this.userService.updateProfile(
       user.UserId,
       updateUserDto,

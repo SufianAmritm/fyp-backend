@@ -60,7 +60,7 @@ export class StationService implements IStationService {
       await this.stationRepository.findOneWithBuilderOption(findOptions);
     stations.managers = stations.managers.map((manager) => {
       manager.user.password = undefined;
-      return { ...manager, ...manager.user };
+      return manager;
     });
   }
 

@@ -1,9 +1,11 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsInt, IsNotEmpty, IsOptional, IsPositive } from 'class-validator';
 
 export class CreateStationDto {
   @AutoMap()
+  @Transform(({ value }) => Number(value))
   @IsInt()
   @IsNotEmpty()
   @IsPositive()

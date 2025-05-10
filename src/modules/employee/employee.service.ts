@@ -36,21 +36,28 @@ export class EmployeeService implements IEmployeeService {
     const { runner, user, transactionManager, emailData } =
       await this.userService.createEmployee(createEmployeeDto);
     try {
+      const uploadOperations = [];
+
       if (picture) {
-        createEmployeeDto.picture = await this.uploadPic(picture, 'profile');
+        uploadOperations.push(this.uploadPic(picture, 'profile', 'picture'));
       }
       if (cnicFront) {
-        createEmployeeDto.cnicFront = await this.uploadPic(cnicFront, 'cnic');
+        uploadOperations.push(this.uploadPic(cnicFront, 'cnic', 'cnicFront'));
       }
       if (cnicBack) {
-        createEmployeeDto.cnicFront = await this.uploadPic(cnicBack, 'cnic');
+        uploadOperations.push(this.uploadPic(cnicBack, 'cnic', 'cnicBack'));
       }
       if (serviceCard) {
-        createEmployeeDto.cnicFront = await this.uploadPic(
-          serviceCard,
-          'serviceCard',
+        uploadOperations.push(
+          this.uploadPic(serviceCard, 'serviceCard', 'serviceCard'),
         );
       }
+
+      const uploadResults = await Promise.all(uploadOperations);
+
+      uploadResults.forEach(({ field, url }) => {
+        createEmployeeDto[field] = url;
+      });
 
       const newEmployee = this.employeeMapper.map(
         createEmployeeDto,
@@ -67,7 +74,7 @@ export class EmployeeService implements IEmployeeService {
       await this.userService.sendEmailForNoPassword(user, emailData);
       runner.end();
       user.password = undefined;
-      return { ...user, ...employee };
+      return { user, employee };
     } catch (error) {
       console.log(error);
       if (runner) {
@@ -100,7 +107,7 @@ export class EmployeeService implements IEmployeeService {
     return RESPONSE_MESSAGES.DELETED;
   }
 
-  private async uploadPic(file: Express.Multer.File, folder: string) {
+  private async uploadPic(file: Express.Multer.File, folder: string,field:string) {
     const key = this.utilService.awsUploadKeyBuilder(file.originalname, folder);
     const uploadOptions: PutObjectCommandInput = {
       Bucket: 'RESIDENCE_BUCKET',
@@ -108,6 +115,6 @@ export class EmployeeService implements IEmployeeService {
       Key: key,
     };
     const url = await this.s3Service.uploadFile(uploadOptions);
-    return this.utilService.awsPublicUrlBuilder(url.bucket, url.key);
+    return {url:this.utilService.awsPublicUrlBuilder(url.bucket, url.key),field};
   }
 }

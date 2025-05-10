@@ -4,6 +4,7 @@ import { compare, genSalt, hash } from 'bcryptjs';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { QueryFailedError } from 'typeorm';
 import { v4 } from 'uuid';
 
 @Injectable()
@@ -191,5 +192,25 @@ export class UtilsService {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
     return date;
+  }
+
+  buildTypeormErrors(error: QueryFailedError) {
+    let message = '';
+    switch (error['code']) {
+      case '23503': {
+        const match = error['detail']?.match(
+          /Key \((.*?)\)=\((.*?)\) is not present in table "(.*?)"/,
+        );
+
+        if (match) {
+          const [, column, value, table] = match;
+          message = `The ${column} value ${value} does not exist in ${table} table`;
+        }
+      }
+    }
+    if (message) {
+      throw new BadRequestException(message);
+    }
+    throw error;
   }
 }

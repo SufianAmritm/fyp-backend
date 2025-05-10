@@ -1,4 +1,5 @@
-import { applyDecorators } from '@nestjs/common';
+import { applyDecorators, UseInterceptors } from '@nestjs/common';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 import {
   ReferenceObject,
@@ -19,6 +20,12 @@ export function MultiFile(
 
   return applyDecorators(
     ApiConsumes('multipart/form-data'),
+    UseInterceptors(
+      FileFieldsInterceptor(
+        fields.map((key) => ({ name: key, maxCount: 1 })),
+        {},
+      ),
+    ),
     ApiBody({
       schema: {
         type: 'object',

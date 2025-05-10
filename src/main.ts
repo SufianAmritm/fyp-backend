@@ -4,20 +4,22 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { SWAGGER_PATH } from './common/constants';
-import { ResponseInterceptor } from './common/interceptors/reponse-format-interceptor';
+import { ResponseInterceptor } from './common/interceptors/response-format-interceptor';
+import { TypeORMErrorInterceptor } from './common/interceptors/typeorm-error-interceptor';
 import { ColoredLogger } from './common/logger';
 import { getSwaggerConfiguration } from './swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['log', 'error', 'warn', 'debug'],
-     bufferLogs:true,
+    bufferLogs: true,
     rawBody: true,
   });
 
   const configService: ConfigService = app.get(ConfigService);
 
-  app.enableCors({    methods: ['PATCH', 'DELETE', 'HEAD', 'POST', 'PUT', 'GET', 'OPTIONS'],
+  app.enableCors({
+    methods: ['PATCH', 'DELETE', 'HEAD', 'POST', 'PUT', 'GET', 'OPTIONS'],
     credentials: true,
     exposedHeaders: ['Content-Disposition'],
   });
@@ -26,12 +28,15 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       transform: true,
-
     }),
   );
 
-  app.useGlobalInterceptors(new ResponseInterceptor());
-  app.useLogger(new ColoredLogger())
+  app.useGlobalInterceptors(
+    new ResponseInterceptor(),
+
+    new TypeORMErrorInterceptor(),
+  );
+  app.useLogger(new ColoredLogger());
   await getSwaggerConfiguration(app);
   await app.listen(configService.get<number>('PORT'));
 

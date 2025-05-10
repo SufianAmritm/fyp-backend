@@ -61,4 +61,5 @@ export const APP_ERROR_MESSAGES = {
   INVALID_OTP_TYPE: 'Invalid OTP type.',
   INVALID_OTP: 'Invalid OTP.',
   OTP_EXPIRED: 'The OTP has expired. Please request a new one.',
+  INVALID_FILE_TYPE: 'Invalid file type.',
 };

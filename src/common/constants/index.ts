@@ -91,3 +91,12 @@ export const YearMonthMap = {
 };
 
 export const ManagementRoles = [UserRoles.ADMIN, UserRoles.MANAGER];
+export const EmployeeProfileCompleteColumns = [
+  'picture',
+  'cnicFront',
+  'cnicBack',
+  'serviceCard',
+  'colonyId',
+  'address',
+  'members',
+];

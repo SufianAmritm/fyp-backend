@@ -6,6 +6,7 @@ import { BaseRepository } from 'src/common/database/repositories/base/base.repos
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { Repository } from 'typeorm';
+import { EmployeeProfileCompleteColumns } from '../../../common/constants';
 import { UpdateEmployeeDto } from '../../employee/dto/update-employee.dto';
 import { UpdateManagersDto } from '../../managers/dto/update-managers.dto';
 import { User } from '../entities/user.entity';
@@ -40,16 +41,18 @@ export class UserRepository
     const { picture, description } = dto;
     let index = 0;
     const params = [];
+    const updates = [];
     let query = `UPDATE managers set `;
     if (picture) {
-      query += `picture = $${++index},`;
+      updates.push(`picture = $${++index}`);
       params.push(picture);
     }
     if (description) {
-      query += `description = $${++index},`;
+      updates.push(`description = $${++index}`);
       params.push(description);
     }
-    query.replace(/,$/, '');
+    query += updates.join(', ');
+    query = query.replace(/,\s*$/, '');
     query += ` where user_id = $${++index}`;
     params.push(userId);
     if (index > 1) await this.repository.query(query, params);
@@ -73,43 +76,58 @@ export class UserRepository
 
     let index = 0;
     const params = [];
+    const updates = [];
     let query = `UPDATE employees set `;
     if (picture) {
-      query += `picture = $${++index},`;
+      updates.push(`picture = $${++index}`);
       params.push(picture);
     }
     if (serviceCard) {
-      query += `service_card = $${++index},`;
+      updates.push(`service_card = $${++index}`);
       params.push(serviceCard);
     }
     if (cnicBack) {
-      query += `cnic_back = $${++index},`;
+      updates.push(`cnic_back = $${++index}`);
       params.push(cnicBack);
     }
     if (cnicFront) {
-      query += `cnic_front = $${++index},`;
+      updates.push(`cnic_front = $${++index}`);
       params.push(cnicFront);
     }
     if (colonyId) {
-      query += `colony_id = $${++index},`;
+      updates.push(`colony_id = $${++index}`);
       params.push(colonyId);
     }
     if (address) {
-      query += `address = $${++index},`;
+      updates.push(`address = $${++index}`);
       params.push(address);
     }
     if (members) {
-      query += `members = $${++index},`;
+      updates.push(`members = $${++index}`);
       params.push(members);
     }
     if (profileComplete) {
-      query += `profile_complete = $${++index},`;
+      updates.push(`profile_complete = $${++index}`);
       params.push(profileComplete);
     }
-    query.replace(/,$/, '');
+    query += updates.join(', ');
+    query = query.replace(/,\s*$/, '');
     query += ` where user_id = $${++index}`;
     params.push(userId);
     if (index > 1) await this.repository.query(query, params);
     return;
+  }
+
+  async isEmployeeProfileComplete(userId: number): Promise<boolean> {
+    const user = await this.repository.findOne({
+      where: { id: userId },
+      relations: { employee: true },
+    });
+
+    return Object.entries(user.employee)
+      .filter(([key, _]) => EmployeeProfileCompleteColumns.includes(key))
+      .every(
+        ([_, value]) => value !== '' && value !== null && value !== undefined,
+      );
   }
 }
