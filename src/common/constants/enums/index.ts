@@ -36,7 +36,7 @@ export enum EMAIL_TEMPLATES {
 }
 export enum EMAIL_SUBJECTS {
   REGISTER = 'Welcome to Pakistan Railway Residency Portal',
-  PASSWORD_RESET='Reset Password',
+  PASSWORD_RESET = 'Reset Password',
 }
 export enum DATE_FILTER {
   TODAY = 'today',
@@ -64,7 +64,13 @@ export enum AWS_PROVIDERS {
 }
 
 export enum UserRoles {
-  ADMIN= 'admin',
-  MANAGER= 'station_manager',
-  EMPLOYEE= 'employee',
-};
+  ADMIN = 'admin',
+  MANAGER = 'station_manager',
+  EMPLOYEE = 'employee',
+}
+
+export enum EMPLOYEE_VERIFICATION_STATUS {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+}

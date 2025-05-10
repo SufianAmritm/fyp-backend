@@ -1,8 +1,16 @@
 import { AutoMap } from '@automapper/classes';
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 import { TABLES } from '../../../common/database/tables';
 import { Colony } from '../../colony/entities/colony.entity';
+import { EmployeeVerification } from '../../employee-verification/entities/employee-verification.entity';
 import { User } from '../../user/entities/user.entity';
 
 @Entity(TABLES.EMPLOYEES, { schema: 'public' })
@@ -28,7 +36,7 @@ export class Employee extends BaseEntity {
   @AutoMap()
   @Column('integer', { nullable: true })
   members: number;
-  
+
   @AutoMap()
   @Column('integer', { name: 'user_id', nullable: false })
   userId: number;
@@ -59,4 +67,6 @@ export class Employee extends BaseEntity {
     foreignKeyConstraintName: 'employees_user_id_fk',
   })
   user: User;
+  @OneToMany(() => EmployeeVerification, (i) => i.employee)
+  verification: EmployeeVerification[];
 }

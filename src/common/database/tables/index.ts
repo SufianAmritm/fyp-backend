@@ -8,4 +8,5 @@ export enum TABLES {
   APARTMENTS = 'apartments',
   COLONIES = 'colonies',
   EMPLOYEES = 'employees',
+  EMPLOYEE_VERIFICATIONS = 'employee_verifications',
 }

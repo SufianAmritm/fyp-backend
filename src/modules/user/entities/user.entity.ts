@@ -14,6 +14,7 @@ import { TABLES } from '../../../common/database/tables';
 import { Apartment } from '../../apartment/entities/apartment.entity';
 import { Colony } from '../../colony/entities/colony.entity';
 import { Division } from '../../division/entities/division.entity';
+import { EmployeeVerification } from '../../employee-verification/entities/employee-verification.entity';
 import { Employee } from '../../employee/entities/employee.entity';
 import { Manager } from '../../managers/entities/managers.entity';
 import { Otp } from '../../otp/entities/otp.entity';
@@ -98,4 +99,7 @@ export class User extends BaseEntity {
   @AutoMap()
   @OneToOne(() => Employee, (i) => i.user)
   employee: Employee;
+  @AutoMap()
+  @OneToMany(() => EmployeeVerification, (i) => i.createdBy)
+  employeeVerifications: EmployeeVerification[];
 }
