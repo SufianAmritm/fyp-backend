@@ -1,6 +1,6 @@
 import { Body, Controller, Inject, Patch, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { DOMAIN_ENTITY, X_API_KEY } from 'src/common/constants';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { DOMAIN_ENTITY } from 'src/common/constants';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
@@ -9,7 +9,6 @@ import { IAuthService } from './interface/auth.interface';
 import { TokenTypeWithUser } from './type/auth.type';
 
 @ApiTags(DOMAIN_ENTITY.AUTH)
-@ApiBearerAuth(X_API_KEY)
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -27,15 +26,6 @@ export class AuthController {
   async signIn(@Body() signInDto: SignInDto): Promise<TokenTypeWithUser> {
     return this.authService.signIn(signInDto);
   }
-
-  // @Post('forget-password')
-  // @ApiOperation({ summary: 'Forget Password' })
-  // async forgetPassword(
-  //   @Body() forgotPasswordDto: ForgetPasswordDto,
-  // ): Promise<string> {
-  //   const { email } = forgotPasswordDto;
-  //   return this.authService.forgetPassword(email);
-  // }
 
   @Patch('reset-password')
   @ApiOperation({ summary: 'Reset Password' })

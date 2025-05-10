@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { RESPONSE_MESSAGES } from 'src/common/constants';
 import { APP_ERROR_MESSAGES } from 'src/common/constants/errors';
-import { OTP_TYPE, UserRoles } from '../../common/constants/enums';
+import { OTP_TYPE } from '../../common/constants/enums';
 import { UtilsService } from '../../common/utils/UtilsService';
 import { IOtpService } from '../otp/interfaces/otp.interface';
 import { IUserService } from '../user/interfaces/user.interface';
@@ -60,7 +60,6 @@ export class AuthService implements IAuthService {
   }
 
   async signUp(signupDto: SignUpDto): Promise<TokenTypeWithUser> {
-    signupDto.password = await this.utilService.hash(signupDto.password);
     const user = await this.userService.createUser(signupDto);
 
     const { id, email, role, emailVerified } = user;
@@ -77,10 +76,10 @@ export class AuthService implements IAuthService {
     if (!user) {
       throw new NotFoundException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
     }
-    if (user.role.name === UserRoles.MANAGER && !user.password) {
+    if (!user.password) {
       throw new UnauthorizedException({
         message: APP_ERROR_MESSAGES.INVALID_PASSWORD,
-        statusCode: 'manager_password_not_set',
+        statusCode: 'password_not_set',
       });
     }
     const isPasswordMatch = await this.utilService.compare(

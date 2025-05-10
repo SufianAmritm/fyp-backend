@@ -96,14 +96,15 @@ export class UserService implements IUserService {
         transactionManager,
       );
       user.password = undefined;
-      const userWithTenant = await this.findOneById(user.id);
       const emailData: EmailData = {
-        name: userWithTenant.name,
-        email: userWithTenant.email,
-        role: userWithTenant.role.name,
+        name: user.name,
+        email: user.email,
+        role: role.name,
       };
 
-      return { runner, user, transactionManager, emailData };
+      return { runner, user:{
+        ...user,role
+      }, transactionManager, emailData };
     } catch (error) {
       console.log(error);
       if (runner) {
@@ -146,14 +147,21 @@ export class UserService implements IUserService {
         transactionManager,
       );
       user.password = undefined;
-      const userWithTenant = await this.findOneById(user.id);
       const emailData: EmailData = {
-        name: userWithTenant.name,
-        email: userWithTenant.email,
-        role: userWithTenant.role.name,
+        name: user.name,
+        email: user.email,
+        role: role.name,
       };
 
-      return { runner, user, transactionManager, emailData };
+      return {
+        runner,
+        user: {
+          ...user,
+          role,
+        },
+        transactionManager,
+        emailData,
+      };
     } catch (error) {
       console.log(error);
       if (runner) {
@@ -334,7 +342,7 @@ export class UserService implements IUserService {
       );
       await runner.end();
 
-      return { ...user, ...employee };
+      return { ...user, role, ...employee };
     } catch (error) {
       console.log(error);
       if (runner) {
