@@ -13,5 +13,6 @@ export interface IEmployeeVerificationService {
   update(
     id: number,
     updateEmployeeVerificationDto: UpdateEmployeeVerificationDto,
+    userId: number,
   );
 }

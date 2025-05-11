@@ -7,17 +7,17 @@ import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { Repository } from 'typeorm';
 import { AppContext } from '../../../common/interfaces/context';
-import { EmployeeVerification } from '../entities/employee-verification.entity';
-import { IEmployeeVerificationRepository } from './interface/employee-verification-repository.interface';
+import { ApplicationPriority } from '../entities/application-colonies.entity';
+import { IApplicationPriorityRepository } from './interface/application-priority-repository.interface';
 
 @Injectable()
-export class EmployeeVerificationRepository
-  extends BaseRepository<EmployeeVerification>
-  implements IEmployeeVerificationRepository
+export class ApplicationPriorityRepository
+  extends BaseRepository<ApplicationPriority>
+  implements IApplicationPriorityRepository
 {
   constructor(
-    @InjectRepository(EmployeeVerification)
-    public readonly repository: Repository<EmployeeVerification>,
+    @InjectRepository(ApplicationPriority)
+    public readonly repository: Repository<ApplicationPriority>,
   ) {
     super(repository);
   }
@@ -25,18 +25,10 @@ export class EmployeeVerificationRepository
   async findAll(
     paginationDto: PaginationDto,
     ctx: AppContext,
-  ): Promise<PagedList<EmployeeVerification>> {
-    const findOption = new FindOptionsBuilder<EmployeeVerification>()
+  ): Promise<PagedList<ApplicationPriority>> {
+    const findOption = new FindOptionsBuilder<ApplicationPriority>()
       .where({
         deletedAt: null,
-      })
-      .relations({
-        employee: {
-          user: true,
-        },
-        approvedBy: true,
-        rejectedBy: true,
-        createdBy: true,
       })
       .order({ id: ORDER_BY.DESC })
       .build();

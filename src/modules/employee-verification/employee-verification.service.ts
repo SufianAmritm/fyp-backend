@@ -58,25 +58,52 @@ export class EmployeeVerificationService
     return this.employeeVerificationRepository.create(newEmployeeVerification);
   }
 
-  findAll(paginationDto: PaginationDto, ctx: AppContext) {
-    return this.employeeVerificationRepository.findAll(paginationDto, ctx);
+  async findAll(paginationDto: PaginationDto, ctx: AppContext) {
+    const result = await this.employeeVerificationRepository.findAll(
+      paginationDto,
+      ctx,
+    );
+    result.items.forEach((item) => {
+      item.employee.user.password = undefined;
+      if (item.approvedBy) item.approvedBy.password = undefined;
+      if (item.rejectedBy) item.rejectedBy.password = undefined;
+      if (item.createdBy) item.createdBy.password = undefined;
+    });
   }
 
-  findOne(id: number) {
+  async findOne(id: number) {
     const findOptions = new FindOptionsBuilder<EmployeeVerification>()
       .where({ id })
       .relations({
-        employee: true,
+        employee: {
+          user: true,
+        },
+        approvedBy: {
+          manager: true,
+        },
+        rejectedBy: {
+          manager: true,
+        },
+        createdBy: {
+          manager: true,
+        },
       })
       .build();
-    return this.employeeVerificationRepository.findOneWithBuilderOption(
-      findOptions,
-    );
+    const result =
+      await this.employeeVerificationRepository.findOneWithBuilderOption(
+        findOptions,
+      );
+    result.employee.user.password = undefined;
+    if (result.approvedBy) result.approvedBy.password = undefined;
+    if (result.rejectedBy) result.rejectedBy.password = undefined;
+    if (result.createdBy) result.createdBy.password = undefined;
+    return result;
   }
 
   async update(
     id: number,
     updateEmployeeVerificationDto: UpdateEmployeeVerificationDto,
+    userId: number,
   ) {
     const { status } = updateEmployeeVerificationDto;
     const exists = await this.employeeVerificationRepository.findOne({
@@ -103,19 +130,23 @@ export class EmployeeVerificationService
       UpdateEmployeeVerificationDto,
       EmployeeVerification,
     );
+    if (
+      employeeVerificationUpdate.status ===
+      EMPLOYEE_VERIFICATION_STATUS.APPROVED
+    ) {
+      employeeVerificationUpdate.approvedById = userId;
+    }
+    if (
+      employeeVerificationUpdate.status ===
+      EMPLOYEE_VERIFICATION_STATUS.REJECTED
+    ) {
+      employeeVerificationUpdate.rejectedById = userId;
+    }
     await this.employeeVerificationRepository.update(
       { id },
       employeeVerificationUpdate,
     );
-    const findOptions = new FindOptionsBuilder<EmployeeVerification>()
-      .where({ id })
-      .relations({
-        employee: true,
-      })
-      .build();
-    return this.employeeVerificationRepository.findOneWithBuilderOption(
-      findOptions,
-    );
+    return this.findOne(id);
   }
 
   async remove(id: number) {

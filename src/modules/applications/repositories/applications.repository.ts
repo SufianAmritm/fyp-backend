@@ -7,17 +7,17 @@ import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { Repository } from 'typeorm';
 import { AppContext } from '../../../common/interfaces/context';
-import { EmployeeVerification } from '../entities/employee-verification.entity';
-import { IEmployeeVerificationRepository } from './interface/employee-verification-repository.interface';
+import { Application } from '../entities/applications.entity';
+import { IApplicationRepository } from './interface/applications-repository.interface';
 
 @Injectable()
-export class EmployeeVerificationRepository
-  extends BaseRepository<EmployeeVerification>
-  implements IEmployeeVerificationRepository
+export class ApplicationRepository
+  extends BaseRepository<Application>
+  implements IApplicationRepository
 {
   constructor(
-    @InjectRepository(EmployeeVerification)
-    public readonly repository: Repository<EmployeeVerification>,
+    @InjectRepository(Application)
+    public readonly repository: Repository<Application>,
   ) {
     super(repository);
   }
@@ -25,12 +25,15 @@ export class EmployeeVerificationRepository
   async findAll(
     paginationDto: PaginationDto,
     ctx: AppContext,
-  ): Promise<PagedList<EmployeeVerification>> {
-    const findOption = new FindOptionsBuilder<EmployeeVerification>()
+  ): Promise<PagedList<Application>> {
+    const findOption = new FindOptionsBuilder<Application>()
       .where({
         deletedAt: null,
       })
       .relations({
+        colonyPriorities: {
+          colony: true,
+        },
         employee: {
           user: true,
         },

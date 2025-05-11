@@ -73,4 +73,5 @@ export enum EMPLOYEE_VERIFICATION_STATUS {
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected',
+  CANCELLED = 'cancelled',
 }

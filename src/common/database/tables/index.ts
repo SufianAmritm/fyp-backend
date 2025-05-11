@@ -9,4 +9,6 @@ export enum TABLES {
   COLONIES = 'colonies',
   EMPLOYEES = 'employees',
   EMPLOYEE_VERIFICATIONS = 'employee_verifications',
+  APPLICATIONS = 'applications',
+  APPLICATION_PRIORITIES = 'application_priorities',
 }

@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { TABLES } from '../../../common/database/tables';
 import { Apartment } from '../../apartment/entities/apartment.entity';
+import { Application } from '../../applications/entities/applications.entity';
 import { Colony } from '../../colony/entities/colony.entity';
 import { Division } from '../../division/entities/division.entity';
 import { EmployeeVerification } from '../../employee-verification/entities/employee-verification.entity';
@@ -102,4 +103,20 @@ export class User extends BaseEntity {
   @AutoMap()
   @OneToMany(() => EmployeeVerification, (i) => i.createdBy)
   employeeVerifications: EmployeeVerification[];
+  @AutoMap()
+  @OneToMany(() => EmployeeVerification, (i) => i.approvedBy)
+  employeeVerificationsApproved: EmployeeVerification[];
+  @AutoMap()
+  @OneToMany(() => EmployeeVerification, (i) => i.rejectedBy)
+  employeeVerificationsRejected: EmployeeVerification[];
+
+  @AutoMap()
+  @OneToMany(() => Application, (i) => i.approvedBy)
+  applicationsApproved: Application[];
+  @AutoMap()
+  @OneToMany(() => Application, (i) => i.rejectedBy)
+  applicationsRejected: Application[];
+  @AutoMap()
+  @OneToMany(() => Application, (i) => i.createdBy)
+  applications: Application[];
 }

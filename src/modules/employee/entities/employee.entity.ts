@@ -9,8 +9,9 @@ import {
   OneToOne,
 } from 'typeorm';
 import { TABLES } from '../../../common/database/tables';
-import { Colony } from '../../colony/entities/colony.entity';
+import { Application } from '../../applications/entities/applications.entity';
 import { EmployeeVerification } from '../../employee-verification/entities/employee-verification.entity';
+import { Station } from '../../station/entities/station.entity';
 import { User } from '../../user/entities/user.entity';
 
 @Entity(TABLES.EMPLOYEES, { schema: 'public' })
@@ -31,8 +32,8 @@ export class Employee extends BaseEntity {
   @Column('character varying', { nullable: true })
   address: string;
   @AutoMap()
-  @Column('integer', { name: 'colony_id', nullable: true })
-  colonyId: number;
+  @Column('integer', { name: 'station_id', nullable: true })
+  stationId: number;
   @AutoMap()
   @Column('integer', { nullable: true })
   members: number;
@@ -53,13 +54,13 @@ export class Employee extends BaseEntity {
     foreignKeyConstraintName: 'employees_created_by_id_fk',
   })
   createdBy: User;
-  @ManyToOne(() => Colony, (i) => i.employees)
+  @ManyToOne(() => Station, (i) => i.employees)
   @JoinColumn({
-    name: 'colony_id',
+    name: 'station_id',
     referencedColumnName: 'id',
-    foreignKeyConstraintName: 'employees_colony_id_fk',
+    foreignKeyConstraintName: 'employees_station_id_fk',
   })
-  colony: Colony;
+  station: Station;
   @OneToOne(() => User, (i) => i.employee)
   @JoinColumn({
     name: 'user_id',
@@ -69,4 +70,6 @@ export class Employee extends BaseEntity {
   user: User;
   @OneToMany(() => EmployeeVerification, (i) => i.employee)
   verification: EmployeeVerification[];
+  @OneToMany(() => Application, (i) => i.employee)
+  applications: Application[];
 }

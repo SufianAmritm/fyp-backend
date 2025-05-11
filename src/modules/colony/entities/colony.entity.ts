@@ -3,9 +3,9 @@ import { BaseEntity } from 'src/common/entities/base.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { TABLES } from '../../../common/database/tables';
 import { Apartment } from '../../apartment/entities/apartment.entity';
+import { ApplicationPriority } from '../../applications/entities/application-colonies.entity';
 import { Station } from '../../station/entities/station.entity';
 import { User } from '../../user/entities/user.entity';
-import { Employee } from '../../employee/entities/employee.entity';
 
 @Entity(TABLES.COLONIES, { schema: 'public' })
 export class Colony extends BaseEntity {
@@ -37,7 +37,6 @@ export class Colony extends BaseEntity {
   station: Station;
   @OneToMany(() => Apartment, (i) => i.colony)
   apartments: Apartment[];
-  @AutoMap()
-  @OneToMany(() => Employee, (i) => i.colony)
-  employees: Employee[];
+  @OneToMany(() => ApplicationPriority, (i) => i.colony)
+  colonyPriorities: ApplicationPriority[];
 }

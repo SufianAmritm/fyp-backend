@@ -7,6 +7,8 @@ import { User } from 'src/modules/user/entities/user.entity';
 import { DataSource } from 'typeorm';
 import { Apartment } from '../../modules/apartment/entities/apartment.entity';
 import { AppLog } from '../../modules/app-log/entities/app-log.entity';
+import { ApplicationPriority } from '../../modules/applications/entities/application-colonies.entity';
+import { Application } from '../../modules/applications/entities/applications.entity';
 import { Colony } from '../../modules/colony/entities/colony.entity';
 import { Division } from '../../modules/division/entities/division.entity';
 import { EmployeeVerification } from '../../modules/employee-verification/entities/employee-verification.entity';
@@ -51,6 +53,8 @@ const dataSource = new DataSource({
     Colony,
     Employee,
     EmployeeVerification,
+    Application,
+    ApplicationPriority,
   ],
   synchronize: false,
   logging: false,

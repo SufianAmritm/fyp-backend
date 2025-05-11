@@ -58,6 +58,8 @@ export class EmployeeVerificationController {
   @Patch(':id')
   update(
     @Param() idDto: IdDto,
+    @Context() context: AppContext,
+
     @Body() updateEmployeeVerificationDto: UpdateEmployeeVerificationDto,
   ) {
     const { id } = idDto;
@@ -65,6 +67,7 @@ export class EmployeeVerificationController {
     return this.employeeVerificationService.update(
       +id,
       updateEmployeeVerificationDto,
+      context.UserId,
     );
   }
 }

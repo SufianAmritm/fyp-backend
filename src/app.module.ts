@@ -14,6 +14,7 @@ import { SeederModule } from './common/database/seeders/seed.module';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
 import { AdminModule } from './modules/admin/admin.module';
 import { ApartmentModule } from './modules/apartment/apartment.module';
+import { ApplicationModule } from './modules/applications/applications.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ColonyModule } from './modules/colony/colony.module';
 import { DivisionModule } from './modules/division/division.module';
@@ -52,6 +53,7 @@ import { UserModule } from './modules/user/user.module';
     AuthModule,
     AdminModule,
     ApartmentModule,
+    ApplicationModule,
     ColonyModule,
     DivisionModule,
     EmployeeModule,
