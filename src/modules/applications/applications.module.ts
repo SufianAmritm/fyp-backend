@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
+import { EmployeeVerificationModule } from '../employee-verification/employee-verification.module';
 import { OccupationModule } from '../occupations/occupations.module';
 import { ApplicationController } from './applications.controller';
 import { ApplicationService } from './applications.service';
@@ -30,12 +32,17 @@ const applicationsServiceProvider = [
   },
 ];
 @Module({
-  imports: [TypeOrmModule.forFeature(applicationsEntities), OccupationModule],
+  imports: [
+    TypeOrmModule.forFeature(applicationsEntities),
+    OccupationModule,
+    EmployeeVerificationModule,
+  ],
   controllers: [ApplicationController],
   providers: [
     ...applicationsServiceProvider,
     ...applicationsRepositoryProvider,
     ApplicationMappingProfile,
+    DbTransactionFactory,
   ],
   exports: [...applicationsServiceProvider],
 })

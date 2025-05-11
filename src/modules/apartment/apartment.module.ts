@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
 import { ApartmentController } from './apartment.controller';
 import { ApartmentService } from './apartment.service';
 import { Apartment } from './entities/apartment.entity';
@@ -28,6 +29,7 @@ const apartmentServiceProvider = [
     ...apartmentServiceProvider,
     ...apartmentRepositoryProvider,
     ApartmentMappingProfile,
+    DbTransactionFactory,
   ],
   exports: [...apartmentServiceProvider],
 })
