@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { OccupationModule } from '../occupations/occupations.module';
 import { ApplicationController } from './applications.controller';
 import { ApplicationService } from './applications.service';
 import { ApplicationPriority } from './entities/application-colonies.entity';
@@ -29,7 +30,7 @@ const applicationsServiceProvider = [
   },
 ];
 @Module({
-  imports: [TypeOrmModule.forFeature(applicationsEntities)],
+  imports: [TypeOrmModule.forFeature(applicationsEntities), OccupationModule],
   controllers: [ApplicationController],
   providers: [
     ...applicationsServiceProvider,

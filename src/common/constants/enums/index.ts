@@ -75,3 +75,9 @@ export enum EMPLOYEE_VERIFICATION_STATUS {
   REJECTED = 'rejected',
   CANCELLED = 'cancelled',
 }
+
+export enum OCCUPATION_STATUS {
+  OCCUPIED = 'occupied',
+  VACANT = 'vacant',
+  ABOUT_TO_VACANT = 'about_to_vacant',
+}

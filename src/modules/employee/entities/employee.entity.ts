@@ -11,6 +11,7 @@ import {
 import { TABLES } from '../../../common/database/tables';
 import { Application } from '../../applications/entities/applications.entity';
 import { EmployeeVerification } from '../../employee-verification/entities/employee-verification.entity';
+import { Occupation } from '../../occupations/entities/occupations.entity';
 import { Station } from '../../station/entities/station.entity';
 import { User } from '../../user/entities/user.entity';
 
@@ -72,4 +73,10 @@ export class Employee extends BaseEntity {
   verification: EmployeeVerification[];
   @OneToMany(() => Application, (i) => i.employee)
   applications: Application[];
+
+  @OneToMany(() => Occupation, (i) => i.occupiedBy)
+  occupations: Occupation[];
+
+  @OneToOne(() => Occupation, (i) => i.vacantBy)
+  occupationAboutToVacant: Occupation;
 }

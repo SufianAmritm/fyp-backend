@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ApartmentController } from './apartment.controller';
+import { ApartmentService } from './apartment.service';
 import { Apartment } from './entities/apartment.entity';
 import { IApartmentService } from './interfaces/apartment.interface';
 import { ApartmentMappingProfile } from './mapping/apartment.mapping';
-import { ApartmentController } from './apartment.controller';
-import { IApartmentRepository } from './repositories/interface/apartment-repository.interface';
 import { ApartmentRepository } from './repositories/apartment.repository';
-import { ApartmentService } from './apartment.service';
+import { IApartmentRepository } from './repositories/interface/apartment-repository.interface';
 
 const apartmentEntities = [Apartment];
 const apartmentRepositoryProvider = [

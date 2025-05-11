@@ -7,13 +7,18 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { RESPONSE_MESSAGES } from '../../common/constants';
-import { EMPLOYEE_VERIFICATION_STATUS } from '../../common/constants/enums';
+import {
+  EMPLOYEE_VERIFICATION_STATUS,
+  OCCUPATION_STATUS,
+} from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { IEmployeeVerificationService } from '../employee-verification/interfaces/employee-verification.interface';
+import { Occupation } from '../occupations/entities/occupations.entity';
+import { IOccupationService } from '../occupations/interfaces/occupations.interface';
 import { CreateApplicationPriorityDto } from './dto/application-colonies/create-applications-priority.dto';
 import { CreateApplicationDto } from './dto/applications/create-applications.dto';
 import { UpdateApplicationDto } from './dto/applications/update-applications.dto';
@@ -28,6 +33,8 @@ export class ApplicationService implements IApplicationService {
   constructor(
     @Inject(IApplicationRepository)
     private readonly applicationsRepository: IApplicationRepository,
+    @Inject(IOccupationService)
+    private readonly occupationService: IOccupationService,
     @Inject(IEmployeeVerificationService)
     private readonly employeeVerificationService: IEmployeeVerificationService,
     @Inject(IApplicationPriorityRepository)
@@ -93,6 +100,8 @@ export class ApplicationService implements IApplicationService {
         ApplicationPriority,
         manager,
       );
+      await runner.end();
+      return this.findOne(application.id);
     } catch (error) {
       console.error(error);
       if (runner) {
@@ -187,16 +196,12 @@ export class ApplicationService implements IApplicationService {
         UpdateApplicationDto,
         Application,
       );
-      if (
-        updateApplicationDto.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED
-      ) {
+      if (updateApplicationDto.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED)
         applicationsUpdate.approvedById = userId;
-      }
-      if (
-        updateApplicationDto.status === EMPLOYEE_VERIFICATION_STATUS.REJECTED
-      ) {
+
+      if (updateApplicationDto.status === EMPLOYEE_VERIFICATION_STATUS.REJECTED)
         applicationsUpdate.rejectedById = userId;
-      }
+
       await this.applicationsRepository.updateWithTransaction(
         { id },
         applicationsUpdate,
@@ -210,19 +215,54 @@ export class ApplicationService implements IApplicationService {
         ApplicationPriority,
         manager,
       );
-      const newApplicationPriorities = this.applicationsMapper.mapArray(
-        updateApplicationDto.colonyPriorities,
-        CreateApplicationPriorityDto,
-        ApplicationPriority,
-      );
-      newApplicationPriorities.forEach((x) => {
-        x.applicationId = id;
-      });
-      await this.applicationPriorityRepository.bulkCreateWithTransaction(
-        newApplicationPriorities,
-        ApplicationPriority,
-        manager,
-      );
+      if (updateApplicationDto.colonyPriorities.length > 0) {
+        const newApplicationPriorities = this.applicationsMapper.mapArray(
+          updateApplicationDto.colonyPriorities,
+          CreateApplicationPriorityDto,
+          ApplicationPriority,
+        );
+        newApplicationPriorities.forEach((x) => {
+          x.applicationId = id;
+        });
+        await this.applicationPriorityRepository.bulkCreateWithTransaction(
+          newApplicationPriorities,
+          ApplicationPriority,
+          manager,
+        );
+      }
+      if (
+        updateApplicationDto.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED
+      ) {
+        if (!updateApplicationDto.apartmentId)
+          throw new BadRequestException(
+            APP_ERROR_MESSAGES.REQUIRED('Apartment'),
+          );
+        const occupation = await this.occupationService.findOneByApartmentId(
+          updateApplicationDto.apartmentId,
+        );
+        if (occupation.status === OCCUPATION_STATUS.OCCUPIED) {
+          throw new BadRequestException(
+            APP_ERROR_MESSAGES.ALREADY_ACTIONED('Apartment', 'occupied'),
+          );
+        }
+        if (occupation.status === OCCUPATION_STATUS.ABOUT_TO_VACANT) {
+          throw new BadRequestException(APP_ERROR_MESSAGES.ABOUT_TO_VACANT);
+        }
+        await this.applicationsRepository.updateWithTransaction(
+          {
+            id: occupation.id,
+          },
+          {
+            lastOccupiedOn: new Date(),
+            status: OCCUPATION_STATUS.OCCUPIED,
+            occupiedById: updateApplicationDto.employeeId,
+            assignedById: userId,
+          },
+          Occupation,
+          manager,
+        );
+      }
+      await runner.end();
 
       return this.findOne(id);
     } catch (error) {

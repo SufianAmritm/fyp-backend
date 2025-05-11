@@ -21,6 +21,7 @@ import { Manager } from '../../managers/entities/managers.entity';
 import { Otp } from '../../otp/entities/otp.entity';
 import { Station } from '../../station/entities/station.entity';
 import { AppSetting } from './settings.entity';
+import { Occupation } from '../../occupations/entities/occupations.entity';
 
 @Unique('user_email_ukey', ['email'])
 @Entity(TABLES.USER, { schema: 'public' })
@@ -119,4 +120,8 @@ export class User extends BaseEntity {
   @AutoMap()
   @OneToMany(() => Application, (i) => i.createdBy)
   applications: Application[];
+  @OneToMany(() => Occupation, (i) => i.assignedBy)
+  occupationsAssigned: Occupation[];
+  @OneToMany(() => Occupation, (i) => i.deAssignedBy)
+  occupationsDeAssigned: Occupation[];
 }

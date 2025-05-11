@@ -11,4 +11,7 @@ export enum TABLES {
   EMPLOYEE_VERIFICATIONS = 'employee_verifications',
   APPLICATIONS = 'applications',
   APPLICATION_PRIORITIES = 'application_priorities',
+  OCCUPATIONS = 'occupations',
+  APARTMENT_HISTORY = 'apartment_history',
+  EMPLOYEE_HISTORY = 'employee_history',
 }

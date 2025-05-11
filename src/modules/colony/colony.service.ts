@@ -47,7 +47,9 @@ export class ColonyService implements IColonyService {
     const findOption = new FindOptionsBuilder<Colony>()
       .where({ id })
       .relations({
-        apartments: true,
+        apartments: {
+          occupation: true,
+        },
       })
       .build();
     return this.colonyRepository.findOneWithBuilderOption(findOption);

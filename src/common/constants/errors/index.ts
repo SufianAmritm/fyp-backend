@@ -65,4 +65,5 @@ export const APP_ERROR_MESSAGES = {
   ALREADY_ACTIONED: (entity: string, action: string) =>
     `${entity} has already been ${action}.`,
   NOT_VERIFIED_ENTITY: (entity: string) => `${entity} is not verified.`,
+  ABOUT_TO_VACANT: 'The selected apartment is yet to be vacant.',
 };

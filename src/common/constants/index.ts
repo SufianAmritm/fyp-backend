@@ -56,6 +56,7 @@ export const DOMAIN_ENTITY = {
   EMPLOYEES: 'Employees',
   EMPLOYEE_VERIFICATIONS: 'EmployeeVerifications',
   APPLICATIONS: 'Applications',
+  OCCUPATIONS: 'Occupations',
 };
 
 export const REGEX = {

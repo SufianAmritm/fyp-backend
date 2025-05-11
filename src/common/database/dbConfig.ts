@@ -14,6 +14,7 @@ import { Division } from '../../modules/division/entities/division.entity';
 import { EmployeeVerification } from '../../modules/employee-verification/entities/employee-verification.entity';
 import { Employee } from '../../modules/employee/entities/employee.entity';
 import { Manager } from '../../modules/managers/entities/managers.entity';
+import { Occupation } from '../../modules/occupations/entities/occupations.entity';
 import { Otp } from '../../modules/otp/entities/otp.entity';
 import { Station } from '../../modules/station/entities/station.entity';
 import { AppSetting } from '../../modules/user/entities/settings.entity';
@@ -55,6 +56,7 @@ const dataSource = new DataSource({
     EmployeeVerification,
     Application,
     ApplicationPriority,
+    Occupation,
   ],
   synchronize: false,
   logging: false,

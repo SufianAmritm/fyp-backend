@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseRepository } from 'src/common/database/repositories/base/base.repository';
 import { Repository } from 'typeorm';
-import { ISettingRepository } from './interfaces/settings-repository.interface';
 import { AppSetting } from '../entities/settings.entity';
+import { ISettingRepository } from './interfaces/settings-repository.interface';
 
 @Injectable()
 export class SettingRepository

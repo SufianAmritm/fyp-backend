@@ -366,8 +366,9 @@ export class UserService implements IUserService {
         emailData,
       );
       await runner.end();
-
-      return { ...user, role, employee };
+user.role = role;
+user.employee = employee;
+return user;
     } catch (error) {
       console.log(error);
       if (runner) {
