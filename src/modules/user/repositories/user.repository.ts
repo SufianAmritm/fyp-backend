@@ -68,7 +68,7 @@ export class UserRepository
       serviceCard,
       cnicBack,
       cnicFront,
-      colonyId,
+      stationId,
       address,
       members,
       profileComplete,
@@ -94,9 +94,9 @@ export class UserRepository
       updates.push(`cnic_front = $${++index}`);
       params.push(cnicFront);
     }
-    if (colonyId) {
-      updates.push(`colony_id = $${++index}`);
-      params.push(colonyId);
+    if (stationId) {
+      updates.push(`station_id = $${++index}`);
+      params.push(stationId);
     }
     if (address) {
       updates.push(`address = $${++index}`);
