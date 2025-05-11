@@ -13,6 +13,7 @@ import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-o
 import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
+import { IEmployeeVerificationService } from '../employee-verification/interfaces/employee-verification.interface';
 import { CreateApplicationPriorityDto } from './dto/application-colonies/create-applications-priority.dto';
 import { CreateApplicationDto } from './dto/applications/create-applications.dto';
 import { UpdateApplicationDto } from './dto/applications/update-applications.dto';
@@ -27,6 +28,8 @@ export class ApplicationService implements IApplicationService {
   constructor(
     @Inject(IApplicationRepository)
     private readonly applicationsRepository: IApplicationRepository,
+    @Inject(IEmployeeVerificationService)
+    private readonly employeeVerificationService: IEmployeeVerificationService,
     @Inject(IApplicationPriorityRepository)
     private readonly applicationPriorityRepository: IApplicationPriorityRepository,
     private readonly transactionFactory: DbTransactionFactory,
@@ -34,6 +37,21 @@ export class ApplicationService implements IApplicationService {
   ) {}
 
   async create(createApplicationDto: CreateApplicationDto) {
+    const employeeVerification =
+      await this.employeeVerificationService.getEmployeeVerificationStatus(
+        createApplicationDto.employeeId,
+      );
+    if (!employeeVerification) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.NOT_VERIFIED_ENTITY('Employee'),
+      );
+    }
+    if (employeeVerification.status !== EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.NOT_VERIFIED_ENTITY('Employee'),
+      );
+    }
+
     const exists = await this.applicationsRepository.find({
       employeeId: createApplicationDto.employeeId,
     });
@@ -139,6 +157,11 @@ export class ApplicationService implements IApplicationService {
     const exists = await this.applicationsRepository.findOne({
       id,
     });
+    if (!exists) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.NOT_FOUND('Application'),
+      );
+    }
     if (status && exists.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
       throw new BadRequestException(
         APP_ERROR_MESSAGES.ALREADY_ACTIONED(

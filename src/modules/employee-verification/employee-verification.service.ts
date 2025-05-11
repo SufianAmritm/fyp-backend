@@ -22,6 +22,18 @@ export class EmployeeVerificationService
     private readonly employeeVerificationRepository: IEmployeeVerificationRepository,
     @InjectMapper() private readonly employeeVerificationMapper: Mapper,
   ) {}
+  getEmployeeVerificationStatus(
+    employeeId: number,
+  ): Promise<EmployeeVerification> {
+    const findOptions = new FindOptionsBuilder<EmployeeVerification>()
+      .where({
+        employeeId,
+      })
+      .build();
+    return this.employeeVerificationRepository.findOneWithBuilderOption(
+      findOptions,
+    );
+  }
 
   async create(createEmployeeVerificationDto: CreateEmployeeVerificationDto) {
     const exists = await this.employeeVerificationRepository.find({
@@ -109,6 +121,11 @@ export class EmployeeVerificationService
     const exists = await this.employeeVerificationRepository.findOne({
       id,
     });
+    if (!exists) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.NOT_FOUND('Employee Verification'),
+      );
+    }
     if (status && exists.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
       throw new BadRequestException(
         APP_ERROR_MESSAGES.ALREADY_ACTIONED(

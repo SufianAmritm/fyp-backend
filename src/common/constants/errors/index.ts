@@ -64,4 +64,5 @@ export const APP_ERROR_MESSAGES = {
   INVALID_FILE_TYPE: 'Invalid file type.',
   ALREADY_ACTIONED: (entity: string, action: string) =>
     `${entity} has already been ${action}.`,
+  NOT_VERIFIED_ENTITY: (entity: string) => `${entity} is not verified.`,
 };
