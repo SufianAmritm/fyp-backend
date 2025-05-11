@@ -7,12 +7,12 @@ export interface IRolePermissionService {
   create(
     createRolePermissionDto: CreateRolePermissionDto,
   ): Promise<RolePermission>;
-  findAll(): Promise<{ component: string; canAccess: string; role: string; }[]>;
+  findAll(): Promise<{ component: string; canAccess: string; role: string }[]>;
   findOne(id: number): Promise<RolePermission>;
   findByRoleId(id: number): Promise<RolePermission[]>;
   update(
     id: number,
     updateRolePermissionDto: UpdateRolePermissionDto,
-  ): Promise<string>;
+  ): Promise<RolePermission>;
   remove(id: number): Promise<string>;
 }

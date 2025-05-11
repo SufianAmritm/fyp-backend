@@ -49,7 +49,7 @@ export class RolePermissionService implements IRolePermissionService {
       RolePermission,
     );
     await this.rolePermissionRepository.update({ id }, roleUpdate);
-    return RESPONSE_MESSAGES.UPDATED;
+    return this.rolePermissionRepository.findOne({ id });
   }
 
   async remove(id: number) {

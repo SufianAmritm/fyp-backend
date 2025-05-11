@@ -2,6 +2,7 @@ import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { RESPONSE_MESSAGES } from '../../common/constants';
+import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { CreateColonyDto } from './dto/create-colony.dto';
@@ -10,7 +11,6 @@ import { UpdateColonyDto } from './dto/update-colony.dto';
 import { Colony } from './entities/colony.entity';
 import { IColonyService } from './interfaces/colony.interface';
 import { IColonyRepository } from './repositories/interface/colony-repository.interface';
-import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 
 @Injectable()
 export class ColonyService implements IColonyService {
@@ -60,7 +60,7 @@ export class ColonyService implements IColonyService {
       Colony,
     );
     await this.colonyRepository.update({ id }, colonyUpdate);
-    return RESPONSE_MESSAGES.UPDATED;
+    return this.colonyRepository.findOne({ id });
   }
 
   async remove(id: number) {

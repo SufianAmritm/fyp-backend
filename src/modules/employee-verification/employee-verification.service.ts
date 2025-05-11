@@ -1,6 +1,6 @@
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { RESPONSE_MESSAGES } from '../../common/constants';
 import { EMPLOYEE_VERIFICATION_STATUS } from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
@@ -24,16 +24,31 @@ export class EmployeeVerificationService
   ) {}
 
   async create(createEmployeeVerificationDto: CreateEmployeeVerificationDto) {
-    const exists = await this.employeeVerificationRepository.findOne({
+    const exists = await this.employeeVerificationRepository.find({
       employeeId: createEmployeeVerificationDto.employeeId,
-      status: EMPLOYEE_VERIFICATION_STATUS.PENDING,
     });
-    if (exists) {
-      throw new Error(
-        APP_ERROR_MESSAGES.ALREADY_EXISTS(
-          'Employee Verification with pending state',
-        ),
+    if (exists.length > 0) {
+      const pending = exists.find(
+        (x) => x.status === EMPLOYEE_VERIFICATION_STATUS.PENDING,
       );
+      if (pending) {
+        throw new BadRequestException(
+          APP_ERROR_MESSAGES.ALREADY_EXISTS(
+            'Employee Verification in pending state',
+          ),
+        );
+      }
+      const approved = exists.find(
+        (x) => x.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED,
+      );
+      if (approved) {
+        throw new BadRequestException(
+          APP_ERROR_MESSAGES.ALREADY_ACTIONED(
+            'Employee Verification',
+            EMPLOYEE_VERIFICATION_STATUS.APPROVED,
+          ),
+        );
+      }
     }
     const newEmployeeVerification = this.employeeVerificationMapper.map(
       createEmployeeVerificationDto,
@@ -63,16 +78,44 @@ export class EmployeeVerificationService
     id: number,
     updateEmployeeVerificationDto: UpdateEmployeeVerificationDto,
   ) {
+    const { status } = updateEmployeeVerificationDto;
+    const exists = await this.employeeVerificationRepository.findOne({
+      id,
+    });
+    if (status && exists.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.ALREADY_ACTIONED(
+          'Employee Verification',
+          EMPLOYEE_VERIFICATION_STATUS.APPROVED,
+        ),
+      );
+    }
+    if (status && exists.status === EMPLOYEE_VERIFICATION_STATUS.REJECTED) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.ALREADY_ACTIONED(
+          'Employee Verification',
+          EMPLOYEE_VERIFICATION_STATUS.REJECTED,
+        ),
+      );
+    }
     const employeeVerificationUpdate = this.employeeVerificationMapper.map(
       updateEmployeeVerificationDto,
-      CreateEmployeeVerificationDto,
+      UpdateEmployeeVerificationDto,
       EmployeeVerification,
     );
     await this.employeeVerificationRepository.update(
       { id },
       employeeVerificationUpdate,
     );
-    return RESPONSE_MESSAGES.UPDATED;
+    const findOptions = new FindOptionsBuilder<EmployeeVerification>()
+      .where({ id })
+      .relations({
+        employee: true,
+      })
+      .build();
+    return this.employeeVerificationRepository.findOneWithBuilderOption(
+      findOptions,
+    );
   }
 
   async remove(id: number) {

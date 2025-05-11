@@ -99,7 +99,7 @@ export class EmployeeService implements IEmployeeService {
       Employee,
     );
     await this.employeeRepository.update({ id }, employeeUpdate);
-    return RESPONSE_MESSAGES.UPDATED;
+    return this.employeeRepository.findOne({ id });
   }
 
   async remove(id: number) {

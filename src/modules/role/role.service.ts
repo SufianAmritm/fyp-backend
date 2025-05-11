@@ -37,7 +37,7 @@ export class RoleService implements IRoleService {
   async update(id: number, updateRoleDto: UpdateRoleDto) {
     const roleUpdate = this.roleMapper.map(updateRoleDto, CreateRoleDto, Role);
     await this.roleRepository.update({ id }, roleUpdate);
-    return RESPONSE_MESSAGES.UPDATED;
+    return this.roleRepository.findOne({ id });
   }
 
   async remove(id: number) {

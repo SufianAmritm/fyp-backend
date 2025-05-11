@@ -62,4 +62,6 @@ export const APP_ERROR_MESSAGES = {
   INVALID_OTP: 'Invalid OTP.',
   OTP_EXPIRED: 'The OTP has expired. Please request a new one.',
   INVALID_FILE_TYPE: 'Invalid file type.',
+  ALREADY_ACTIONED: (entity: string, action: string) =>
+    `${entity} has already been ${action}.`,
 };

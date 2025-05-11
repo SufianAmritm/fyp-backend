@@ -61,7 +61,7 @@ export class ApartmentService implements IApartmentService {
       Apartment,
     );
     await this.apartmentRepository.update({ id }, apartmentUpdate);
-    return RESPONSE_MESSAGES.UPDATED;
+    return this.apartmentRepository.findOne({ id });
   }
 
   async remove(id: number) {

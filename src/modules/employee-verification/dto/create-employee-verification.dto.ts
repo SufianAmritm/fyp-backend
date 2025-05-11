@@ -30,8 +30,7 @@ export class CreateEmployeeVerificationDto {
   @MaxLength(255, {
     message: 'Reason must be less than 255 characters',
   })
-  @ApiPropertyOptional({})
-  reason: string;
+
   @AutoMap()
   createdById: number;
 }
