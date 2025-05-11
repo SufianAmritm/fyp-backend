@@ -16,4 +16,5 @@ export interface IOccupationService {
   ): Promise<any>;
   findOne(id: number): Promise<Occupation>;
   findOneByApartmentId(id: number): Promise<Occupation>;
+  findOneByOccupiedById(id: number): Promise<Occupation>;
 }

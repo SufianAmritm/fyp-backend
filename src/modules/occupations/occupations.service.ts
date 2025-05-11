@@ -24,6 +24,36 @@ export class OccupationService implements IOccupationService {
     private readonly occupationsRepository: IOccupationRepository,
     @InjectMapper() private readonly occupationsMapper: Mapper,
   ) {}
+  async findOneByOccupiedById(occupiedById: number): Promise<Occupation> {
+    const findOptions = new FindOptionsBuilder<Occupation>()
+      .where({
+        occupiedById,
+      })
+      .relations({
+        apartment: true,
+        assignedBy: {
+          manager: true,
+        },
+        deAssignedBy: {
+          manager: true,
+        },
+        occupiedBy: {
+          user: true,
+        },
+        vacantBy: {
+          user: true,
+        },
+      })
+      .build();
+
+    const occupation =
+      await this.occupationsRepository.findOneWithBuilderOption(findOptions);
+    if (occupation.assignedBy) occupation.assignedBy.password = undefined;
+    if (occupation.deAssignedBy) occupation.deAssignedBy.password = undefined;
+    if (occupation.occupiedBy) occupation.occupiedBy.user.password = undefined;
+    if (occupation.vacantBy) occupation.vacantBy.user.password = undefined;
+    return occupation;
+  }
   async findOneByApartmentId(apartmentId: number): Promise<Occupation> {
     const findOptions = new FindOptionsBuilder<Occupation>()
       .where({

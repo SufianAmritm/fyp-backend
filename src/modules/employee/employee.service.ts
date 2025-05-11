@@ -3,6 +3,7 @@ import { InjectMapper } from '@automapper/nestjs';
 import { PutObjectCommandInput } from '@aws-sdk/client-s3';
 import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { RESPONSE_MESSAGES } from '../../common/constants';
+import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { UtilsService } from '../../common/utils/UtilsService';
@@ -89,7 +90,16 @@ export class EmployeeService implements IEmployeeService {
   }
 
   findOne(id: number) {
-    return this.employeeRepository.findOne({ id });
+    const findOptions = new FindOptionsBuilder<Employee>()
+      .where({ id })
+      .relations({
+        user: true,
+        station: {
+          colonies: true,
+        },
+      })
+      .build();
+    return this.employeeRepository.findOneWithBuilderOption(findOptions);
   }
 
   async update(id: number, updateEmployeeDto: UpdateEmployeeDto) {
@@ -107,7 +117,11 @@ export class EmployeeService implements IEmployeeService {
     return RESPONSE_MESSAGES.DELETED;
   }
 
-  private async uploadPic(file: Express.Multer.File, folder: string,field:string) {
+  private async uploadPic(
+    file: Express.Multer.File,
+    folder: string,
+    field: string,
+  ) {
     const key = this.utilService.awsUploadKeyBuilder(file.originalname, folder);
     const uploadOptions: PutObjectCommandInput = {
       Bucket: 'RESIDENCE_BUCKET',
@@ -115,6 +129,9 @@ export class EmployeeService implements IEmployeeService {
       Key: key,
     };
     const url = await this.s3Service.uploadFile(uploadOptions);
-    return {url:this.utilService.awsPublicUrlBuilder(url.bucket, url.key),field};
+    return {
+      url: this.utilService.awsPublicUrlBuilder(url.bucket, url.key),
+      field,
+    };
   }
 }

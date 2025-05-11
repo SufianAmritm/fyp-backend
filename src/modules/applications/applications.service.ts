@@ -17,6 +17,8 @@ import { DbTransactionFactory } from '../../common/database/utils/db-transaction
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { IEmployeeVerificationService } from '../employee-verification/interfaces/employee-verification.interface';
+import { Employee } from '../employee/entities/employee.entity';
+import { IEmployeeService } from '../employee/interfaces/employee.interface';
 import { Occupation } from '../occupations/entities/occupations.entity';
 import { IOccupationService } from '../occupations/interfaces/occupations.interface';
 import { CreateApplicationPriorityDto } from './dto/application-colonies/create-applications-priority.dto';
@@ -35,6 +37,8 @@ export class ApplicationService implements IApplicationService {
     private readonly applicationsRepository: IApplicationRepository,
     @Inject(IOccupationService)
     private readonly occupationService: IOccupationService,
+    @Inject(IEmployeeService)
+    private readonly employeeService: IEmployeeService,
     @Inject(IEmployeeVerificationService)
     private readonly employeeVerificationService: IEmployeeVerificationService,
     @Inject(IApplicationPriorityRepository)
@@ -59,6 +63,25 @@ export class ApplicationService implements IApplicationService {
       );
     }
 
+    const occupation = await this.occupationService.findOneByOccupiedById(
+      createApplicationDto.employeeId,
+    );
+    if (occupation) {
+      throw new BadRequestException(
+        'You have already occupied an apartment, please create a transfer request, or vacant the house first.',
+      );
+    }
+    const employee = await this.employeeService.findOne(
+      createApplicationDto.employeeId,
+    );
+
+    if (!employee) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
+    }
+    await this.verifyPriorities(
+      createApplicationDto.colonyPriorities,
+      employee,
+    );
     const exists = await this.applicationsRepository.find({
       employeeId: createApplicationDto.employeeId,
     });
@@ -109,6 +132,21 @@ export class ApplicationService implements IApplicationService {
       }
       throw new InternalServerErrorException(
         error.message || APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private async verifyPriorities(
+    createApplicationPriorityDto: CreateApplicationPriorityDto[],
+    employee: Employee,
+  ) {
+    const colonyIds = createApplicationPriorityDto.map((x) => x.colonyId);
+    const colonies = employee.station.colonies.filter((x) =>
+      colonyIds.includes(x.id),
+    );
+    if (colonies.length !== colonyIds.length) {
+      throw new BadRequestException(
+        "Some colonies selected don't belong to your station.",
       );
     }
   }
@@ -224,6 +262,17 @@ export class ApplicationService implements IApplicationService {
         newApplicationPriorities.forEach((x) => {
           x.applicationId = id;
         });
+        const employee = await this.employeeService.findOne(exists.employeeId);
+
+        if (!employee) {
+          throw new BadRequestException(
+            APP_ERROR_MESSAGES.NOT_FOUND('Employee'),
+          );
+        }
+        await this.verifyPriorities(
+          updateApplicationDto.colonyPriorities,
+          employee,
+        );
         await this.applicationPriorityRepository.bulkCreateWithTransaction(
           newApplicationPriorities,
           ApplicationPriority,

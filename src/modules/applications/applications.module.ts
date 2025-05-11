@@ -13,6 +13,8 @@ import { ApplicationPriorityRepository } from './repositories/application-priori
 import { ApplicationRepository } from './repositories/applications.repository';
 import { IApplicationPriorityRepository } from './repositories/interface/application-priority-repository.interface';
 import { IApplicationRepository } from './repositories/interface/applications-repository.interface';
+import { StationModule } from '../station/station.module';
+import { EmployeeModule } from '../employee/employee.module';
 
 const applicationsEntities = [Application, ApplicationPriority];
 const applicationsRepositoryProvider = [
@@ -36,6 +38,7 @@ const applicationsServiceProvider = [
     TypeOrmModule.forFeature(applicationsEntities),
     OccupationModule,
     EmployeeVerificationModule,
+    EmployeeModule,
   ],
   controllers: [ApplicationController],
   providers: [
