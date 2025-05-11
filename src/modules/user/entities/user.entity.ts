@@ -22,6 +22,7 @@ import { Otp } from '../../otp/entities/otp.entity';
 import { Station } from '../../station/entities/station.entity';
 import { AppSetting } from './settings.entity';
 import { Occupation } from '../../occupations/entities/occupations.entity';
+import { VacancyRequest } from '../../occupations/entities/vacancy-requests.entity';
 
 @Unique('user_email_ukey', ['email'])
 @Entity(TABLES.USER, { schema: 'public' })
@@ -124,4 +125,11 @@ export class User extends BaseEntity {
   occupationsAssigned: Occupation[];
   @OneToMany(() => Occupation, (i) => i.deAssignedBy)
   occupationsDeAssigned: Occupation[];
+
+  @AutoMap()
+  @OneToMany(() => VacancyRequest, (i) => i.approvedBy)
+  vacancyRequestsApproved: VacancyRequest[];
+  @AutoMap()
+  @OneToMany(() => VacancyRequest, (i) => i.rejectedBy)
+  vacancyRequestsRejected: VacancyRequest[];
 }

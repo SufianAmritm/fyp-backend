@@ -126,7 +126,7 @@ export class EmployeeVerificationService
         APP_ERROR_MESSAGES.NOT_FOUND('Employee Verification'),
       );
     }
-    if (status && exists.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
+    if (exists.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
       throw new BadRequestException(
         APP_ERROR_MESSAGES.ALREADY_ACTIONED(
           'Employee Verification',
@@ -134,11 +134,19 @@ export class EmployeeVerificationService
         ),
       );
     }
-    if (status && exists.status === EMPLOYEE_VERIFICATION_STATUS.REJECTED) {
+    if (exists.status === EMPLOYEE_VERIFICATION_STATUS.REJECTED) {
       throw new BadRequestException(
         APP_ERROR_MESSAGES.ALREADY_ACTIONED(
           'Employee Verification',
           EMPLOYEE_VERIFICATION_STATUS.REJECTED,
+        ),
+      );
+    }
+    if (exists.status === EMPLOYEE_VERIFICATION_STATUS.CANCELLED) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.ALREADY_ACTIONED(
+          'Employee Verification',
+          EMPLOYEE_VERIFICATION_STATUS.CANCELLED,
         ),
       );
     }

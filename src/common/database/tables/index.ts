@@ -14,4 +14,5 @@ export enum TABLES {
   OCCUPATIONS = 'occupations',
   APARTMENT_HISTORY = 'apartment_history',
   EMPLOYEE_HISTORY = 'employee_history',
+  VACANCY_REQUESTS = 'vacancy_requests',
 }

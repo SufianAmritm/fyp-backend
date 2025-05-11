@@ -1,11 +1,19 @@
 import { AutoMap } from '@automapper/classes';
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 import { OCCUPATION_STATUS } from '../../../common/constants/enums';
 import { TABLES } from '../../../common/database/tables';
 import { Apartment } from '../../apartment/entities/apartment.entity';
 import { Employee } from '../../employee/entities/employee.entity';
 import { User } from '../../user/entities/user.entity';
+import { VacancyRequest } from './vacancy-requests.entity';
 
 @Entity(TABLES.OCCUPATIONS, { schema: 'public' })
 export class Occupation extends BaseEntity {
@@ -89,4 +97,6 @@ export class Occupation extends BaseEntity {
     foreignKeyConstraintName: 'occupations_de_assigned_by_id_fk',
   })
   deAssignedBy: User;
+  @OneToMany(() => VacancyRequest, (i) => i.occupation)
+  vacancyRequests: VacancyRequest[];
 }

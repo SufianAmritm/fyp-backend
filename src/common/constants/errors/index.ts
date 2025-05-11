@@ -66,4 +66,7 @@ export const APP_ERROR_MESSAGES = {
     `${entity} has already been ${action}.`,
   NOT_VERIFIED_ENTITY: (entity: string) => `${entity} is not verified.`,
   ABOUT_TO_VACANT: 'The selected apartment is yet to be vacant.',
+  NOT_OCCUPIED: 'The selected apartment is not occupied',
+
+  NOT_OCCUPIED_BY_YOU: 'The selected apartment is not occupied by you.',
 };

@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsInt, IsNotEmpty } from 'class-validator';
 
-export class AssignOccupationDto {
+export class CreateVacancyRequestDto {
   @AutoMap()
   @ApiProperty({
     example: 1,
@@ -11,5 +11,8 @@ export class AssignOccupationDto {
   @Transform(({ value }) => Number(value))
   @IsInt()
   @IsNotEmpty()
-  employeeId: number;
+  apartmentId: number;
+
+  @AutoMap()
+  occupationId: number;
 }

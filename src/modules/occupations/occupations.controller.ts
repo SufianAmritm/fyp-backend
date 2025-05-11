@@ -1,13 +1,21 @@
-import { Body, Controller, Inject, Patch, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { DOMAIN_ENTITY, JWT } from 'src/common/constants';
 import { Context } from '../../common/decorators/context';
+import { IdDto } from '../../common/dtos/request/id.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { AppContext } from '../../common/interfaces/context';
-import {
-  AssignOccupationDto,
-  DeAssignOccupationDto,
-} from './dto/assign-occupation.dto';
+import { AssignOccupationDto } from './dto/assign-occupation.dto';
+import { CreateVacancyRequestDto } from './dto/create-vacancy-request.dto';
+import { UpdateVacancyRequestDto } from './dto/update-vacany-request.dto';
 import { IOccupationService } from './interfaces/occupations.interface';
 
 @ApiTags(DOMAIN_ENTITY.OCCUPATIONS)
@@ -20,10 +28,16 @@ export class OccupationController {
     private readonly occupationsService: IOccupationService,
   ) {}
 
-  // @Post()
-  // create(@Body() createOccupationDto: CreateOccupationDto) {
-  //   return this.occupationsService.create(createOccupationDto);
-  // }
+  @Post('vacancy-request')
+  create(
+    @Body() createVacancyRequestDto: CreateVacancyRequestDto,
+    @Context() context: AppContext,
+  ) {
+    return this.occupationsService.vacantOccupation(
+      createVacancyRequestDto,
+      context.UserId,
+    );
+  }
 
   // @Get()
   // findAll(
@@ -38,24 +52,46 @@ export class OccupationController {
   //   const { id } = idDto;
   //   return this.occupationsService.findOne(+id);
   // }
+  @Patch('vacancy-request/:id')
+  updateVacancyRequest(
+    @Body() updateVacancyRequestDto: UpdateVacancyRequestDto,
+    @Context() context: AppContext,
+    @Param() idDto: IdDto,
+  ) {
+    const { id } = idDto;
 
-  @Patch('assign')
+    return this.occupationsService.updateVacancyRequest(
+      id,
+      updateVacancyRequestDto,
+      context.UserId,
+    );
+  }
+  @Patch('assign/:id')
   assignOccupation(
     @Body() assignOccupationDto: AssignOccupationDto,
     @Context() context: AppContext,
+    @Param() idDto: IdDto,
   ) {
+    const { id } = idDto;
+
     return this.occupationsService.assignOccupation(
+      id,
       assignOccupationDto,
       context.UserId,
     );
   }
-  @Patch('deassign')
-  deAssignOccupation(
-    @Body() deAssignOccupationDto: DeAssignOccupationDto,
-    @Context() context: AppContext,
-  ) {
-    return this.occupationsService.deAssignOccupation(
-      deAssignOccupationDto,
+  @Patch('deassign/:id')
+  deAssignOccupation(@Context() context: AppContext, @Param() idDto: IdDto) {
+    const { id } = idDto;
+
+    return this.occupationsService.deAssignOccupation(id, context.UserId);
+  }
+  @Post('leave-occupation/:id')
+  leaveOccupation(@Context() context: AppContext, @Param() idDto: IdDto) {
+    const { id } = idDto;
+
+    return this.occupationsService.leaveOccupation(
+      id,
       context.UserId,
     );
   }

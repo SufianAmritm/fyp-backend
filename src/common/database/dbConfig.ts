@@ -15,6 +15,7 @@ import { EmployeeVerification } from '../../modules/employee-verification/entiti
 import { Employee } from '../../modules/employee/entities/employee.entity';
 import { Manager } from '../../modules/managers/entities/managers.entity';
 import { Occupation } from '../../modules/occupations/entities/occupations.entity';
+import { VacancyRequest } from '../../modules/occupations/entities/vacancy-requests.entity';
 import { Otp } from '../../modules/otp/entities/otp.entity';
 import { Station } from '../../modules/station/entities/station.entity';
 import { AppSetting } from '../../modules/user/entities/settings.entity';
@@ -57,6 +58,7 @@ const dataSource = new DataSource({
     Application,
     ApplicationPriority,
     Occupation,
+    VacancyRequest,
   ],
   synchronize: false,
   logging: false,

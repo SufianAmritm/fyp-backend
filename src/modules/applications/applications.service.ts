@@ -209,7 +209,7 @@ export class ApplicationService implements IApplicationService {
         APP_ERROR_MESSAGES.NOT_FOUND('Application'),
       );
     }
-    if (status && exists.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
+    if (exists.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
       throw new BadRequestException(
         APP_ERROR_MESSAGES.ALREADY_ACTIONED(
           'Application',
@@ -217,11 +217,19 @@ export class ApplicationService implements IApplicationService {
         ),
       );
     }
-    if (status && exists.status === EMPLOYEE_VERIFICATION_STATUS.REJECTED) {
+    if (exists.status === EMPLOYEE_VERIFICATION_STATUS.REJECTED) {
       throw new BadRequestException(
         APP_ERROR_MESSAGES.ALREADY_ACTIONED(
           'Application',
           EMPLOYEE_VERIFICATION_STATUS.REJECTED,
+        ),
+      );
+    }
+    if (exists.status === EMPLOYEE_VERIFICATION_STATUS.CANCELLED) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.ALREADY_ACTIONED(
+          'Application',
+          EMPLOYEE_VERIFICATION_STATUS.CANCELLED,
         ),
       );
     }
