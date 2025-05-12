@@ -15,6 +15,8 @@ import { Occupation } from '../../occupations/entities/occupations.entity';
 import { VacancyRequest } from '../../occupations/entities/vacancy-requests.entity';
 import { Station } from '../../station/entities/station.entity';
 import { User } from '../../user/entities/user.entity';
+import { TransferRequest } from '../../occupations/entities/transfer-requests.entity';
+import { Colony } from '../../colony/entities/colony.entity';
 
 @Entity(TABLES.EMPLOYEES, { schema: 'public' })
 export class Employee extends BaseEntity {
@@ -34,8 +36,8 @@ export class Employee extends BaseEntity {
   @Column('character varying', { nullable: true })
   address: string;
   @AutoMap()
-  @Column('integer', { name: 'station_id', nullable: true })
-  stationId: number;
+  @Column('integer', { name: 'colony_id', nullable: true })
+  colonyId: number;
   @AutoMap()
   @Column('integer', { nullable: true })
   members: number;
@@ -56,13 +58,13 @@ export class Employee extends BaseEntity {
     foreignKeyConstraintName: 'employees_created_by_id_fk',
   })
   createdBy: User;
-  @ManyToOne(() => Station, (i) => i.employees)
+  @ManyToOne(() => Colony, (i) => i.employees)
   @JoinColumn({
-    name: 'station_id',
+    name: 'colony_id',
     referencedColumnName: 'id',
-    foreignKeyConstraintName: 'employees_station_id_fk',
+    foreignKeyConstraintName: 'employees_colony_id_fk',
   })
-  station: Station;
+  colony: Colony;
   @OneToOne(() => User, (i) => i.employee)
   @JoinColumn({
     name: 'user_id',
@@ -79,7 +81,9 @@ export class Employee extends BaseEntity {
   occupations: Occupation[];
 
   @OneToOne(() => Occupation, (i) => i.vacantBy)
-  occupationAboutToVacant: Occupation;
-  @OneToOne(() => VacancyRequest, (i) => i.createdBy)
-  vacancyRequest: VacancyRequest;
+  occupationVacants: Occupation[];
+  @OneToMany(() => VacancyRequest, (i) => i.createdBy)
+  vacancyRequests: VacancyRequest[];
+  @OneToMany(() => TransferRequest, (i) => i.createdBy)
+  transferRequests: TransferRequest[];
 }

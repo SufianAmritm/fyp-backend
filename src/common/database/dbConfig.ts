@@ -20,6 +20,7 @@ import { Otp } from '../../modules/otp/entities/otp.entity';
 import { Station } from '../../modules/station/entities/station.entity';
 import { AppSetting } from '../../modules/user/entities/settings.entity';
 import { Seed } from './seeders/entities/seed.entity';
+import { TransferRequest } from '../../modules/occupations/entities/transfer-requests.entity';
 
 config();
 
@@ -59,6 +60,7 @@ const dataSource = new DataSource({
     ApplicationPriority,
     Occupation,
     VacancyRequest,
+    TransferRequest,
   ],
   synchronize: false,
   logging: false,

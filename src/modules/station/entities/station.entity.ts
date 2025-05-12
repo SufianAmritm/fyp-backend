@@ -13,7 +13,6 @@ import { Colony } from '../../colony/entities/colony.entity';
 import { Division } from '../../division/entities/division.entity';
 import { Manager } from '../../managers/entities/managers.entity';
 import { User } from '../../user/entities/user.entity';
-import { Employee } from '../../employee/entities/employee.entity';
 
 @Index('stations_name_division_id_uk', ['name', 'divisionId'], {
   unique: true,
@@ -55,7 +54,4 @@ export class Station extends BaseEntity {
   @AutoMap()
   @OneToMany(() => Colony, (i) => i.station)
   colonies: Colony[];
-  @AutoMap()
-  @OneToMany(() => Employee, (i) => i.station)
-  employees: Employee[];
 }

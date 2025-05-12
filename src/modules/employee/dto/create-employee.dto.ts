@@ -27,7 +27,7 @@ export class CreateEmployeeDto extends OmitType(SignUpDto, ['password']) {
   @ApiProperty({
     example: 1,
   })
-  stationId: number;
+  colonyId: number;
   @AutoMap()
   @Transform(({ value }) => Number(value))
   @IsNumber()

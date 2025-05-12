@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ORDER_BY } from 'src/common/constants/enums';
+import {
+  EMPLOYEE_VERIFICATION_STATUS,
+  ORDER_BY,
+} from 'src/common/constants/enums';
 import { FindOptionsBuilder } from 'src/common/database/builder-pattern/find-options.builder';
 import { BaseRepository } from 'src/common/database/repositories/base/base.repository';
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
@@ -68,7 +71,7 @@ export class UserRepository
       serviceCard,
       cnicBack,
       cnicFront,
-      stationId,
+      colonyId,
       address,
       members,
       profileComplete,
@@ -77,6 +80,19 @@ export class UserRepository
     let index = 0;
     const params = [];
     const updates = [];
+    const user = await this.repository.findOne({
+      where: {
+        id: userId,
+      },
+      relations: {
+        employee: {
+          verification: true,
+        },
+      },
+    });
+    const isEmployeeVerified = user.employee.verification?.some(
+      (v) => v.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED,
+    );
     let query = `UPDATE employees set `;
     if (picture) {
       updates.push(`picture = $${++index}`);
@@ -94,9 +110,9 @@ export class UserRepository
       updates.push(`cnic_front = $${++index}`);
       params.push(cnicFront);
     }
-    if (stationId) {
-      updates.push(`station_id = $${++index}`);
-      params.push(stationId);
+    if (colonyId && !isEmployeeVerified) {
+      updates.push(`colony_id = $${++index}`);
+      params.push(colonyId);
     }
     if (address) {
       updates.push(`address = $${++index}`);

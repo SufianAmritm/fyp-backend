@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { DOMAIN_ENTITY, RESPONSE_MESSAGES } from 'src/common/constants';
 
 import { Mapper } from '@automapper/core';
@@ -173,7 +178,9 @@ export class UserService implements IUserService {
       if (runner) {
         await runner.rollbackTransaction();
       }
-      throw new Error(error.message);
+      throw new InternalServerErrorException(
+        APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      );
     }
   }
   async createAdmin(createAdminDto: CreateAdminDto): Promise<User> {
@@ -263,7 +270,9 @@ export class UserService implements IUserService {
       uploadOperations.push(this.uploadPic(cnicBack, 'cnic', 'cnicBack'));
     }
     if (serviceCard) {
-      uploadOperations.push(this.uploadPic(serviceCard, 'serviceCard', 'serviceCard'));
+      uploadOperations.push(
+        this.uploadPic(serviceCard, 'serviceCard', 'serviceCard'),
+      );
     }
 
     const uploadResults = await Promise.all(uploadOperations);
@@ -276,11 +285,8 @@ export class UserService implements IUserService {
       await this.userRepository.updateManagerFromUser(id, dto);
     }
     if (user.role.name === UserRoles.EMPLOYEE) {
-      console.log('Updating employee')
-      console.log(dto)
-      await this.userRepository.updateEmployeeFromUser
-      (id, dto);
-      await this.isEmployeeProfileComplete(id)
+      await this.userRepository.updateEmployeeFromUser(id, dto);
+      await this.isEmployeeProfileComplete(id);
     }
     await this.userRepository.update({ id }, dto);
 
@@ -288,9 +294,12 @@ export class UserService implements IUserService {
   }
 
   async isEmployeeProfileComplete(id: number): Promise<boolean> {
-  const isComplete = await this.userRepository.isEmployeeProfileComplete(id);
-  if(isComplete) await this.userRepository.updateEmployeeFromUser(id, { profileComplete: true });
-  return isComplete;
+    const isComplete = await this.userRepository.isEmployeeProfileComplete(id);
+    if (isComplete)
+      await this.userRepository.updateEmployeeFromUser(id, {
+        profileComplete: true,
+      });
+    return isComplete;
   }
   async getSettings(userId: number): Promise<AppSetting> {
     return this.settingRepository.findOne({ userId });
@@ -366,9 +375,9 @@ export class UserService implements IUserService {
         emailData,
       );
       await runner.end();
-user.role = role;
-user.employee = employee;
-return user;
+      user.role = role;
+      user.employee = employee;
+      return user;
     } catch (error) {
       console.log(error);
       if (runner) {
@@ -531,7 +540,11 @@ return user;
   //     data,
   //   );
   // }
-  private async uploadPic(file: Express.Multer.File, folder: string,field:string) {
+  private async uploadPic(
+    file: Express.Multer.File,
+    folder: string,
+    field: string,
+  ) {
     console.log('file', file);
     const key = this.utilService.awsUploadKeyBuilder(file.originalname, folder);
     const uploadOptions: PutObjectCommandInput = {
@@ -540,6 +553,9 @@ return user;
       Key: key,
     };
     const url = await this.s3Service.uploadFile(uploadOptions);
-    return {url:this.utilService.awsPublicUrlBuilder(url.bucket, url.key),field};
+    return {
+      url: this.utilService.awsPublicUrlBuilder(url.bucket, url.key),
+      field,
+    };
   }
 }

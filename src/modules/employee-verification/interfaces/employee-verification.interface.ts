@@ -1,7 +1,7 @@
 import { PaginationDto } from '../../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../../common/interfaces/context';
 import { CreateEmployeeVerificationDto } from '../dto/create-employee-verification.dto';
-import { UpdateEmployeeVerificationDto } from '../dto/update-employee-verification.dto';
+import { UpdateEmployeeVerificationByAdminDto } from '../dto/update-employee-verification.dto';
 import { EmployeeVerification } from '../entities/employee-verification.entity';
 
 export const IEmployeeVerificationService = Symbol(
@@ -13,10 +13,11 @@ export interface IEmployeeVerificationService {
   findOne(id: number);
   update(
     id: number,
-    updateEmployeeVerificationDto: UpdateEmployeeVerificationDto,
+    updateEmployeeVerificationDto: UpdateEmployeeVerificationByAdminDto,
     userId: number,
   );
   getEmployeeVerificationStatus(
     employeeId: number,
   ): Promise<EmployeeVerification>;
+  cancel(id: number, userId: number): Promise<EmployeeVerification>;
 }

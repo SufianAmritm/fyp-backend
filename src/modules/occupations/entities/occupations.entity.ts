@@ -33,11 +33,11 @@ export class Occupation extends BaseEntity {
   @Column('integer', { name: 'occupied_by_id', nullable: true })
   occupiedById: number;
   @AutoMap()
-  @Column('integer', { name: 'vacant_by_id', nullable: true })
-  vacantById: number;
-  @AutoMap()
   @Column('integer', { name: 'assigned_by_id', nullable: true })
   assignedById: number;
+  @AutoMap()
+  @Column('integer', { name: 'vacant_by_id', nullable: true })
+  vacantById: number;
   @AutoMap()
   @Column('integer', { name: 'de_assigned_by_id', nullable: true })
   deAssignedById: number;
@@ -76,7 +76,7 @@ export class Occupation extends BaseEntity {
     foreignKeyConstraintName: 'occupations_occupied_by_id_fk',
   })
   occupiedBy: Employee;
-  @OneToOne(() => Employee, (i) => i.occupationAboutToVacant)
+  @ManyToOne(() => Employee, (i) => i.occupationVacants)
   @JoinColumn({
     name: 'vacant_by_id',
     referencedColumnName: 'id',

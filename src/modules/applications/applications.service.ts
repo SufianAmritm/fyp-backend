@@ -23,7 +23,10 @@ import { Occupation } from '../occupations/entities/occupations.entity';
 import { IOccupationService } from '../occupations/interfaces/occupations.interface';
 import { CreateApplicationPriorityDto } from './dto/application-colonies/create-applications-priority.dto';
 import { CreateApplicationDto } from './dto/applications/create-applications.dto';
-import { UpdateApplicationDto } from './dto/applications/update-applications.dto';
+import {
+  UpdateApplicationByAdminDto,
+  UpdateApplicationDto,
+} from './dto/applications/update-applications.dto';
 import { ApplicationPriority } from './entities/application-colonies.entity';
 import { Application } from './entities/applications.entity';
 import { IApplicationService } from './interfaces/applications.interface';
@@ -46,11 +49,84 @@ export class ApplicationService implements IApplicationService {
     private readonly transactionFactory: DbTransactionFactory,
     @InjectMapper() private readonly applicationsMapper: Mapper,
   ) {}
+  async update(
+    id: number,
+    updateApplicationDto: UpdateApplicationDto,
+    userId: number,
+  ) {
+    const employee =
+      await this.employeeService.findOneByUserIdWithColonies(userId);
+    if (!employee) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
+    }
+    const exists = await this.applicationsRepository.findOne({
+      id,
+      createdById: employee.id,
+    });
+    if (!exists) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.NOT_FOUND('Application'),
+      );
+    }
+    if (updateApplicationDto.colonyPriorities.length > 0) {
+      const runner = await this.transactionFactory.transactionRunner();
+      try {
+        await runner.start();
+        const manager = runner.manager;
+
+        const newApplicationPriorities = this.applicationsMapper.mapArray(
+          updateApplicationDto.colonyPriorities,
+          CreateApplicationPriorityDto,
+          ApplicationPriority,
+        );
+        newApplicationPriorities.forEach((x) => {
+          x.applicationId = id;
+        });
+        const employee = await this.employeeService.findOne(exists.employeeId);
+
+        if (!employee) {
+          throw new BadRequestException(
+            APP_ERROR_MESSAGES.NOT_FOUND('Employee'),
+          );
+        }
+        await this.verifyPriorities(
+          updateApplicationDto.colonyPriorities,
+          employee,
+        );
+        await this.applicationPriorityRepository.deleteWithTransaction(
+          {
+            applicationId: id,
+          },
+          ApplicationPriority,
+          manager,
+        );
+        await this.applicationPriorityRepository.bulkCreateWithTransaction(
+          newApplicationPriorities,
+          ApplicationPriority,
+          manager,
+        );
+        await runner.end();
+        return this.findOne(id);
+      } catch (error) {
+        if (runner) await runner.rollbackTransaction();
+        throw new InternalServerErrorException(
+          RESPONSE_MESSAGES.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+  }
 
   async create(createApplicationDto: CreateApplicationDto) {
+    const employee = await this.employeeService.findOneByUserIdWithColonies(
+      createApplicationDto.createdById,
+    );
+    if (!employee) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
+    }
+    const employeeId = employee.id;
     const employeeVerification =
       await this.employeeVerificationService.getEmployeeVerificationStatus(
-        createApplicationDto.employeeId,
+        employeeId,
       );
     if (!employeeVerification) {
       throw new BadRequestException(
@@ -63,27 +139,20 @@ export class ApplicationService implements IApplicationService {
       );
     }
 
-    const occupation = await this.occupationService.findOneByOccupiedById(
-      createApplicationDto.employeeId,
-    );
+    const occupation =
+      await this.occupationService.findOneByOccupiedById(employeeId);
     if (occupation) {
       throw new BadRequestException(
         'You have already occupied an apartment, please create a transfer request, or vacant the house first.',
       );
     }
-    const employee = await this.employeeService.findOne(
-      createApplicationDto.employeeId,
-    );
 
-    if (!employee) {
-      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
-    }
     await this.verifyPriorities(
       createApplicationDto.colonyPriorities,
       employee,
     );
     const exists = await this.applicationsRepository.find({
-      employeeId: createApplicationDto.employeeId,
+      employeeId,
     });
     if (exists.length > 0) {
       const pending = exists.find(
@@ -141,7 +210,7 @@ export class ApplicationService implements IApplicationService {
     employee: Employee,
   ) {
     const colonyIds = createApplicationPriorityDto.map((x) => x.colonyId);
-    const colonies = employee.station.colonies.filter((x) =>
+    const colonies = employee.colony.station.colonies.filter((x) =>
       colonyIds.includes(x.id),
     );
     if (colonies.length !== colonyIds.length) {
@@ -194,13 +263,61 @@ export class ApplicationService implements IApplicationService {
     if (result.createdBy) result.createdBy.password = undefined;
     return result;
   }
-
-  async update(
+  async cancel(id: number, userId: number) {
+    const employee = await this.employeeService.findOneByUserId(userId);
+    if (!employee) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
+    }
+    const exists = await this.applicationsRepository.findOne({
+      id,
+      employeeId: employee.id,
+    });
+    if (!exists) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.NOT_FOUND('Application'),
+      );
+    }
+    if (exists.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.ALREADY_ACTIONED(
+          'Application',
+          EMPLOYEE_VERIFICATION_STATUS.APPROVED,
+        ),
+      );
+    }
+    if (exists.status === EMPLOYEE_VERIFICATION_STATUS.REJECTED) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.ALREADY_ACTIONED(
+          'Application',
+          EMPLOYEE_VERIFICATION_STATUS.REJECTED,
+        ),
+      );
+    }
+    if (exists.status === EMPLOYEE_VERIFICATION_STATUS.CANCELLED) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.ALREADY_ACTIONED(
+          'Application',
+          EMPLOYEE_VERIFICATION_STATUS.CANCELLED,
+        ),
+      );
+    }
+    const applicationUpdate = this.applicationsMapper.map(
+      {
+        status: EMPLOYEE_VERIFICATION_STATUS.CANCELLED,
+        reason: 'Cancelled by Employee',
+        apartmentId: null,
+      },
+      UpdateApplicationByAdminDto,
+      Application,
+    );
+    await this.applicationsRepository.update({ id }, applicationUpdate);
+    return this.findOne(id);
+  }
+  async updateByAdmin(
     id: number,
-    updateApplicationDto: UpdateApplicationDto,
+    updateApplicationDto: UpdateApplicationByAdminDto,
     userId: number,
   ) {
-    const { status } = updateApplicationDto;
     const exists = await this.applicationsRepository.findOne({
       id,
     });
@@ -239,7 +356,7 @@ export class ApplicationService implements IApplicationService {
       const manager = runner.manager;
       const applicationsUpdate = this.applicationsMapper.map(
         updateApplicationDto,
-        UpdateApplicationDto,
+        UpdateApplicationByAdminDto,
         Application,
       );
       if (updateApplicationDto.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED)
@@ -254,46 +371,10 @@ export class ApplicationService implements IApplicationService {
         Application,
         manager,
       );
-      await this.applicationPriorityRepository.deleteWithTransaction(
-        {
-          applicationId: id,
-        },
-        ApplicationPriority,
-        manager,
-      );
-      if (updateApplicationDto.colonyPriorities.length > 0) {
-        const newApplicationPriorities = this.applicationsMapper.mapArray(
-          updateApplicationDto.colonyPriorities,
-          CreateApplicationPriorityDto,
-          ApplicationPriority,
-        );
-        newApplicationPriorities.forEach((x) => {
-          x.applicationId = id;
-        });
-        const employee = await this.employeeService.findOne(exists.employeeId);
 
-        if (!employee) {
-          throw new BadRequestException(
-            APP_ERROR_MESSAGES.NOT_FOUND('Employee'),
-          );
-        }
-        await this.verifyPriorities(
-          updateApplicationDto.colonyPriorities,
-          employee,
-        );
-        await this.applicationPriorityRepository.bulkCreateWithTransaction(
-          newApplicationPriorities,
-          ApplicationPriority,
-          manager,
-        );
-      }
       if (
         updateApplicationDto.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED
       ) {
-        if (!updateApplicationDto.apartmentId)
-          throw new BadRequestException(
-            APP_ERROR_MESSAGES.REQUIRED('Apartment'),
-          );
         const occupation = await this.occupationService.findOneByApartmentId(
           updateApplicationDto.apartmentId,
         );
@@ -305,6 +386,14 @@ export class ApplicationService implements IApplicationService {
         if (occupation.status === OCCUPATION_STATUS.ABOUT_TO_VACANT) {
           throw new BadRequestException(APP_ERROR_MESSAGES.ABOUT_TO_VACANT);
         }
+        const employee = await this.employeeService.findOneByUserId(
+          exists.createdById,
+        );
+        if (!employee) {
+          throw new BadRequestException(
+            APP_ERROR_MESSAGES.NOT_FOUND('Employee'),
+          );
+        }
         await this.applicationsRepository.updateWithTransaction(
           {
             id: occupation.id,
@@ -312,7 +401,7 @@ export class ApplicationService implements IApplicationService {
           {
             lastOccupiedOn: new Date(),
             status: OCCUPATION_STATUS.OCCUPIED,
-            occupiedById: updateApplicationDto.employeeId,
+            occupiedById: employee.id,
             assignedById: userId,
           },
           Occupation,

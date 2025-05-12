@@ -8,7 +8,7 @@ import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-o
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { CreateEmployeeVerificationDto } from './dto/create-employee-verification.dto';
-import { UpdateEmployeeVerificationDto } from './dto/update-employee-verification.dto';
+import { UpdateEmployeeVerificationByAdminDto } from './dto/update-employee-verification.dto';
 import { EmployeeVerification } from './entities/employee-verification.entity';
 import { IEmployeeVerificationService } from './interfaces/employee-verification.interface';
 import { IEmployeeVerificationRepository } from './repositories/interface/employee-verification-repository.interface';
@@ -112,12 +112,60 @@ export class EmployeeVerificationService
     return result;
   }
 
+  async cancel(id: number, userId: number) {
+    const exists = await this.employeeVerificationRepository.findOne({
+      id,
+      createdById: userId,
+    });
+    if (!exists) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.NOT_FOUND('Employee Verification'),
+      );
+    }
+    if (exists.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.ALREADY_ACTIONED(
+          'Employee Verification',
+          EMPLOYEE_VERIFICATION_STATUS.APPROVED,
+        ),
+      );
+    }
+    if (exists.status === EMPLOYEE_VERIFICATION_STATUS.REJECTED) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.ALREADY_ACTIONED(
+          'Employee Verification',
+          EMPLOYEE_VERIFICATION_STATUS.REJECTED,
+        ),
+      );
+    }
+    if (exists.status === EMPLOYEE_VERIFICATION_STATUS.CANCELLED) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.ALREADY_ACTIONED(
+          'Employee Verification',
+          EMPLOYEE_VERIFICATION_STATUS.CANCELLED,
+        ),
+      );
+    }
+    const employeeVerificationUpdate = this.employeeVerificationMapper.map(
+      {
+        status: EMPLOYEE_VERIFICATION_STATUS.CANCELLED,
+        reason: 'Cancelled by Employee',
+      },
+      UpdateEmployeeVerificationByAdminDto,
+      EmployeeVerification,
+    );
+    await this.employeeVerificationRepository.update(
+      { id },
+      employeeVerificationUpdate,
+    );
+    return this.findOne(id);
+  }
+
   async update(
     id: number,
-    updateEmployeeVerificationDto: UpdateEmployeeVerificationDto,
+    updateEmployeeVerificationDto: UpdateEmployeeVerificationByAdminDto,
     userId: number,
   ) {
-    const { status } = updateEmployeeVerificationDto;
     const exists = await this.employeeVerificationRepository.findOne({
       id,
     });
@@ -152,7 +200,7 @@ export class EmployeeVerificationService
     }
     const employeeVerificationUpdate = this.employeeVerificationMapper.map(
       updateEmployeeVerificationDto,
-      UpdateEmployeeVerificationDto,
+      UpdateEmployeeVerificationByAdminDto,
       EmployeeVerification,
     );
     if (

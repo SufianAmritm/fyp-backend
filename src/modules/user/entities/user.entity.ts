@@ -18,11 +18,12 @@ import { Division } from '../../division/entities/division.entity';
 import { EmployeeVerification } from '../../employee-verification/entities/employee-verification.entity';
 import { Employee } from '../../employee/entities/employee.entity';
 import { Manager } from '../../managers/entities/managers.entity';
+import { Occupation } from '../../occupations/entities/occupations.entity';
+import { TransferRequest } from '../../occupations/entities/transfer-requests.entity';
+import { VacancyRequest } from '../../occupations/entities/vacancy-requests.entity';
 import { Otp } from '../../otp/entities/otp.entity';
 import { Station } from '../../station/entities/station.entity';
 import { AppSetting } from './settings.entity';
-import { Occupation } from '../../occupations/entities/occupations.entity';
-import { VacancyRequest } from '../../occupations/entities/vacancy-requests.entity';
 
 @Unique('user_email_ukey', ['email'])
 @Entity(TABLES.USER, { schema: 'public' })
@@ -132,4 +133,16 @@ export class User extends BaseEntity {
   @AutoMap()
   @OneToMany(() => VacancyRequest, (i) => i.rejectedBy)
   vacancyRequestsRejected: VacancyRequest[];
+
+  @OneToMany(() => TransferRequest, (i) => i.approvedByFrom)
+  transferRequestsApprovedFrom: TransferRequest[];
+
+  @OneToMany(() => TransferRequest, (i) => i.approvedByTo)
+  transferRequestsApprovedTo: TransferRequest[];
+
+  @OneToMany(() => TransferRequest, (i) => i.rejectedByFrom)
+  transferRequestsRejectedFrom: TransferRequest[];
+
+  @OneToMany(() => TransferRequest, (i) => i.rejectedByTo)
+  transferRequestsRejectedTo: TransferRequest[];
 }

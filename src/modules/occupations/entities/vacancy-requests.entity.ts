@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { EMPLOYEE_VERIFICATION_STATUS } from '../../../common/constants/enums';
 import { TABLES } from '../../../common/database/tables';
 import { Employee } from '../../employee/entities/employee.entity';
@@ -10,7 +10,7 @@ import { Occupation } from './occupations.entity';
 @Entity(TABLES.VACANCY_REQUESTS, { schema: 'public' })
 export class VacancyRequest extends BaseEntity {
   @AutoMap()
-  @Column('integer', { name: 'apartment_id', nullable: false })
+  @Column('integer', { name: 'occupation_id', nullable: false })
   occupationId: number;
 
   @AutoMap()
@@ -37,10 +37,10 @@ export class VacancyRequest extends BaseEntity {
   @JoinColumn({
     name: 'occupation_id',
     referencedColumnName: 'id',
-    foreignKeyConstraintName: 'vacancy_requests_apartment_id_fk',
+    foreignKeyConstraintName: 'vacancy_requests_occupation_id_fk',
   })
   occupation: Occupation;
-  @OneToOne(() => Employee, (i) => i.vacancyRequest)
+  @ManyToOne(() => Employee, (i) => i.vacancyRequests)
   @JoinColumn({
     name: 'created_by_id',
     referencedColumnName: 'id',

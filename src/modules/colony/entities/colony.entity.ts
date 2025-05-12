@@ -6,6 +6,8 @@ import { Apartment } from '../../apartment/entities/apartment.entity';
 import { ApplicationPriority } from '../../applications/entities/application-colonies.entity';
 import { Station } from '../../station/entities/station.entity';
 import { User } from '../../user/entities/user.entity';
+import { TransferRequest } from '../../occupations/entities/transfer-requests.entity';
+import { Employee } from '../../employee/entities/employee.entity';
 
 @Entity(TABLES.COLONIES, { schema: 'public' })
 export class Colony extends BaseEntity {
@@ -39,4 +41,11 @@ export class Colony extends BaseEntity {
   apartments: Apartment[];
   @OneToMany(() => ApplicationPriority, (i) => i.colony)
   colonyPriorities: ApplicationPriority[];
+  @OneToMany(() => TransferRequest, (i) => i.fromColony)
+  fromTransferRequests: TransferRequest[];
+  @OneToMany(() => TransferRequest, (i) => i.toColony)
+  toTransferRequests: TransferRequest[];
+
+  @OneToMany(() => Employee, (i) => i.colony)
+  employees: Employee[];
 }

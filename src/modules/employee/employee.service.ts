@@ -27,6 +27,34 @@ export class EmployeeService implements IEmployeeService {
     private readonly s3Service: IS3Service,
     private readonly utilService: UtilsService,
   ) {}
+  findOneByUserIdWithColonies(userId: number): Promise<Employee> {
+    const findOptions = new FindOptionsBuilder<Employee>()
+      .where({ userId })
+      .relations({
+        user: true,
+        colony: {
+          station: {
+            colonies: true,
+          },
+        },
+        occupations: true,
+      })
+      .build();
+    return this.employeeRepository.findOneWithBuilderOption(findOptions);
+  }
+  findOneByUserId(userId: number): Promise<Employee> {
+    const findOptions = new FindOptionsBuilder<Employee>()
+      .where({ userId })
+      .relations({
+        user: true,
+        colony: {
+          station: true,
+        },
+        occupations: true,
+      })
+      .build();
+    return this.employeeRepository.findOneWithBuilderOption(findOptions);
+  }
   async create(
     createEmployeeDto: CreateEmployeeDto,
     cnicFront: Express.Multer.File,
@@ -94,8 +122,8 @@ export class EmployeeService implements IEmployeeService {
       .where({ id })
       .relations({
         user: true,
-        station: {
-          colonies: true,
+        colony: {
+          station: true,
         },
       })
       .build();

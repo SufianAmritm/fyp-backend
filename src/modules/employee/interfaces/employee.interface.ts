@@ -12,4 +12,6 @@ export interface IEmployeeService {
   );
 
   findOne(id: number): Promise<Employee>;
+  findOneByUserId(userId: number): Promise<Employee>;
+  findOneByUserIdWithColonies(userId: number): Promise<Employee>;
 }
