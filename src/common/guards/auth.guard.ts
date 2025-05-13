@@ -2,6 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  HttpException,
   Injectable,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -37,11 +38,17 @@ export class AuthGuard implements CanActivate {
   async verifyJwt(req: any) {
     const authorizationToken = req.headers.authorization;
     if (!authorizationToken) {
-      throw new ForbiddenException('No token provided');
+      throw new ForbiddenException({
+        statusCode: 'invalid_token',
+        message: 'Authorization token not found',
+      });
     }
     const token = authorizationToken.split(' ')[1];
     if (!token) {
-      throw new ForbiddenException('Malformed token');
+      throw new ForbiddenException({
+        statusCode: 'invalid_token',
+        message: 'Malformed token',
+      });
     }
     try {
       const decoded = await this.verifyToken(token);
@@ -54,8 +61,12 @@ export class AuthGuard implements CanActivate {
       req[AuthGuard.CONTEXT] = new AppContext(decoded);
       req.user = decoded;
       return true;
-    } catch (err) {
-      throw new ForbiddenException('Invalid token');
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new ForbiddenException({
+        statusCode: 'invalid_token',
+        message: 'Malformed token',
+      });
     }
   }
 
@@ -68,12 +79,23 @@ export class AuthGuard implements CanActivate {
           if (error) {
             if (error instanceof jwt.TokenExpiredError) {
               const decodeTest = jwt.decode(token) as any;
-              if (decodeTest?.email && this.configService.get<string>('TEST_EMAILS').split(',').includes(decodeTest?.email)) {
+              if (
+                decodeTest?.email &&
+                this.configService
+                  .get<string>('TEST_EMAILS')
+                  .split(',')
+                  .includes(decodeTest?.email)
+              ) {
                 resolve(decodeTest);
               }
             }
 
-            throw error;
+            if (error instanceof jwt.TokenExpiredError) {
+              throw new ForbiddenException({
+                message: 'Email not verified',
+                statusCode: 'token_expired',
+              });
+            }
           } else {
             resolve(decoded);
           }
