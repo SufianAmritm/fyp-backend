@@ -17,6 +17,7 @@ import { OccupationRepository } from './repositories/occupations.repository';
 import { TransferRequestRepository } from './repositories/transfer-request.repository';
 import { VacancyRequestRepository } from './repositories/vacany-request.repository';
 import { ManagersModule } from '../managers/managers.module';
+import { EmailModule } from '../email/email.module';
 
 const occupationsEntities = [Occupation, VacancyRequest, TransferRequest];
 const occupationsRepositoryProvider = [
@@ -45,6 +46,7 @@ const occupationsServiceProvider = [
     UserModule,
     EmployeeModule,
     ManagersModule,
+    EmailModule
   ],
   controllers: [OccupationController],
   providers: [
