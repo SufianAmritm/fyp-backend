@@ -9,12 +9,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { DOMAIN_ENTITY, JWT } from 'src/common/constants';
-import { EMPLOYEE_VERIFICATION_STATUS } from '../../common/constants/enums';
+import { DOMAIN_ENTITY, JWT, ManagementRoles } from 'src/common/constants';
+import {
+  EMPLOYEE_VERIFICATION_STATUS,
+  UserRoles,
+} from '../../common/constants/enums';
 import { Context } from '../../common/decorators/context';
+import { Roles } from '../../common/decorators/role-metadata.decorator';
 import { IdDto } from '../../common/dtos/request/id.dto';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { AppContext } from '../../common/interfaces/context';
 import { CreateEmployeeVerificationDto } from './dto/create-employee-verification.dto';
 import { UpdateEmployeeVerificationByAdminDto } from './dto/update-employee-verification.dto';
@@ -22,14 +27,14 @@ import { IEmployeeVerificationService } from './interfaces/employee-verification
 
 @ApiTags(DOMAIN_ENTITY.EMPLOYEE_VERIFICATIONS)
 @ApiBearerAuth(JWT)
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('employee-verifications')
 export class EmployeeVerificationController {
   constructor(
     @Inject(IEmployeeVerificationService)
     private readonly employeeVerificationService: IEmployeeVerificationService,
   ) {}
-
+  @Roles([UserRoles.EMPLOYEE])
   @Post()
   create(
     @Body() createEmployeeVerificationDto: CreateEmployeeVerificationDto,
@@ -55,6 +60,7 @@ export class EmployeeVerificationController {
     return this.employeeVerificationService.findOne(+id);
   }
 
+  @Roles(ManagementRoles)
   @Post('approve/:id')
   approve(
     @Param() idDto: IdDto,
@@ -70,12 +76,14 @@ export class EmployeeVerificationController {
       context.UserId,
     );
   }
+  @Roles([UserRoles.EMPLOYEE])
   @Post('cancel/:id')
   cancel(@Param() idDto: IdDto, @Context() context: AppContext) {
     const { id } = idDto;
 
     return this.employeeVerificationService.cancel(+id, context.UserId);
   }
+  @Roles(ManagementRoles)
   @Post('reject/:id')
   reject(
     @Param() idDto: IdDto,

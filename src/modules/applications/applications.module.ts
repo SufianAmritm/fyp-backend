@@ -15,6 +15,8 @@ import { IApplicationPriorityRepository } from './repositories/interface/applica
 import { IApplicationRepository } from './repositories/interface/applications-repository.interface';
 import { StationModule } from '../station/station.module';
 import { EmployeeModule } from '../employee/employee.module';
+import { UserModule } from '../user/user.module';
+import { ManagersModule } from '../managers/managers.module';
 
 const applicationsEntities = [Application, ApplicationPriority];
 const applicationsRepositoryProvider = [
@@ -39,6 +41,8 @@ const applicationsServiceProvider = [
     OccupationModule,
     EmployeeVerificationModule,
     EmployeeModule,
+    UserModule,
+    ManagersModule,
   ],
   controllers: [ApplicationController],
   providers: [

@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Inject,
   Param,
@@ -28,14 +27,13 @@ import { IDivisionService } from './interfaces/division.interface';
 @ApiTags(DOMAIN_ENTITY.DIVISION)
 @ApiBearerAuth(JWT)
 @UseGuards(AuthGuard, RolesGuard)
-@Roles([UserRoles.ADMIN])
 @Controller('divisions')
 export class DivisionController {
   constructor(
     @Inject(IDivisionService)
     private readonly divisionService: IDivisionService,
   ) {}
-
+  @Roles([UserRoles.ADMIN])
   @Post()
   create(
     @Body() createDivisionDto: CreateDivisionDto,
@@ -58,7 +56,7 @@ export class DivisionController {
     const { id } = idDto;
     return this.divisionService.findOne(+id);
   }
-
+  @Roles([UserRoles.ADMIN])
   @Patch(':id')
   update(@Param() idDto: IdDto, @Body() updateDivisionDto: UpdateDivisionDto) {
     const { id } = idDto;
@@ -66,10 +64,10 @@ export class DivisionController {
     return this.divisionService.update(+id, updateDivisionDto);
   }
 
-  @Delete(':id')
-  remove(@Param() idDto: IdDto) {
-    const { id } = idDto;
+  // @Delete(':id')
+  // remove(@Param() idDto: IdDto) {
+  //   const { id } = idDto;
 
-    return this.divisionService.remove(+id);
-  }
+  //   return this.divisionService.remove(+id);
+  // }
 }

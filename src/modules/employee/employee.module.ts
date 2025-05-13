@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ManagersModule } from '../managers/managers.module';
 import { UserModule } from '../user/user.module';
 import { EmployeeController } from './employee.controller';
 import { EmployeeService } from './employee.service';
@@ -23,7 +24,11 @@ const employeeServiceProvider = [
   },
 ];
 @Module({
-  imports: [TypeOrmModule.forFeature(employeeEntities), UserModule],
+  imports: [
+    TypeOrmModule.forFeature(employeeEntities),
+    UserModule,
+    ManagersModule,
+  ],
   controllers: [EmployeeController],
   providers: [
     ...employeeServiceProvider,

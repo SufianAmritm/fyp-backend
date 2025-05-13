@@ -145,4 +145,10 @@ export class User extends BaseEntity {
 
   @OneToMany(() => TransferRequest, (i) => i.rejectedByTo)
   transferRequestsRejectedTo: TransferRequest[];
+
+  @OneToMany(() => VacancyRequest, (i) => i.createdBy)
+  vacancyRequests: VacancyRequest[];
+
+  @OneToMany(() => TransferRequest, (i) => i.createdBy)
+  transferRequests: TransferRequest[];
 }

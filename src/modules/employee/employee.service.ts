@@ -1,13 +1,21 @@
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { PutObjectCommandInput } from '@aws-sdk/client-s3';
-import { HttpException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { RESPONSE_MESSAGES } from '../../common/constants';
+import { UserRoles } from '../../common/constants/enums';
+import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { UtilsService } from '../../common/utils/UtilsService';
 import { IS3Service } from '../aws/interface/aws-s3.interface';
+import { IManagersService } from '../managers/interfaces/managers.interface';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
@@ -23,6 +31,8 @@ export class EmployeeService implements IEmployeeService {
     @InjectMapper() private readonly employeeMapper: Mapper,
     @Inject(IUserService)
     private readonly userService: IUserService,
+    @Inject(IManagersService)
+    private readonly managerService: IManagersService,
     @Inject(IS3Service)
     private readonly s3Service: IS3Service,
     private readonly utilService: UtilsService,
@@ -62,6 +72,24 @@ export class EmployeeService implements IEmployeeService {
     serviceCard: Express.Multer.File,
     picture?: Express.Multer.File,
   ) {
+    const creator = await this.userService.findOneById(
+      createEmployeeDto.createdById,
+    );
+    if (!creator)
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
+    if (creator.role.name === UserRoles.MANAGER) {
+      const manager = await this.managerService.findOneByUserIdWithColonies(
+        creator.id,
+      );
+      const canManagerCreateEmployee = manager.station.colonies.some(
+        (colony) => colony.id === createEmployeeDto.colonyId,
+      );
+
+      if (!canManagerCreateEmployee) {
+        throw new BadRequestException(APP_ERROR_MESSAGES.UNAUTHORIZED);
+      }
+    }
+
     const { runner, user, transactionManager, emailData } =
       await this.userService.createEmployee(createEmployeeDto);
     try {
@@ -117,7 +145,7 @@ export class EmployeeService implements IEmployeeService {
     return this.employeeRepository.findAll(paginationDto, ctx);
   }
 
-  findOne(id: number) {
+  async findOne(id: number) {
     const findOptions = new FindOptionsBuilder<Employee>()
       .where({ id })
       .relations({
@@ -127,17 +155,70 @@ export class EmployeeService implements IEmployeeService {
         },
       })
       .build();
-    return this.employeeRepository.findOneWithBuilderOption(findOptions);
+    const employee =
+      await this.employeeRepository.findOneWithBuilderOption(findOptions);
+    if (employee.user) employee.user.password = undefined;
+    return employee;
   }
 
-  async update(id: number, updateEmployeeDto: UpdateEmployeeDto) {
+  async update(
+    id: number,
+    updateEmployeeDto: UpdateEmployeeDto,
+    userId: number,
+    cnicFront?: Express.Multer.File,
+    cnicBack?: Express.Multer.File,
+    serviceCard?: Express.Multer.File,
+    picture?: Express.Multer.File,
+  ) {
+    const employee = await this.findOne(id);
+    if (!employee) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
+    }
+    const updator = await this.userService.findOneById(userId);
+    if (!updator)
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
+    if (updator.role.name === UserRoles.MANAGER) {
+      const manager = await this.managerService.findOneByUserIdWithColonies(
+        updator.id,
+      );
+      const canManagerCreateEmployee = manager.station.colonies.some(
+        (colony) => colony.id === employee.colonyId,
+      );
+
+      if (!canManagerCreateEmployee) {
+        throw new BadRequestException(APP_ERROR_MESSAGES.UNAUTHORIZED);
+      }
+    }
+    const uploadOperations = [];
+
+    if (picture) {
+      uploadOperations.push(this.uploadPic(picture, 'profile', 'picture'));
+    }
+    if (cnicFront) {
+      uploadOperations.push(this.uploadPic(cnicFront, 'cnic', 'cnicFront'));
+    }
+    if (cnicBack) {
+      uploadOperations.push(this.uploadPic(cnicBack, 'cnic', 'cnicBack'));
+    }
+    if (serviceCard) {
+      uploadOperations.push(
+        this.uploadPic(serviceCard, 'serviceCard', 'serviceCard'),
+      );
+    }
+
+    const uploadResults = await Promise.all(uploadOperations);
+
+    uploadResults.forEach(({ field, url }) => {
+      updateEmployeeDto[field] = url;
+    });
     const employeeUpdate = this.employeeMapper.map(
       updateEmployeeDto,
       CreateEmployeeDto,
       Employee,
     );
     await this.employeeRepository.update({ id }, employeeUpdate);
-    return this.employeeRepository.findOne({ id });
+    await this.userService.updateProfile(employee.userId, updateEmployeeDto);
+    return this.findOne(id);
   }
 
   async remove(id: number) {

@@ -1,6 +1,7 @@
 import { PaginationDto } from '../../../common/dtos/request/pagination.dto';
 import { CreateManagersDto } from '../dto/create-managers.dto';
 import { UpdateManagersDto } from '../dto/update-managers.dto';
+import { Manager } from '../entities/managers.entity';
 
 export const IManagersService = Symbol('IManagersService');
 export interface IManagersService {
@@ -12,4 +13,7 @@ export interface IManagersService {
   );
   findOne(id: number);
   findAll(paginationDto: PaginationDto);
+  findOneByUserIdWithColonies(id: number): Promise<Manager>;
+
+  findOneByUserIdWithColoniesAndEmployees(id: number): Promise<Manager>;
 }

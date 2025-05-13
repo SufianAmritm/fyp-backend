@@ -2,6 +2,7 @@ import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import {
   BadRequestException,
+  HttpException,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -10,6 +11,7 @@ import { RESPONSE_MESSAGES } from '../../common/constants';
 import {
   EMPLOYEE_VERIFICATION_STATUS,
   OCCUPATION_STATUS,
+  UserRoles,
 } from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
@@ -19,8 +21,10 @@ import { AppContext } from '../../common/interfaces/context';
 import { IEmployeeVerificationService } from '../employee-verification/interfaces/employee-verification.interface';
 import { Employee } from '../employee/entities/employee.entity';
 import { IEmployeeService } from '../employee/interfaces/employee.interface';
+import { IManagersService } from '../managers/interfaces/managers.interface';
 import { Occupation } from '../occupations/entities/occupations.entity';
 import { IOccupationService } from '../occupations/interfaces/occupations.interface';
+import { IUserService } from '../user/interfaces/user.interface';
 import { CreateApplicationPriorityDto } from './dto/application-colonies/create-applications-priority.dto';
 import { CreateApplicationDto } from './dto/applications/create-applications.dto';
 import {
@@ -40,6 +44,10 @@ export class ApplicationService implements IApplicationService {
     private readonly applicationsRepository: IApplicationRepository,
     @Inject(IOccupationService)
     private readonly occupationService: IOccupationService,
+    @Inject(IUserService)
+    private readonly userService: IUserService,
+    @Inject(IManagersService)
+    private readonly managerService: IManagersService,
     @Inject(IEmployeeService)
     private readonly employeeService: IEmployeeService,
     @Inject(IEmployeeVerificationService)
@@ -61,7 +69,6 @@ export class ApplicationService implements IApplicationService {
     }
     const exists = await this.applicationsRepository.findOne({
       id,
-      createdById: employee.id,
     });
     if (!exists) {
       throw new BadRequestException(
@@ -109,6 +116,8 @@ export class ApplicationService implements IApplicationService {
         return this.findOne(id);
       } catch (error) {
         if (runner) await runner.rollbackTransaction();
+        if (error instanceof HttpException) throw error;
+
         throw new InternalServerErrorException(
           RESPONSE_MESSAGES.INTERNAL_SERVER_ERROR,
         );
@@ -199,6 +208,8 @@ export class ApplicationService implements IApplicationService {
       if (runner) {
         await runner.rollbackTransaction();
       }
+      if (error instanceof HttpException) throw error;
+
       throw new InternalServerErrorException(
         error.message || APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );
@@ -268,10 +279,11 @@ export class ApplicationService implements IApplicationService {
     if (!employee) {
       throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
     }
-    const exists = await this.applicationsRepository.findOne({
-      id,
-      employeeId: employee.id,
-    });
+    const findOptions = new FindOptionsBuilder<Application>()
+      .where({ id, createdById: userId })
+      .build();
+    const exists =
+      await this.applicationsRepository.findOneWithBuilderOption(findOptions);
     if (!exists) {
       throw new BadRequestException(
         APP_ERROR_MESSAGES.NOT_FOUND('Application'),
@@ -350,6 +362,23 @@ export class ApplicationService implements IApplicationService {
         ),
       );
     }
+
+    const user = await this.userService.findOneById(userId);
+    if (!user)
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
+    if (user.role.name === UserRoles.MANAGER) {
+      const manager = await this.managerService.findOneByUserIdWithColonies(
+        user.id,
+      );
+      const canManagerUpdateApplication = manager.station.colonies.some(
+        (colony) =>
+          colony.employees.some((emp) => emp.id === exists.employeeId),
+      );
+      if (!canManagerUpdateApplication) {
+        throw new BadRequestException(APP_ERROR_MESSAGES.UNAUTHORIZED);
+      }
+    }
+
     const runner = await this.transactionFactory.transactionRunner();
     try {
       await runner.start();
@@ -416,6 +445,8 @@ export class ApplicationService implements IApplicationService {
       if (runner) {
         await runner.rollbackTransaction();
       }
+      if (error instanceof HttpException) throw error;
+
       throw new InternalServerErrorException(
         error.message || APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );

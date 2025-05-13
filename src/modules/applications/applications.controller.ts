@@ -11,13 +11,18 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { DOMAIN_ENTITY, JWT } from 'src/common/constants';
-import { EMPLOYEE_VERIFICATION_STATUS } from '../../common/constants/enums';
+import { DOMAIN_ENTITY, JWT, ManagementRoles } from 'src/common/constants';
+import {
+  EMPLOYEE_VERIFICATION_STATUS,
+  UserRoles,
+} from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { Context } from '../../common/decorators/context';
+import { Roles } from '../../common/decorators/role-metadata.decorator';
 import { IdDto } from '../../common/dtos/request/id.dto';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { AppContext } from '../../common/interfaces/context';
 import { CreateApplicationDto } from './dto/applications/create-applications.dto';
 import {
@@ -28,16 +33,20 @@ import { IApplicationService } from './interfaces/applications.interface';
 
 @ApiTags(DOMAIN_ENTITY.APPLICATIONS)
 @ApiBearerAuth(JWT)
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('applications')
 export class ApplicationController {
   constructor(
     @Inject(IApplicationService)
     private readonly applicationsService: IApplicationService,
   ) {}
-
+  @Roles([UserRoles.EMPLOYEE])
   @Post()
-  create(@Body() createApplicationDto: CreateApplicationDto) {
+  create(
+    @Body() createApplicationDto: CreateApplicationDto,
+    @Context() context: AppContext,
+  ) {
+    createApplicationDto.createdById = context.UserId;
     return this.applicationsService.create(createApplicationDto);
   }
 
@@ -54,7 +63,7 @@ export class ApplicationController {
     const { id } = idDto;
     return this.applicationsService.findOne(+id);
   }
-
+  @Roles([UserRoles.EMPLOYEE])
   @Patch(':id')
   update(
     @Param() idDto: IdDto,
@@ -69,7 +78,7 @@ export class ApplicationController {
       context.UserId,
     );
   }
-
+  @Roles(ManagementRoles)
   @Post('approve/:id')
   approve(
     @Param() idDto: IdDto,
@@ -87,12 +96,14 @@ export class ApplicationController {
       context.UserId,
     );
   }
+  @Roles([UserRoles.EMPLOYEE])
   @Post('cancel/:id')
   cancel(@Param() idDto: IdDto, @Context() context: AppContext) {
     const { id } = idDto;
 
     return this.applicationsService.cancel(+id, context.UserId);
   }
+  @Roles(ManagementRoles)
   @Post('reject/:id')
   reject(
     @Param() idDto: IdDto,

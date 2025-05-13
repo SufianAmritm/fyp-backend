@@ -1,8 +1,12 @@
 import {
   Body,
   Controller,
+  Get,
   Inject,
+  Param,
+  Patch,
   Post,
+  Query,
   UploadedFiles,
   UseGuards,
 } from '@nestjs/common';
@@ -12,11 +16,14 @@ import { MAX_FILE_SIZES, SUPPORT_TYPES } from '../../common/constants/enums';
 import { Context } from '../../common/decorators/context';
 import { MultiFile } from '../../common/decorators/multi-file.decorator';
 import { Roles } from '../../common/decorators/role-metadata.decorator';
+import { IdDto } from '../../common/dtos/request/id.dto';
+import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AppContext } from '../../common/interfaces/context';
 import { MultiFileValidatorPipe } from '../../common/pipes/multi-file-validation.pipe';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { IEmployeeService } from './interfaces/employee.interface';
 
 @ApiTags(DOMAIN_ENTITY.EMPLOYEES)
@@ -115,31 +122,107 @@ export class EmployeeController {
     );
   }
 
-  // @Post()
-  // create(@Body() createEmployeeDto: CreateEmployeeDto) {
-  //   return this.employeeService.create(createEmployeeDto);
-  // }
+  @Get()
+  findAll(
+    @Query() paginationDto: PaginationDto,
+    @Context() context: AppContext,
+  ) {
+    return this.employeeService.findAll(paginationDto, context);
+  }
 
-  // @Get()
-  // findAll(
-  //   @Query() paginationDto: PaginationDto,
-  //   @Context() context: AppContext,
-  // ) {
-  //   return this.employeeService.findAll(paginationDto, context);
-  // }
+  @Get(':id')
+  findOne(@Param() idDto: IdDto) {
+    const { id } = idDto;
+    return this.employeeService.findOne(+id);
+  }
 
-  // @Get(':id')
-  // findOne(@Param() idDto: IdDto) {
-  //   const { id } = idDto;
-  //   return this.employeeService.findOne(+id);
-  // }
-
-  // @Patch(':id')
-  // update(@Param() idDto: IdDto, @Body() updateEmployeeDto: UpdateEmployeeDto) {
-  //   const { id } = idDto;
-
-  //   return this.employeeService.update(+id, updateEmployeeDto);
-  // }
+  @Patch(':id')
+  @MultiFile(
+    ['picture', 'cnic_front', 'cnic_back', 'service_card'],
+    {
+      name: {
+        type: 'string',
+        example: 'John Doe',
+        description: 'Full name of the user',
+      },
+      email: {
+        type: 'string',
+        example: 'user@example.com',
+        description: 'Please provide email',
+      },
+      phoneNumber: {
+        type: 'string',
+        pattern: '^\\+923[0-9]{9}$',
+        example: '+923001234567',
+        description:
+          'The phone number should be a valid Pakistani phone number with format +923xxxxxxxxx',
+      },
+      colonyId: {
+        type: 'string',
+        example: 1,
+        description: 'colony ID associated with the user',
+        minimum: 1,
+      },
+      address: {
+        type: 'string',
+        example: 'razabad',
+        description: 'Please provide address',
+      },
+      members: {
+        type: 'string',
+        example: 1,
+        description: 'Number of family members',
+        minimum: 1,
+      },
+    },
+    // [
+    //   'name',
+    //   'email',
+    //   'phoneNumber',
+    //   'colonyId',
+    //   'cnic-front',
+    //   'cnic-back',
+    //   'service-card',
+    // ],
+  )
+  update(
+    @Param() idDto: IdDto,
+    @Body() updateEmployeeDto: UpdateEmployeeDto,
+    @UploadedFiles(
+      new MultiFileValidatorPipe(
+        ['picture', 'cnic_front', 'cnic_back', 'service_card'].map((value) => ({
+          field: value,
+          validations: {
+            maxFileSize: MAX_FILE_SIZES.AVATAR,
+            fileType: new RegExp(SUPPORT_TYPES.AVATAR),
+            required: value === 'picture' ? false : true,
+          },
+        })),
+      ),
+    )
+    files: {
+      picture?: Express.Multer.File[];
+      cnic_front?: Express.Multer.File[];
+      cnic_back?: Express.Multer.File[];
+      service_card?: Express.Multer.File[];
+    },
+    @Context() context: AppContext,
+  ) {
+    const { id } = idDto;
+    const picture = files.picture?.[0];
+    const cnicFront = files.cnic_front?.[0];
+    const cnicBack = files.cnic_back?.[0];
+    const serviceCard = files.service_card?.[0];
+    return this.employeeService.update(
+      +id,
+      updateEmployeeDto,
+      context.UserId,
+      cnicFront,
+      cnicBack,
+      serviceCard,
+      picture,
+    );
+  }
 
   // @Delete(':id')
   // remove(@Param() idDto: IdDto) {

@@ -82,8 +82,8 @@ export class Employee extends BaseEntity {
 
   @OneToOne(() => Occupation, (i) => i.vacantBy)
   occupationVacants: Occupation[];
-  @OneToMany(() => VacancyRequest, (i) => i.createdBy)
+  @OneToMany(() => VacancyRequest, (i) => i.employee)
   vacancyRequests: VacancyRequest[];
-  @OneToMany(() => TransferRequest, (i) => i.createdBy)
+  @OneToMany(() => TransferRequest, (i) => i.employee)
   transferRequests: TransferRequest[];
 }

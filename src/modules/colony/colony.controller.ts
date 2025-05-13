@@ -26,14 +26,13 @@ import { IColonyService } from './interfaces/colony.interface';
 @ApiTags(DOMAIN_ENTITY.COLONIES)
 @ApiBearerAuth(JWT)
 @UseGuards(AuthGuard, RolesGuard)
-@Roles(ManagementRoles)
 @Controller('colonies')
 export class ColonyController {
   constructor(
     @Inject(IColonyService)
     private readonly colonyService: IColonyService,
   ) {}
-
+  @Roles(ManagementRoles)
   @Post()
   create(@Body() createColonyDto: CreateColonyDto, @Context() ctx: AppContext) {
     createColonyDto.createdById = ctx.UserId;
@@ -54,10 +53,11 @@ export class ColonyController {
     return this.colonyService.findOne(+id);
   }
 
+  @Roles(ManagementRoles)
   @Patch(':id')
-  update(@Param() idDto: IdDto, @Body() updateColonyDto: UpdateColonyDto) {
+  update(@Param() idDto: IdDto, @Body() updateColonyDto: UpdateColonyDto,@Context() ctx: AppContext) {
     const { id } = idDto;
 
-    return this.colonyService.update(+id, updateColonyDto);
+    return this.colonyService.update(+id, updateColonyDto,ctx.UserId);
   }
 }

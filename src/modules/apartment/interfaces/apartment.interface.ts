@@ -8,5 +8,5 @@ export interface IApartmentService {
   create(createApartmentDto: CreateApartmentDto);
   findAll(getApartmentDto: GetApartmentDto, paginationDto: PaginationDto);
   findOne(id: number);
-  update(id: number, updateApartmentDto: UpdateApartmentDto);
+  update(id: number, updateApartmentDto: UpdateApartmentDto, userId: number);
 }

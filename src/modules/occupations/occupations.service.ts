@@ -3,6 +3,7 @@ import { InjectMapper } from '@automapper/nestjs';
 import {
   BadGatewayException,
   BadRequestException,
+  HttpException,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -20,6 +21,7 @@ import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { Employee } from '../employee/entities/employee.entity';
 import { IEmployeeService } from '../employee/interfaces/employee.interface';
+import { IManagersService } from '../managers/interfaces/managers.interface';
 import { IUserService } from '../user/interfaces/user.interface';
 import { AssignOccupationDto } from './dto/assign-occupation.dto';
 import { CreateOccupationDto } from './dto/create-occupations.dto';
@@ -49,6 +51,8 @@ export class OccupationService implements IOccupationService {
     private readonly occupationsRepository: IOccupationRepository,
     @Inject(IEmployeeService)
     private readonly employeeService: IEmployeeService,
+    @Inject(IManagersService)
+    private readonly managerService: IManagersService,
     @Inject(IUserService)
     private readonly userService: IUserService,
     @Inject(IVacancyRequestRepository)
@@ -140,6 +144,7 @@ export class OccupationService implements IOccupationService {
         ),
       );
     }
+
     const colonyFrom = transferRequest.fromColony;
     const colonyTo = transferRequest.toColony;
     const isUserFrom = colonyFrom.station.managers.some(
@@ -290,6 +295,8 @@ export class OccupationService implements IOccupationService {
       return this.findOneTransferRequest(transferRequest.id);
     } catch (error) {
       if (runner) await runner.rollbackTransaction();
+      if (error instanceof HttpException) throw error;
+
       throw new InternalServerErrorException(
         APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );
@@ -306,7 +313,6 @@ export class OccupationService implements IOccupationService {
     }
     const exists = await this.transferRequestRepository.findOne({
       id,
-      createdById: employee.id,
     });
     if (!exists) {
       throw new BadRequestException(
@@ -325,11 +331,12 @@ export class OccupationService implements IOccupationService {
     const findOptions = new FindOptionsBuilder<TransferRequest>()
       .where({ id })
       .relations({
-        createdBy: {
-          user: true,
-        },
+        createdBy: true,
         approvedByFrom: {
           manager: true,
+        },
+        employee: {
+          user: true,
         },
         approvedByTo: {
           manager: true,
@@ -344,23 +351,45 @@ export class OccupationService implements IOccupationService {
         toColony: true,
       })
       .build();
-    return this.transferRequestRepository.findOneWithBuilderOption(findOptions);
+    const request =
+      await this.transferRequestRepository.findOneWithBuilderOption(
+        findOptions,
+      );
+    if (request.approvedByFrom) request.approvedByFrom.password = undefined;
+    if (request.approvedByTo) request.approvedByTo.password = undefined;
+    if (request.rejectedByFrom) request.rejectedByFrom.password = undefined;
+    if (request.rejectedByTo) request.rejectedByTo.password = undefined;
+    if (request.createdBy) request.createdBy.password = undefined;
+    if (request.employee) request.employee.user.password = undefined;
+
+    return request;
   }
 
   async createTransferRequest(
     createTransferRequestDto: CreateTransferRequestDto,
     userId: number,
   ) {
-    const exists = await this.transferRequestRepository.findOne({
-      createdById: userId,
-    });
+    const findOptions = new FindOptionsBuilder<TransferRequest>()
+      .where({ createdById: userId })
+      .order({
+        createdAt: 'DESC',
+      })
+      .build();
+    const exists =
+      await this.transferRequestRepository.findOneWithBuilderOption(
+        findOptions,
+      );
     if (exists?.status === EMPLOYEE_VERIFICATION_STATUS.PENDING) {
       throw new BadGatewayException(
         'Your vacancy request is still pending. Please wait for the admin to review it.',
       );
     }
+    const employee = await this.employeeService.findOneByUserId(userId);
+    if (!employee) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
+    }
     const currentOccupation = await this.occupationsRepository.find({
-      occupiedById: userId,
+      occupiedById: employee.id,
     });
     if (currentOccupation.length === 0) {
       throw new BadGatewayException(APP_ERROR_MESSAGES.NOT_FOUND('Occupation'));
@@ -371,6 +400,7 @@ export class OccupationService implements IOccupationService {
       TransferRequest,
     );
     newTransferRequest.createdById = userId;
+    newTransferRequest.employeeId = employee.id;
     if (newTransferRequest.fromColonyId === newTransferRequest.toColonyId) {
       newTransferRequest.withinStation = true;
     }
@@ -378,9 +408,8 @@ export class OccupationService implements IOccupationService {
   }
 
   async cancelTransferRequest(id: number, userId: number) {
-    const employee = await this.employeeService.findOneByUserId(userId);
     const exists = await this.transferRequestRepository.findOne({
-      createdById: employee.id,
+      createdById: userId,
       id,
     });
     if (!exists) {
@@ -468,9 +497,8 @@ export class OccupationService implements IOccupationService {
   }
 
   async cancelVacancyRequest(id: number, userId: number) {
-    const employee = await this.employeeService.findOneByUserId(userId);
     const exists = await this.vacancyRequestRepository.findOne({
-      createdById: employee.id,
+      createdById: userId,
       id,
     });
     if (!exists) {
@@ -525,7 +553,7 @@ export class OccupationService implements IOccupationService {
     if (!occupation) {
       throw new BadGatewayException(APP_ERROR_MESSAGES.NOT_FOUND('Apartment'));
     }
-    if (occupation.occupiedById !== userId) {
+    if (occupation.occupiedById !== employee.id) {
       throw new BadGatewayException(APP_ERROR_MESSAGES.NOT_OCCUPIED_BY_YOU);
     }
 
@@ -575,9 +603,19 @@ export class OccupationService implements IOccupationService {
     userId: number,
   ) {
     const { status } = updateVacancyRequestDto;
-    const vacancyRequest = await this.vacancyRequestRepository.findOne({
-      id,
-    });
+    const findOptions = new FindOptionsBuilder<VacancyRequest>()
+      .where({
+        id,
+      })
+      .relations({
+        employee: true,
+        occupation: {
+          apartment: true,
+        },
+      })
+      .build();
+    const vacancyRequest =
+      await this.vacancyRequestRepository.findOneWithBuilderOption(findOptions);
 
     if (!vacancyRequest) {
       throw new BadGatewayException(
@@ -608,6 +646,26 @@ export class OccupationService implements IOccupationService {
           EMPLOYEE_VERIFICATION_STATUS.REJECTED,
         ),
       );
+    }
+    const updator = await this.userService.findOneById(userId);
+    if (!updator)
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
+    if (updator.role.name === UserRoles.MANAGER) {
+      const manager = await this.managerService.findOneByUserIdWithColonies(
+        updator.id,
+      );
+      const canManagerUpdateVerification =
+        manager.station.colonies.some(
+          (colony) => colony.id === vacancyRequest.employee.colonyId,
+        ) ||
+        manager.station.colonies.some(
+          (colony) =>
+            colony.id === vacancyRequest.occupation.apartment.colonyId,
+        );
+
+      if (!canManagerUpdateVerification) {
+        throw new BadRequestException(APP_ERROR_MESSAGES.UNAUTHORIZED);
+      }
     }
     const mapped = this.occupationsMapper.map(
       updateVacancyRequestDto,
@@ -653,6 +711,8 @@ export class OccupationService implements IOccupationService {
       return this.findOneVacancyRequest(id);
     } catch (error) {
       if (runner) await runner.rollbackTransaction();
+      if (error instanceof HttpException) throw error;
+
       throw new InternalServerErrorException(
         APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );
@@ -674,8 +734,11 @@ export class OccupationService implements IOccupationService {
         rejectedBy: {
           manager: true,
         },
-        createdBy: {
+        employee: {
           user: true,
+        },
+        createdBy: {
+          manager: true,
         },
       })
       .build();
@@ -685,8 +748,9 @@ export class OccupationService implements IOccupationService {
       vacancyRequest.approvedBy.password = undefined;
     if (vacancyRequest.rejectedBy)
       vacancyRequest.rejectedBy.password = undefined;
-    if (vacancyRequest.createdBy)
-      vacancyRequest.createdBy.user.password = undefined;
+    if (vacancyRequest.createdBy) vacancyRequest.createdBy.password = undefined;
+    if (vacancyRequest.employee)
+      vacancyRequest.employee.user.password = undefined;
     return vacancyRequest;
   }
   async findOneByOccupiedById(occupiedById: number): Promise<Occupation> {
@@ -754,9 +818,16 @@ export class OccupationService implements IOccupationService {
     assignOccupationDto: AssignOccupationDto,
     userId: number,
   ): Promise<any> {
-    const occupation = await this.occupationsRepository.findOne({
-      id,
-    });
+    const findOptions = new FindOptionsBuilder<Occupation>()
+      .where({
+        id,
+      })
+      .relations({
+        apartment: true,
+      })
+      .build();
+    const occupation =
+      await this.occupationsRepository.findOneWithBuilderOption(findOptions);
 
     if (occupation.status === OCCUPATION_STATUS.OCCUPIED) {
       throw new BadGatewayException(
@@ -765,6 +836,21 @@ export class OccupationService implements IOccupationService {
     }
     if (occupation.status === OCCUPATION_STATUS.ABOUT_TO_VACANT) {
       throw new BadGatewayException(APP_ERROR_MESSAGES.ABOUT_TO_VACANT);
+    }
+    const updator = await this.userService.findOneById(userId);
+    if (!updator)
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
+    if (updator.role.name === UserRoles.MANAGER) {
+      const manager = await this.managerService.findOneByUserIdWithColonies(
+        updator.id,
+      );
+      const canManagerUpdateVerification = manager.station.colonies.some(
+        (colony) => colony.id === occupation.apartment.colonyId,
+      );
+
+      if (!canManagerUpdateVerification) {
+        throw new BadRequestException(APP_ERROR_MESSAGES.UNAUTHORIZED);
+      }
     }
     await this.occupationsRepository.update(
       { id: occupation.id },
@@ -778,13 +864,36 @@ export class OccupationService implements IOccupationService {
     return this.findOne(occupation.id);
   }
   async deAssignOccupation(id: number, userId: number): Promise<any> {
-    const occupation = await this.occupationsRepository.findOne({
+    const findOptions = new FindOptionsBuilder<Occupation>()
+    .where({
       id,
-    });
+    })
+    .relations({
+      apartment: true,
+    })
+    .build();
+  const occupation =
+    await this.occupationsRepository.findOneWithBuilderOption(findOptions);
+
     if (occupation.status === OCCUPATION_STATUS.VACANT) {
       throw new BadGatewayException(
         APP_ERROR_MESSAGES.ALREADY_ACTIONED('Apartment', 'vacant'),
       );
+    }
+    const updator = await this.userService.findOneById(userId);
+    if (!updator)
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
+    if (updator.role.name === UserRoles.MANAGER) {
+      const manager = await this.managerService.findOneByUserIdWithColonies(
+        updator.id,
+      );
+      const canManagerUpdateVerification = manager.station.colonies.some(
+        (colony) => colony.id === occupation.apartment.colonyId,
+      );
+
+      if (!canManagerUpdateVerification) {
+        throw new BadRequestException(APP_ERROR_MESSAGES.UNAUTHORIZED);
+      }
     }
     const runner = await this.transactionFactory.transactionRunner();
     try {
@@ -817,6 +926,8 @@ export class OccupationService implements IOccupationService {
       return this.findOne(occupation.id);
     } catch (error) {
       if (runner) await runner.rollbackTransaction();
+      if (error instanceof HttpException) throw error;
+
       throw new InternalServerErrorException(
         APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );

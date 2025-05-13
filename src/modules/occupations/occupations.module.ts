@@ -16,6 +16,7 @@ import { IVacancyRequestRepository } from './repositories/interface/vacancy-requ
 import { OccupationRepository } from './repositories/occupations.repository';
 import { TransferRequestRepository } from './repositories/transfer-request.repository';
 import { VacancyRequestRepository } from './repositories/vacany-request.repository';
+import { ManagersModule } from '../managers/managers.module';
 
 const occupationsEntities = [Occupation, VacancyRequest, TransferRequest];
 const occupationsRepositoryProvider = [
@@ -43,6 +44,7 @@ const occupationsServiceProvider = [
     TypeOrmModule.forFeature(occupationsEntities),
     UserModule,
     EmployeeModule,
+    ManagersModule,
   ],
   controllers: [OccupationController],
   providers: [

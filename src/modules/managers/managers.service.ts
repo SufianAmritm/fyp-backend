@@ -31,7 +31,35 @@ export class ManagersService implements IManagersService {
     private readonly utilService: UtilsService,
     @InjectMapper() private readonly managersMapper: Mapper,
   ) {}
-
+  async findOneByUserIdWithColoniesAndEmployees(id: number) {
+    const findOptions = new FindOptionsBuilder<Manager>()
+      .where({ id })
+      .select({
+        user: true,
+        station: {
+          id: true,
+          colonies: {
+            id: true,
+            employees: {
+              id: true,
+            },
+          },
+        },
+      })
+      .relations({
+        user: true,
+        station: {
+          colonies: {
+            employees: true,
+          },
+        },
+      })
+      .build();
+    const manager =
+      await this.managersRepository.findOneWithBuilderOption(findOptions);
+    manager.user.password = undefined;
+    return manager;
+  }
   async create(
     createManagersDto: CreateManagersDto,
     picture?: Express.Multer.File,
@@ -76,6 +104,7 @@ export class ManagersService implements IManagersService {
       if (runner) {
         await runner.rollbackTransaction();
       }
+
       if (error instanceof HttpException) throw error;
       throw new Error(error.message);
     }
@@ -102,7 +131,30 @@ export class ManagersService implements IManagersService {
     manager.user.password = undefined;
     return manager;
   }
-
+  async findOneByUserIdWithColonies(id: number) {
+    const findOptions = new FindOptionsBuilder<Manager>()
+      .where({ id })
+      .select({
+        user: true,
+        station: {
+          id: true,
+          colonies: {
+            id: true,
+          },
+        },
+      })
+      .relations({
+        user: true,
+        station: {
+          colonies: true,
+        },
+      })
+      .build();
+    const manager =
+      await this.managersRepository.findOneWithBuilderOption(findOptions);
+    manager.user.password = undefined;
+    return manager;
+  }
   async update(
     id: number,
     updateManagersDto: UpdateManagersDto,
@@ -137,12 +189,14 @@ export class ManagersService implements IManagersService {
       Manager,
     );
     await this.managersRepository.update({ id }, managersUpdate);
-    const findOptions = new FindOptionsBuilder<Manager>().where({ id }).relations({
-      user: true,
-    }).build();
-    const man = await this.managersRepository.findOneWithBuilderOption(
-      findOptions
-    );
+    const findOptions = new FindOptionsBuilder<Manager>()
+      .where({ id })
+      .relations({
+        user: true,
+      })
+      .build();
+    const man =
+      await this.managersRepository.findOneWithBuilderOption(findOptions);
     return man;
   }
 

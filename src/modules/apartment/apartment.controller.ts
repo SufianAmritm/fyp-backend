@@ -26,7 +26,6 @@ import { IApartmentService } from './interfaces/apartment.interface';
 @ApiTags(DOMAIN_ENTITY.APARTMENTS)
 @ApiBearerAuth(JWT)
 @UseGuards(AuthGuard, RolesGuard)
-@Roles(ManagementRoles)
 @Controller('apartments')
 export class ApartmentController {
   constructor(
@@ -34,6 +33,7 @@ export class ApartmentController {
     private readonly apartmentService: IApartmentService,
   ) {}
 
+  @Roles(ManagementRoles)
   @Post()
   create(
     @Body() createApartmentDto: CreateApartmentDto,
@@ -42,7 +42,6 @@ export class ApartmentController {
     createApartmentDto.createdById = context.UserId;
     return this.apartmentService.create(createApartmentDto);
   }
-
   @Get()
   findAll(
     @Query() getApartmentDto: GetApartmentDto,
@@ -57,14 +56,15 @@ export class ApartmentController {
     const { id } = idDto;
     return this.apartmentService.findOne(+id);
   }
-
+  @Roles(ManagementRoles)
   @Patch(':id')
   update(
     @Param() idDto: IdDto,
     @Body() updateApartmentDto: UpdateApartmentDto,
+    @Context() context: AppContext,
   ) {
     const { id } = idDto;
 
-    return this.apartmentService.update(+id, updateApartmentDto);
+    return this.apartmentService.update(+id, updateApartmentDto,context.UserId);
   }
 }

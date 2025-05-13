@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -121,6 +122,8 @@ export class UserService implements IUserService {
       if (runner) {
         await runner.rollbackTransaction();
       }
+      if (error instanceof HttpException) throw error;
+
       throw new Error(error.message);
     }
   }
@@ -178,6 +181,8 @@ export class UserService implements IUserService {
       if (runner) {
         await runner.rollbackTransaction();
       }
+      if (error instanceof HttpException) throw error;
+
       throw new InternalServerErrorException(
         APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );
@@ -234,6 +239,8 @@ export class UserService implements IUserService {
       if (runner) {
         await runner.rollbackTransaction();
       }
+      if (error instanceof HttpException) throw error;
+
       throw new Error(error.message);
     }
   }
@@ -383,6 +390,8 @@ export class UserService implements IUserService {
       if (runner) {
         await runner.rollbackTransaction();
       }
+      if (error instanceof HttpException) throw error;
+
       throw new Error(error.message);
     }
   }

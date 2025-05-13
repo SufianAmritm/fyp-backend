@@ -12,7 +12,9 @@ export class VacancyRequest extends BaseEntity {
   @AutoMap()
   @Column('integer', { name: 'occupation_id', nullable: false })
   occupationId: number;
-
+  @AutoMap()
+  @Column('integer', { name: 'employee_id', nullable: false })
+  employeeId: number;
   @AutoMap()
   @Column('enum', {
     name: 'status',
@@ -42,11 +44,18 @@ export class VacancyRequest extends BaseEntity {
   occupation: Occupation;
   @ManyToOne(() => Employee, (i) => i.vacancyRequests)
   @JoinColumn({
+    name: 'employee_id',
+    referencedColumnName: 'id',
+    foreignKeyConstraintName: 'vacancy_requests_employee_id_fk',
+  })
+  employee: Employee;
+  @ManyToOne(() => User, (i) => i.vacancyRequests)
+  @JoinColumn({
     name: 'created_by_id',
     referencedColumnName: 'id',
     foreignKeyConstraintName: 'vacancy_requests_created_by_id_fk',
   })
-  createdBy: Employee;
+  createdBy: User;
   @ManyToOne(() => User, (i) => i.vacancyRequestsApproved)
   @JoinColumn({
     name: 'approved_by_id',

@@ -28,7 +28,6 @@ import { IStationService } from './interfaces/station.interface';
 @ApiTags(DOMAIN_ENTITY.STATIONS)
 @ApiBearerAuth(JWT)
 @UseGuards(AuthGuard, RolesGuard)
-@Roles([UserRoles.ADMIN])
 @Controller('stations')
 export class StationController {
   constructor(
@@ -36,6 +35,7 @@ export class StationController {
     private readonly stationService: IStationService,
   ) {}
 
+  @Roles([UserRoles.ADMIN])
   @Post()
   create(
     @Body() createStationDto: CreateStationDto,
@@ -58,7 +58,7 @@ export class StationController {
     const { id } = idDto;
     return this.stationService.findOne(+id);
   }
-
+@Roles([UserRoles.ADMIN])
   @Patch(':id')
   update(@Param() idDto: IdDto, @Body() updateStationDto: UpdateStationDto) {
     const { id } = idDto;

@@ -13,6 +13,9 @@ export class TransferRequest extends BaseEntity {
   @Column('integer', { name: 'from_colony_id', nullable: false })
   fromColonyId: number;
   @AutoMap()
+  @Column('integer', { name: 'employee_id', nullable: false })
+  employeeId: number;
+  @AutoMap()
   @Column('integer', { name: 'to_colony_id', nullable: false })
   toColonyId: number;
   @AutoMap()
@@ -65,11 +68,18 @@ export class TransferRequest extends BaseEntity {
   toColony: Colony;
   @ManyToOne(() => Employee, (i) => i.transferRequests)
   @JoinColumn({
+    name: 'employee_id',
+    referencedColumnName: 'id',
+    foreignKeyConstraintName: 'transfer_requests_employee_id_fk',
+  })
+  employee: Employee;
+  @ManyToOne(() => User, (i) => i.transferRequests)
+  @JoinColumn({
     name: 'created_by_id',
     referencedColumnName: 'id',
     foreignKeyConstraintName: 'transfer_requests_created_by_id_fk',
   })
-  createdBy: Employee;
+  createdBy: User;
   @ManyToOne(() => User, (i) => i.transferRequestsApprovedFrom)
   @JoinColumn({
     name: 'approved_by_from_id',

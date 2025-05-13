@@ -24,25 +24,24 @@ import { Context } from '../../common/decorators/context';
 import { Roles } from '../../common/decorators/role-metadata.decorator';
 import { SingleFile } from '../../common/decorators/single-file.decorator';
 import { IdDto } from '../../common/dtos/request/id.dto';
+import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AppContext } from '../../common/interfaces/context';
 import { CreateManagersDto } from './dto/create-managers.dto';
 import { UpdateManagersDto } from './dto/update-managers.dto';
 import { IManagersService } from './interfaces/managers.interface';
-import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 
 @ApiTags(DOMAIN_ENTITY.MANAGERS)
 @ApiBearerAuth(JWT)
 @UseGuards(AuthGuard, RolesGuard)
-@Roles([UserRoles.ADMIN])
 @Controller('managers')
 export class ManagersController {
   constructor(
     @Inject(IManagersService)
     private readonly managersService: IManagersService,
   ) {}
-
+  @Roles([UserRoles.ADMIN])
   @Post()
   @SingleFile(
     'picture',
@@ -107,7 +106,7 @@ export class ManagersController {
     const { id } = idDto;
     return this.managersService.findOne(+id);
   }
-
+  @Roles([UserRoles.ADMIN])
   @Patch(':id')
   @SingleFile(
     'picture',

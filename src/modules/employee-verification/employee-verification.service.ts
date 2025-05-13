@@ -2,11 +2,16 @@ import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { RESPONSE_MESSAGES } from '../../common/constants';
-import { EMPLOYEE_VERIFICATION_STATUS } from '../../common/constants/enums';
+import {
+  EMPLOYEE_VERIFICATION_STATUS,
+  UserRoles,
+} from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
+import { IManagersService } from '../managers/interfaces/managers.interface';
+import { IUserService } from '../user/interfaces/user.interface';
 import { CreateEmployeeVerificationDto } from './dto/create-employee-verification.dto';
 import { UpdateEmployeeVerificationByAdminDto } from './dto/update-employee-verification.dto';
 import { EmployeeVerification } from './entities/employee-verification.entity';
@@ -20,6 +25,10 @@ export class EmployeeVerificationService
   constructor(
     @Inject(IEmployeeVerificationRepository)
     private readonly employeeVerificationRepository: IEmployeeVerificationRepository,
+    @Inject(IManagersService)
+    private readonly managerService: IManagersService,
+    @Inject(IUserService)
+    private readonly userService: IUserService,
     @InjectMapper() private readonly employeeVerificationMapper: Mapper,
   ) {}
   getEmployeeVerificationStatus(
@@ -113,10 +122,14 @@ export class EmployeeVerificationService
   }
 
   async cancel(id: number, userId: number) {
-    const exists = await this.employeeVerificationRepository.findOne({
-      id,
-      createdById: userId,
-    });
+    const findOptions = new FindOptionsBuilder<EmployeeVerification>()
+      .where({ id, createdById: userId })
+
+      .build();
+    const exists =
+      await this.employeeVerificationRepository.findOneWithBuilderOption(
+        findOptions,
+      );
     if (!exists) {
       throw new BadRequestException(
         APP_ERROR_MESSAGES.NOT_FOUND('Employee Verification'),
@@ -166,9 +179,20 @@ export class EmployeeVerificationService
     updateEmployeeVerificationDto: UpdateEmployeeVerificationByAdminDto,
     userId: number,
   ) {
-    const exists = await this.employeeVerificationRepository.findOne({
-      id,
-    });
+    const findOptions = new FindOptionsBuilder<EmployeeVerification>()
+      .where({
+        id,
+      })
+      .relations({
+        employee: {
+          colony: true,
+        },
+      })
+      .build();
+    const exists =
+      await this.employeeVerificationRepository.findOneWithBuilderOption(
+        findOptions,
+      );
     if (!exists) {
       throw new BadRequestException(
         APP_ERROR_MESSAGES.NOT_FOUND('Employee Verification'),
@@ -197,6 +221,21 @@ export class EmployeeVerificationService
           EMPLOYEE_VERIFICATION_STATUS.CANCELLED,
         ),
       );
+    }
+    const updator = await this.userService.findOneById(userId);
+    if (!updator)
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
+    if (updator.role.name === UserRoles.MANAGER) {
+      const manager = await this.managerService.findOneByUserIdWithColonies(
+        updator.id,
+      );
+      const canManagerUpdateVerification = manager.station.colonies.some(
+        (colony) => colony.id === exists.employee.colonyId,
+      );
+
+      if (!canManagerUpdateVerification) {
+        throw new BadRequestException(APP_ERROR_MESSAGES.UNAUTHORIZED);
+      }
     }
     const employeeVerificationUpdate = this.employeeVerificationMapper.map(
       updateEmployeeVerificationDto,

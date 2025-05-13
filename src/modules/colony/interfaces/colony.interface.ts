@@ -8,5 +8,5 @@ export interface IColonyService {
   create(createColonyDto: CreateColonyDto);
   findAll(getColonyDto: GetColonyDto, paginationDto: PaginationDto);
   findOne(id: number);
-  update(id: number, updateColonyDto: UpdateColonyDto);
+  update(id: number, updateColonyDto: UpdateColonyDto, userId: number);
 }
