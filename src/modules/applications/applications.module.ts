@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
+import { EmailModule } from '../email/email.module';
 import { EmployeeVerificationModule } from '../employee-verification/employee-verification.module';
+import { EmployeeModule } from '../employee/employee.module';
+import { ManagersModule } from '../managers/managers.module';
 import { OccupationModule } from '../occupations/occupations.module';
+import { UserModule } from '../user/user.module';
 import { ApplicationController } from './applications.controller';
 import { ApplicationService } from './applications.service';
 import { ApplicationPriority } from './entities/application-colonies.entity';
@@ -13,10 +17,6 @@ import { ApplicationPriorityRepository } from './repositories/application-priori
 import { ApplicationRepository } from './repositories/applications.repository';
 import { IApplicationPriorityRepository } from './repositories/interface/application-priority-repository.interface';
 import { IApplicationRepository } from './repositories/interface/applications-repository.interface';
-import { StationModule } from '../station/station.module';
-import { EmployeeModule } from '../employee/employee.module';
-import { UserModule } from '../user/user.module';
-import { ManagersModule } from '../managers/managers.module';
 
 const applicationsEntities = [Application, ApplicationPriority];
 const applicationsRepositoryProvider = [
@@ -43,6 +43,7 @@ const applicationsServiceProvider = [
     EmployeeModule,
     UserModule,
     ManagersModule,
+    EmailModule
   ],
   controllers: [ApplicationController],
   providers: [

@@ -9,6 +9,8 @@ import {
 } from '@nestjs/common';
 import { RESPONSE_MESSAGES } from '../../common/constants';
 import {
+  EMAIL_SUBJECTS,
+  EMAIL_TEMPLATES,
   EMPLOYEE_VERIFICATION_STATUS,
   OCCUPATION_STATUS,
   UserRoles,
@@ -18,6 +20,7 @@ import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-o
 import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
+import { IEmailService } from '../email/interfaces/email.interface';
 import { IEmployeeVerificationService } from '../employee-verification/interfaces/employee-verification.interface';
 import { Employee } from '../employee/entities/employee.entity';
 import { IEmployeeService } from '../employee/interfaces/employee.interface';
@@ -50,6 +53,8 @@ export class ApplicationService implements IApplicationService {
     private readonly managerService: IManagersService,
     @Inject(IEmployeeService)
     private readonly employeeService: IEmployeeService,
+    @Inject(IEmailService)
+    private readonly emailService: IEmailService,
     @Inject(IEmployeeVerificationService)
     private readonly employeeVerificationService: IEmployeeVerificationService,
     @Inject(IApplicationPriorityRepository)
@@ -364,6 +369,7 @@ export class ApplicationService implements IApplicationService {
     }
 
     const user = await this.userService.findOneById(userId);
+    const employee = await this.employeeService.findOne(exists.employeeId);
     if (!user)
       throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
     if (user.role.name === UserRoles.MANAGER) {
@@ -400,6 +406,19 @@ export class ApplicationService implements IApplicationService {
         Application,
         manager,
       );
+      if (
+        updateApplicationDto.status === EMPLOYEE_VERIFICATION_STATUS.REJECTED
+      ) {
+        await this.emailService.send(
+          employee.user.email,
+          EMAIL_SUBJECTS.APPLICATION_REJECTED,
+          EMAIL_TEMPLATES.APPLICATION_REJECTED,
+          {
+            reason: updateApplicationDto.reason,
+            employeeName: employee.user.name,
+          },
+        );
+      }
 
       if (
         updateApplicationDto.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED
@@ -435,6 +454,21 @@ export class ApplicationService implements IApplicationService {
           },
           Occupation,
           manager,
+        );
+        await this.emailService.send(
+          employee.user.email,
+          EMAIL_SUBJECTS.APPLICATION_APPROVED,
+          EMAIL_TEMPLATES.APPLICATION_APPROVED,
+          {
+            reason: updateApplicationDto.reason,
+            apartment: {
+              employeeName: employee.user.name,
+              houseNo: occupation.apartment.houseNo,
+              colonyName: occupation.apartment.colony.name,
+              streetNo: occupation.apartment.streetNo,
+              address: occupation.apartment.address,
+            },
+          },
         );
       }
       await runner.end();

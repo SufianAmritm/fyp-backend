@@ -33,9 +33,29 @@ export enum TIME_IN_SECONDS {
 export enum EMAIL_TEMPLATES {
   REGISTER = 'welcome-email',
   PASSWORD_RESET = 'password-reset',
+  APPLICATION_APPROVED = 'application-approved',
+  APPLICATION_REJECTED = 'application-rejected',
+  EMPLOYEE_VERIFICATION_REJECTED = 'employee-verification-rejected',
+  EMPLOYEE_VERIFICATION_APPROVED = 'employee-verification-approved',
+  TRANSFER_REQUEST_REJECTED = 'transfer-request-rejected',
+  TRANSFER_REQUEST_APPROVED = 'transfer-request-approved',
+  VACANCY_REQUEST_REJECTED = 'vacancy-request-rejected',
+  VACANCY_REQUEST_APPROVED = 'vacancy-request-approved',
+  APARTMENT_DEASSIGNED = 'apartment-deassigned',
+  APARTMENT_ASSIGNED = 'apartment-assigned',
 }
 export enum EMAIL_SUBJECTS {
+  APPLICATION_APPROVED = 'Railway Housing Application Approved',
+  APPLICATION_REJECTED = 'Railway Housing Application Rejected',
   REGISTER = 'Welcome to Pakistan Railway Residency Portal',
+  EMPLOYEE_VERIFICATION_REJECTED = 'Employee Verification Rejected',
+  EMPLOYEE_VERIFICATION_APPROVED = 'Employee Verification Approved',
+  TRANSFER_REQUEST_REJECTED = 'Transfer Request Rejected',
+  TRANSFER_REQUEST_APPROVED = 'Transfer Request Approved',
+  VACANCY_REQUEST_REJECTED = 'Vacancy Request Rejected',
+  VACANCY_REQUEST_APPROVED = 'Vacancy Request Approved',
+  APARTMENT_DEASSIGNED = 'Apartment Deassigned',
+  APARTMENT_ASSIGNED = 'Apartment Assigned',
   PASSWORD_RESET = 'Reset Password',
 }
 export enum DATE_FILTER {

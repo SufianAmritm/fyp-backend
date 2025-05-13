@@ -1,17 +1,18 @@
 import { AutoMap } from '@automapper/classes';
-import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EMPLOYEE_VERIFICATION_STATUS } from '../../../../common/constants/enums';
 import { CreateApplicationDto } from './create-applications.dto';
-import { Transform } from 'class-transformer';
 export class UpdateApplicationDto extends PartialType(CreateApplicationDto) {}
 
 export class UpdateApplicationByAdminDto {
   @AutoMap()
-  @ApiPropertyOptional({})
+  @ApiProperty({
+    example: 'reason',
+  })
   @IsString()
   @IsNotEmpty()
-  @IsOptional()
   reason: string;
   @AutoMap()
   status: EMPLOYEE_VERIFICATION_STATUS;

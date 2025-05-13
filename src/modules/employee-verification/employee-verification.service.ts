@@ -3,6 +3,8 @@ import { InjectMapper } from '@automapper/nestjs';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { RESPONSE_MESSAGES } from '../../common/constants';
 import {
+  EMAIL_SUBJECTS,
+  EMAIL_TEMPLATES,
   EMPLOYEE_VERIFICATION_STATUS,
   UserRoles,
 } from '../../common/constants/enums';
@@ -10,6 +12,7 @@ import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
+import { IEmailService } from '../email/interfaces/email.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateEmployeeVerificationDto } from './dto/create-employee-verification.dto';
@@ -27,6 +30,8 @@ export class EmployeeVerificationService
     private readonly employeeVerificationRepository: IEmployeeVerificationRepository,
     @Inject(IManagersService)
     private readonly managerService: IManagersService,
+    @Inject(IEmailService)
+    private readonly emailService: IEmailService,
     @Inject(IUserService)
     private readonly userService: IUserService,
     @InjectMapper() private readonly employeeVerificationMapper: Mapper,
@@ -186,6 +191,7 @@ export class EmployeeVerificationService
       .relations({
         employee: {
           colony: true,
+          user: true,
         },
       })
       .build();
@@ -258,6 +264,44 @@ export class EmployeeVerificationService
       { id },
       employeeVerificationUpdate,
     );
+    if (
+      employeeVerificationUpdate.status ===
+      EMPLOYEE_VERIFICATION_STATUS.APPROVED
+    ) {
+      await this.emailService.send(
+        exists.employee.user.email,
+        EMAIL_SUBJECTS.EMPLOYEE_VERIFICATION_APPROVED,
+        EMAIL_TEMPLATES.EMPLOYEE_VERIFICATION_APPROVED,
+        {
+          reason: employeeVerificationUpdate.reason,
+          employee: {
+            name: exists.employee.user.name,
+            email: exists.employee.user.email,
+            phone: exists.employee.user.phoneNumber,
+            colonyName: exists.employee.colony.name,
+          },
+        },
+      );
+    }
+    if (
+      employeeVerificationUpdate.status ===
+      EMPLOYEE_VERIFICATION_STATUS.REJECTED
+    ) {
+      await this.emailService.send(
+        exists.employee.user.email,
+        EMAIL_SUBJECTS.EMPLOYEE_VERIFICATION_REJECTED,
+        EMAIL_TEMPLATES.EMPLOYEE_VERIFICATION_REJECTED,
+        {
+          reason: employeeVerificationUpdate.reason,
+          employee: {
+            name: exists.employee.user.name,
+            email: exists.employee.user.email,
+            phone: exists.employee.user.phoneNumber,
+            colonyName: exists.employee.colony.name,
+          },
+        },
+      );
+    }
     return this.findOne(id);
   }
 

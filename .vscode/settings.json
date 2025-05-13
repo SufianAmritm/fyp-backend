@@ -27,6 +27,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "cSpell.words": [
+    "DEASSIGNED",
     "updator"
   ],
 }

@@ -10,6 +10,8 @@ import {
 } from '@nestjs/common';
 import { RESPONSE_MESSAGES } from '../../common/constants';
 import {
+  EMAIL_SUBJECTS,
+  EMAIL_TEMPLATES,
   EMPLOYEE_VERIFICATION_STATUS,
   OCCUPATION_STATUS,
   UserRoles,
@@ -19,6 +21,8 @@ import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-o
 import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
+import { Apartment } from '../apartment/entities/apartment.entity';
+import { IEmailService } from '../email/interfaces/email.interface';
 import { Employee } from '../employee/entities/employee.entity';
 import { IEmployeeService } from '../employee/interfaces/employee.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
@@ -51,6 +55,8 @@ export class OccupationService implements IOccupationService {
     private readonly occupationsRepository: IOccupationRepository,
     @Inject(IEmployeeService)
     private readonly employeeService: IEmployeeService,
+    @Inject(IEmailService)
+    private readonly emailService: IEmailService,
     @Inject(IManagersService)
     private readonly managerService: IManagersService,
     @Inject(IUserService)
@@ -91,6 +97,9 @@ export class OccupationService implements IOccupationService {
             },
           },
         },
+        employee: {
+          user: true,
+        },
       })
       .relations({
         fromColony: {
@@ -106,6 +115,9 @@ export class OccupationService implements IOccupationService {
               user: true,
             },
           },
+        },
+        employee: {
+          user: true,
         },
       })
       .build();
@@ -201,6 +213,7 @@ export class OccupationService implements IOccupationService {
     if (mapped.rejectedByFromId || mapped.rejectedByToId) {
       mapped.status = EMPLOYEE_VERIFICATION_STATUS.REJECTED;
     }
+
     const runner = await this.transactionFactory.transactionRunner();
 
     try {
@@ -214,7 +227,7 @@ export class OccupationService implements IOccupationService {
         TransferRequest,
         manager,
       );
-
+      let apartment: Apartment = null;
       if (
         mapped.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED &&
         updateTransferRequestByAdminDto.apartmentId &&
@@ -229,6 +242,7 @@ export class OccupationService implements IOccupationService {
         const occupation = await this.findOneByApartmentId(
           updateTransferRequestByAdminDto.apartmentId,
         );
+        apartment = occupation.apartment;
         if (occupation.apartment.colonyId !== transferRequest.toColonyId) {
           throw new BadRequestException(
             APP_ERROR_MESSAGES.NOT_FOUND('Apartment'),
@@ -289,6 +303,40 @@ export class OccupationService implements IOccupationService {
           },
           Employee,
           manager,
+        );
+      }
+      if (mapped.status === EMPLOYEE_VERIFICATION_STATUS.REJECTED) {
+        await this.emailService.send(
+          transferRequest.employee.user.email,
+          EMAIL_SUBJECTS.TRANSFER_REQUEST_REJECTED,
+          EMAIL_TEMPLATES.TRANSFER_REQUEST_REJECTED,
+          {
+            reason: updateTransferRequestByAdminDto.reason,
+            transfer: {
+              fromColony: colonyFrom.name,
+              toColony: colonyTo.name,
+            },
+          },
+        );
+      }
+      if (mapped.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
+        await this.emailService.send(
+          transferRequest.employee.user.email,
+          EMAIL_SUBJECTS.TRANSFER_REQUEST_APPROVED,
+          EMAIL_TEMPLATES.TRANSFER_REQUEST_APPROVED,
+          {
+            reason: updateTransferRequestByAdminDto.reason,
+            transfer: {
+              fromColony: colonyFrom.name,
+              toColony: colonyTo.name,
+              apartment: {
+                houseNo: apartment.houseNo,
+                streetNo: apartment.streetNo,
+                address: apartment.address,
+                colonyName: colonyTo.name,
+              },
+            },
+          },
         );
       }
       await runner.end();
@@ -608,9 +656,13 @@ export class OccupationService implements IOccupationService {
         id,
       })
       .relations({
-        employee: true,
+        employee: {
+          user: true,
+        },
         occupation: {
-          apartment: true,
+          apartment: {
+            colony: true,
+          },
         },
       })
       .build();
@@ -707,6 +759,42 @@ export class OccupationService implements IOccupationService {
         { id },
         updateVacancyRequestDto,
       );
+      if (
+        updateVacancyRequestDto.status === EMPLOYEE_VERIFICATION_STATUS.REJECTED
+      ) {
+        await this.emailService.send(
+          vacancyRequest.employee.user.email,
+          EMAIL_SUBJECTS.VACANCY_REQUEST_REJECTED,
+          EMAIL_TEMPLATES.VACANCY_REQUEST_REJECTED,
+          {
+            reason: updateVacancyRequestDto.reason,
+            apartment: {
+              houseNo: vacancyRequest.occupation.apartment.houseNo,
+              streetNo: vacancyRequest.occupation.apartment.streetNo,
+              address: vacancyRequest.occupation.apartment.address,
+              colonyName: vacancyRequest.occupation.apartment.colony.name,
+            },
+          },
+        );
+      }
+      if (
+        updateVacancyRequestDto.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED
+      ) {
+        await this.emailService.send(
+          vacancyRequest.employee.user.email,
+          EMAIL_SUBJECTS.VACANCY_REQUEST_APPROVED,
+          EMAIL_TEMPLATES.VACANCY_REQUEST_APPROVED,
+          {
+            reason: updateVacancyRequestDto.reason,
+            apartment: {
+              houseNo: vacancyRequest.occupation.apartment.houseNo,
+              streetNo: vacancyRequest.occupation.apartment.streetNo,
+              address: vacancyRequest.occupation.apartment.address,
+              colonyName: vacancyRequest.occupation.apartment.colony.name,
+            },
+          },
+        );
+      }
       await runner.end();
       return this.findOneVacancyRequest(id);
     } catch (error) {
@@ -789,7 +877,9 @@ export class OccupationService implements IOccupationService {
         apartmentId,
       })
       .relations({
-        apartment: true,
+        apartment: {
+          colony: true,
+        },
         assignedBy: {
           manager: true,
         },
@@ -834,9 +924,13 @@ export class OccupationService implements IOccupationService {
         APP_ERROR_MESSAGES.ALREADY_ACTIONED('Apartment', 'occupied'),
       );
     }
+
     if (occupation.status === OCCUPATION_STATUS.ABOUT_TO_VACANT) {
       throw new BadGatewayException(APP_ERROR_MESSAGES.ABOUT_TO_VACANT);
     }
+    const employee = await this.employeeService.findOne(
+      assignOccupationDto.employeeId,
+    );
     const updator = await this.userService.findOneById(userId);
     if (!updator)
       throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
@@ -861,25 +955,42 @@ export class OccupationService implements IOccupationService {
         assignedById: userId,
       },
     );
+    await this.emailService.send(
+      employee.user.email,
+      EMAIL_SUBJECTS.APARTMENT_ASSIGNED,
+      EMAIL_TEMPLATES.APARTMENT_ASSIGNED,
+      {
+        apartment: {
+          employeeName: employee.user.name,
+          houseNo: occupation.apartment.houseNo,
+          colonyName: occupation.apartment.colony.name,
+          streetNo: occupation.apartment.streetNo,
+          address: occupation.apartment.address,
+        },
+      },
+    );
     return this.findOne(occupation.id);
   }
   async deAssignOccupation(id: number, userId: number): Promise<any> {
     const findOptions = new FindOptionsBuilder<Occupation>()
-    .where({
-      id,
-    })
-    .relations({
-      apartment: true,
-    })
-    .build();
-  const occupation =
-    await this.occupationsRepository.findOneWithBuilderOption(findOptions);
+      .where({
+        id,
+      })
+      .relations({
+        apartment: true,
+      })
+      .build();
+    const occupation =
+      await this.occupationsRepository.findOneWithBuilderOption(findOptions);
 
     if (occupation.status === OCCUPATION_STATUS.VACANT) {
       throw new BadGatewayException(
         APP_ERROR_MESSAGES.ALREADY_ACTIONED('Apartment', 'vacant'),
       );
     }
+    const employee = await this.employeeService.findOne(
+      occupation.occupiedById,
+    );
     const updator = await this.userService.findOneById(userId);
     if (!updator)
       throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
@@ -921,6 +1032,20 @@ export class OccupationService implements IOccupationService {
         },
         Occupation,
         manager,
+      );
+      await this.emailService.send(
+        employee.user.email,
+        EMAIL_SUBJECTS.APARTMENT_DEASSIGNED,
+        EMAIL_TEMPLATES.APARTMENT_DEASSIGNED,
+        {
+          apartment: {
+            employeeName: employee.user.name,
+            houseNo: occupation.apartment.houseNo,
+            colonyName: occupation.apartment.colony.name,
+            streetNo: occupation.apartment.streetNo,
+            address: occupation.apartment.address,
+          },
+        },
       );
       await runner.end();
       return this.findOne(occupation.id);
