@@ -13,6 +13,7 @@ import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-o
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { IEmailService } from '../email/interfaces/email.interface';
+import { IEmployeeService } from '../employee/interfaces/employee.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateEmployeeVerificationDto } from './dto/create-employee-verification.dto';
@@ -30,6 +31,8 @@ export class EmployeeVerificationService
     private readonly employeeVerificationRepository: IEmployeeVerificationRepository,
     @Inject(IManagersService)
     private readonly managerService: IManagersService,
+    @Inject(IEmployeeService)
+    private readonly employeeService: IEmployeeService,
     @Inject(IEmailService)
     private readonly emailService: IEmailService,
     @Inject(IUserService)
@@ -50,8 +53,14 @@ export class EmployeeVerificationService
   }
 
   async create(createEmployeeVerificationDto: CreateEmployeeVerificationDto) {
+    const employee = await this.employeeService.findOneByUserId(
+      createEmployeeVerificationDto.createdById,
+    );
+    if (!employee) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
+    }
     const exists = await this.employeeVerificationRepository.find({
-      employeeId: createEmployeeVerificationDto.employeeId,
+      employeeId: employee.id,
     });
     if (exists.length > 0) {
       const pending = exists.find(
@@ -76,6 +85,7 @@ export class EmployeeVerificationService
         );
       }
     }
+    createEmployeeVerificationDto.employeeId = employee.id;
     const newEmployeeVerification = this.employeeVerificationMapper.map(
       createEmployeeVerificationDto,
       CreateEmployeeVerificationDto,
@@ -95,6 +105,7 @@ export class EmployeeVerificationService
       if (item.rejectedBy) item.rejectedBy.password = undefined;
       if (item.createdBy) item.createdBy.password = undefined;
     });
+    return result;
   }
 
   async findOne(id: number) {
@@ -119,10 +130,10 @@ export class EmployeeVerificationService
       await this.employeeVerificationRepository.findOneWithBuilderOption(
         findOptions,
       );
-    result.employee.user.password = undefined;
-    if (result.approvedBy) result.approvedBy.password = undefined;
-    if (result.rejectedBy) result.rejectedBy.password = undefined;
-    if (result.createdBy) result.createdBy.password = undefined;
+    if (result?.employee) result.employee.user.password = undefined;
+    if (result?.approvedBy) result.approvedBy.password = undefined;
+    if (result?.rejectedBy) result.rejectedBy.password = undefined;
+    if (result?.createdBy) result.createdBy.password = undefined;
     return result;
   }
 

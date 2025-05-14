@@ -28,6 +28,7 @@ export class ManagersRepository
       })
       .relations({
         user: true,
+        station: true,
       })
       .order({ id: ORDER_BY.DESC })
       .build();

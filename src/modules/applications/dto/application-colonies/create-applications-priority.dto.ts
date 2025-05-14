@@ -15,6 +15,7 @@ export class CreateApplicationPriorityDto {
   @IsNotEmpty()
   @IsPositive()
   colonyId: number;
+  @AutoMap()
   @ApiProperty({
     example: 1,
   })

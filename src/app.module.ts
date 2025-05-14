@@ -3,6 +3,7 @@ import { CamelCaseNamingConvention } from '@automapper/core';
 import { AutomapperModule } from '@automapper/nestjs';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
@@ -17,6 +18,7 @@ import { ApartmentModule } from './modules/apartment/apartment.module';
 import { ApplicationModule } from './modules/applications/applications.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ColonyModule } from './modules/colony/colony.module';
+import { CronModule } from './modules/crons/cron.module';
 import { DivisionModule } from './modules/division/division.module';
 import { EmployeeVerificationModule } from './modules/employee-verification/employee-verification.module';
 import { EmployeeModule } from './modules/employee/employee.module';
@@ -36,6 +38,8 @@ import { UserModule } from './modules/user/user.module';
       validate: (env) => envSchema.parse(env),
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
+
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
     }),
@@ -56,6 +60,7 @@ import { UserModule } from './modules/user/user.module';
     ApartmentModule,
     ApplicationModule,
     ColonyModule,
+    CronModule,
     DivisionModule,
     EmployeeModule,
     EmployeeVerificationModule,

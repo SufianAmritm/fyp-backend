@@ -12,7 +12,11 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { DOMAIN_ENTITY, JWT, ManagementRoles } from 'src/common/constants';
-import { MAX_FILE_SIZES, SUPPORT_TYPES } from '../../common/constants/enums';
+import {
+  MAX_FILE_SIZES,
+  SUPPORT_TYPES,
+  UserRoles,
+} from '../../common/constants/enums';
 import { Context } from '../../common/decorators/context';
 import { MultiFile } from '../../common/decorators/multi-file.decorator';
 import { Roles } from '../../common/decorators/role-metadata.decorator';
@@ -29,13 +33,13 @@ import { IEmployeeService } from './interfaces/employee.interface';
 @ApiTags(DOMAIN_ENTITY.EMPLOYEES)
 @ApiBearerAuth(JWT)
 @UseGuards(AuthGuard, RolesGuard)
-@Roles(ManagementRoles)
 @Controller('employees')
 export class EmployeeController {
   constructor(
     @Inject(IEmployeeService)
     private readonly employeeService: IEmployeeService,
   ) {}
+  @Roles(ManagementRoles)
   @Post()
   @MultiFile(
     ['picture', 'cnic_front', 'cnic_back', 'service_card'],
@@ -121,7 +125,7 @@ export class EmployeeController {
       picture,
     );
   }
-
+  @Roles(ManagementRoles)
   @Get()
   findAll(
     @Query() paginationDto: PaginationDto,
@@ -129,13 +133,13 @@ export class EmployeeController {
   ) {
     return this.employeeService.findAll(paginationDto, context);
   }
-
+  @Roles(ManagementRoles)
   @Get(':id')
   findOne(@Param() idDto: IdDto) {
     const { id } = idDto;
     return this.employeeService.findOne(+id);
   }
-
+  @Roles(ManagementRoles)
   @Patch(':id')
   @MultiFile(
     ['picture', 'cnic_front', 'cnic_back', 'service_card'],
@@ -222,6 +226,11 @@ export class EmployeeController {
       serviceCard,
       picture,
     );
+  }
+  @Roles([UserRoles.EMPLOYEE, ...ManagementRoles])
+  @Get('verification-status')
+  getVerificationStatus(@Context() context: AppContext) {
+    return this.employeeService.getVerificationStatus(context.UserId);
   }
 
   // @Delete(':id')

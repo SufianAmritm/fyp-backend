@@ -40,4 +40,5 @@ export interface IWrite<T> {
     repository: Repository<T>,
     transactionManager: EntityManager,
   ): Promise<void>;
+
 }

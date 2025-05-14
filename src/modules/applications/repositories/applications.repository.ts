@@ -35,6 +35,9 @@ export class ApplicationRepository
           colony: true,
         },
         employee: {
+          colony: {
+            station: true,
+          },
           user: true,
         },
         approvedBy: true,

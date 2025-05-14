@@ -1,6 +1,6 @@
 import { AutoMap } from '@automapper/classes';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EMPLOYEE_VERIFICATION_STATUS } from '../../../common/constants/enums';
 import { CreateVacancyRequestDto } from './create-vacancy-request.dto';
 export class UpdateVacancyRequestDto extends PartialType(
@@ -15,5 +15,6 @@ export class UpdateVacancyRequestByAdminDto {
   @ApiProperty({
     example: 'reason',
   })
+  @IsOptional()
   reason: string;
 }

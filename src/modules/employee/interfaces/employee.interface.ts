@@ -15,6 +15,7 @@ export interface IEmployeeService {
   );
 
   findOne(id: number): Promise<Employee>;
+  findOneWithOccupationsAndRequests(id: number): Promise<Employee>;
   findOneByUserId(userId: number): Promise<Employee>;
   findOneByUserIdWithColonies(userId: number): Promise<Employee>;
   findAll(paginationDto: PaginationDto, ctx: AppContext);
@@ -27,4 +28,5 @@ export interface IEmployeeService {
     serviceCard: Express.Multer.File,
     picture?: Express.Multer.File,
   );
+  getVerificationStatus(id: number): Promise<{ status: boolean }>;
 }

@@ -183,6 +183,7 @@ export class ApplicationService implements IApplicationService {
       CreateApplicationDto,
       Application,
     );
+    newApplication.employeeId = employeeId;
     const newApplicationPriorities = this.applicationsMapper.mapArray(
       createApplicationDto.colonyPriorities,
       CreateApplicationPriorityDto,
@@ -273,10 +274,10 @@ export class ApplicationService implements IApplicationService {
       .build();
     const result =
       await this.applicationsRepository.findOneWithBuilderOption(findOptions);
-    result.employee.user.password = undefined;
-    if (result.approvedBy) result.approvedBy.password = undefined;
-    if (result.rejectedBy) result.rejectedBy.password = undefined;
-    if (result.createdBy) result.createdBy.password = undefined;
+ if (result?.employee) result.employee.user.password = undefined;
+ if (result?.approvedBy) result.approvedBy.password = undefined;
+ if (result?.rejectedBy) result.rejectedBy.password = undefined;
+ if (result?.createdBy) result.createdBy.password = undefined;
     return result;
   }
   async cancel(id: number, userId: number) {
@@ -335,9 +336,11 @@ export class ApplicationService implements IApplicationService {
     updateApplicationDto: UpdateApplicationByAdminDto,
     userId: number,
   ) {
+    console.log(updateApplicationDto);
     const exists = await this.applicationsRepository.findOne({
       id,
     });
+    console.log(exists);
     if (!exists) {
       throw new BadRequestException(
         APP_ERROR_MESSAGES.NOT_FOUND('Application'),
@@ -426,6 +429,10 @@ export class ApplicationService implements IApplicationService {
         const occupation = await this.occupationService.findOneByApartmentId(
           updateApplicationDto.apartmentId,
         );
+        if (!occupation)
+          throw new BadRequestException(
+            APP_ERROR_MESSAGES.NOT_FOUND('Occupation'),
+          );
         if (occupation.status === OCCUPATION_STATUS.OCCUPIED) {
           throw new BadRequestException(
             APP_ERROR_MESSAGES.ALREADY_ACTIONED('Apartment', 'occupied'),

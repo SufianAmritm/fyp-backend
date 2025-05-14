@@ -5,8 +5,9 @@ import { FindOptionsBuilder } from 'src/common/database/builder-pattern/find-opt
 import { BaseRepository } from 'src/common/database/repositories/base/base.repository';
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { AppContext } from '../../../common/interfaces/context';
+import { GetTransferRequestDto } from '../dto/get-transfer-requests.dto';
 import { TransferRequest } from '../entities/transfer-requests.entity';
 import { ITransferRequestRepository } from './interface/transfer-request-repository.interface';
 
@@ -23,12 +24,24 @@ export class TransferRequestRepository
   }
 
   async findAll(
+    getDto: GetTransferRequestDto,
     paginationDto: PaginationDto,
     ctx: AppContext,
   ): Promise<PagedList<TransferRequest>> {
+    const { search } = getDto;
+    const whereOptions: FindOptionsWhere<TransferRequest> = {};
     const findOption = new FindOptionsBuilder<TransferRequest>()
-      .where({
-        deletedAt: null,
+      .where(whereOptions)
+      .relations({
+        fromColony: {
+          station: true,
+        },
+        toColony: {
+          station: true,
+        },
+        employee: {
+          user: true,
+        },
       })
       .order({ id: ORDER_BY.DESC })
       .build();

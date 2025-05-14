@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { EmailModule } from '../email/email.module';
+import { EmployeeModule } from '../employee/employee.module';
 import { ManagersModule } from '../managers/managers.module';
 import { UserModule } from '../user/user.module';
 import { EmployeeVerificationController } from './employee-verification.controller';
@@ -9,7 +11,6 @@ import { IEmployeeVerificationService } from './interfaces/employee-verification
 import { EmployeeVerificationMappingProfile } from './mapping/employee-verification.mapping';
 import { EmployeeVerificationRepository } from './repositories/employee-verification.repository';
 import { IEmployeeVerificationRepository } from './repositories/interface/employee-verification-repository.interface';
-import { EmailModule } from '../email/email.module';
 
 const employeeVerificationEntities = [EmployeeVerification];
 const employeeVerificationRepositoryProvider = [
@@ -29,7 +30,8 @@ const employeeVerificationServiceProvider = [
     TypeOrmModule.forFeature(employeeVerificationEntities),
     UserModule,
     ManagersModule,
-    EmailModule
+    EmailModule,
+    EmployeeModule,
   ],
   controllers: [EmployeeVerificationController],
   providers: [

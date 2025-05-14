@@ -8,7 +8,10 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { RESPONSE_MESSAGES } from '../../common/constants';
-import { UserRoles } from '../../common/constants/enums';
+import {
+  EMPLOYEE_VERIFICATION_STATUS,
+  UserRoles,
+} from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
@@ -37,6 +40,54 @@ export class EmployeeService implements IEmployeeService {
     private readonly s3Service: IS3Service,
     private readonly utilService: UtilsService,
   ) {}
+  async findOneWithOccupationsAndRequests(id: number): Promise<Employee> {
+    const findOptions = new FindOptionsBuilder<Employee>()
+      .where({ id })
+      .relations({
+        user: true,
+        colony: {
+          station: true,
+        },
+        occupations: {
+          apartment: {
+            colony: true,
+          },
+        },
+        transferRequests: {
+          fromColony: true,
+          toColony: true,
+        },
+        vacancyRequests: {
+          occupation: {
+            apartment: true,
+          },
+        },
+      })
+      .build();
+    const employee =
+      await this.employeeRepository.findOneWithBuilderOption(findOptions);
+    if (employee?.user) employee.user.password = undefined;
+    return employee;
+  }
+  async getVerificationStatus(userId: number): Promise<{ status: boolean }> {
+    const findOptions = new FindOptionsBuilder<Employee>()
+      .where({ userId })
+      .relations({
+        verification: true,
+      })
+      .build();
+    const employee =
+      await this.employeeRepository.findOneWithBuilderOption(findOptions);
+    const recentRequest = employee.verification?.sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    })?.[0];
+    return {
+      status:
+        recentRequest?.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED
+          ? true
+          : false,
+    };
+  }
   findOneByUserIdWithColonies(userId: number): Promise<Employee> {
     const findOptions = new FindOptionsBuilder<Employee>()
       .where({ userId })
@@ -128,10 +179,14 @@ export class EmployeeService implements IEmployeeService {
         Employee,
         transactionManager,
       );
-      await this.userService.sendEmailForNoPassword(user, emailData);
+      await this.userService.sendEmailForNoPassword(
+        user,
+        emailData,
+        transactionManager,
+      );
       runner.end();
       user.password = undefined;
-      return { user, employee };
+      return { ...user, employee };
     } catch (error) {
       console.log(error);
       if (runner) {
@@ -141,8 +196,13 @@ export class EmployeeService implements IEmployeeService {
       throw new Error(error.message);
     }
   }
-  findAll(paginationDto: PaginationDto, ctx: AppContext) {
-    return this.employeeRepository.findAll(paginationDto, ctx);
+  async findAll(paginationDto: PaginationDto, ctx: AppContext) {
+    const employees = await this.employeeRepository.findAll(paginationDto, ctx);
+    employees.items = employees.items.map((item) => {
+      item.user.password = undefined;
+      return item;
+    });
+    return employees;
   }
 
   async findOne(id: number) {
@@ -157,7 +217,7 @@ export class EmployeeService implements IEmployeeService {
       .build();
     const employee =
       await this.employeeRepository.findOneWithBuilderOption(findOptions);
-    if (employee.user) employee.user.password = undefined;
+    if (employee?.user) employee.user.password = undefined;
     return employee;
   }
 

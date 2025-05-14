@@ -32,6 +32,9 @@ export class EmployeeVerificationRepository
       })
       .relations({
         employee: {
+          colony: {
+            station: true,
+          },
           user: true,
         },
         approvedBy: true,

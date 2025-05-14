@@ -47,4 +47,9 @@ export interface IWrite<T> {
     target: EntityTarget<T>,
     transactionManager: EntityManager,
   ): Promise<void>;
+  bulkUpdate(
+    items: QueryDeepPartialEntity<T>[],
+    by: any,
+    batchSize: number,
+  ): Promise<void>;
 }

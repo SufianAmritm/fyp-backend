@@ -69,6 +69,11 @@ export class ManagersController {
         description: 'Station ID associated with the user',
         minimum: 1,
       },
+      description: {
+        type: 'string',
+        example: 'user@example.com',
+        description: 'Please provide email',
+      },
     },
     true,
     ['name', 'email', 'phoneNumber', 'stationId'],

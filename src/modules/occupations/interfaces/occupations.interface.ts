@@ -1,8 +1,19 @@
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { PaginationDto } from '../../../common/dtos/request/pagination.dto';
+import { AppContext } from '../../../common/interfaces/context';
+import { PagedList } from '../../../common/types/paged-list';
 import { AssignOccupationDto } from '../dto/assign-occupation.dto';
 import { CreateTransferRequestDto } from '../dto/create-transfer-request.dto';
+import { GetTransferRequestDto } from '../dto/get-transfer-requests.dto';
+import { GetVacancyRequestDto } from '../dto/get-vacany-requests.dto';
 import { UpdateVacancyRequestByAdminDto } from '../dto/update-vacany-request.dto';
-import { UpdateTransferRequestDto, UpdateTransferRequestByAdminDto } from '../dto/updateTransferRequest.dto';
+import {
+  UpdateTransferRequestByAdminDto,
+  UpdateTransferRequestDto,
+} from '../dto/updateTransferRequest.dto';
 import { Occupation } from '../entities/occupations.entity';
+import { TransferRequest } from '../entities/transfer-requests.entity';
+import { VacancyRequest } from '../entities/vacancy-requests.entity';
 
 export const IOccupationService = Symbol('IOccupationService');
 export interface IOccupationService {
@@ -39,4 +50,18 @@ export interface IOccupationService {
     updateTransferRequestDto: UpdateTransferRequestDto,
     userId: number,
   );
+  findOneTransferRequest(id: number): Promise<TransferRequest>;
+  findAllTransferRequest(
+    getDto: GetTransferRequestDto,
+    paginationDto: PaginationDto,
+    ctx: AppContext,
+  ): Promise<PagedList<TransferRequest>>;
+  findAllForCronJob(days: Date): Promise<Occupation[]>;
+  findOneVacancyRequest(id: number): Promise<VacancyRequest>;
+  findAllVacancyRequest(
+    getDto: GetVacancyRequestDto,
+    paginationDto: PaginationDto,
+    ctx: AppContext,
+  ): Promise<PagedList<VacancyRequest>>;
+  bulkUpdate(updates: QueryDeepPartialEntity<Occupation>[]);
 }

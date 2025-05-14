@@ -5,8 +5,9 @@ import { FindOptionsBuilder } from 'src/common/database/builder-pattern/find-opt
 import { BaseRepository } from 'src/common/database/repositories/base/base.repository';
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { AppContext } from '../../../common/interfaces/context';
+import { GetVacancyRequestDto } from '../dto/get-vacany-requests.dto';
 import { VacancyRequest } from '../entities/vacancy-requests.entity';
 import { IVacancyRequestRepository } from './interface/vacancy-requests-repository.interface';
 
@@ -23,12 +24,25 @@ export class VacancyRequestRepository
   }
 
   async findAll(
+    getDto: GetVacancyRequestDto,
     paginationDto: PaginationDto,
     ctx: AppContext,
   ): Promise<PagedList<VacancyRequest>> {
+    const { search } = getDto;
+    const whereOptions: FindOptionsWhere<VacancyRequest> = {};
     const findOption = new FindOptionsBuilder<VacancyRequest>()
-      .where({
-        deletedAt: null,
+      .where(whereOptions)
+      .relations({
+        occupation: {
+          apartment: {
+            colony: {
+              station: true,
+            },
+          },
+        },
+        employee: {
+          user: true,
+        },
       })
       .order({ id: ORDER_BY.DESC })
       .build();

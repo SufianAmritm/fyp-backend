@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Get,
   Inject,
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -16,11 +18,14 @@ import {
 import { Context } from '../../common/decorators/context';
 import { Roles } from '../../common/decorators/role-metadata.decorator';
 import { IdDto } from '../../common/dtos/request/id.dto';
+import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AppContext } from '../../common/interfaces/context';
 import { AssignOccupationDto } from './dto/assign-occupation.dto';
 import { CreateTransferRequestDto } from './dto/create-transfer-request.dto';
+import { GetTransferRequestDto } from './dto/get-transfer-requests.dto';
+import { GetVacancyRequestDto } from './dto/get-vacany-requests.dto';
 import { UpdateVacancyRequestByAdminDto } from './dto/update-vacany-request.dto';
 import {
   UpdateTransferRequestByAdminDto,
@@ -37,6 +42,47 @@ export class OccupationController {
     @Inject(IOccupationService)
     private readonly occupationsService: IOccupationService,
   ) {}
+  @Roles(ManagementRoles)
+  @Get('transfer-request')
+  findAllTransferRequest(
+    @Query() paginationDto: PaginationDto,
+    @Query() getDto: GetTransferRequestDto,
+    @Context() context: AppContext,
+  ) {
+    return this.occupationsService.findAllTransferRequest(
+      getDto,
+      paginationDto,
+      context,
+    );
+  }
+  @Roles([UserRoles.EMPLOYEE, ...ManagementRoles])
+  @Get('transfer-request/:id')
+  findOneTransferRequest(
+    @Param() idDto: IdDto,
+    @Context() context: AppContext,
+  ) {
+    const { id } = idDto;
+    return this.occupationsService.findOneTransferRequest(id);
+  }
+  @Roles(ManagementRoles)
+  @Get('vacancy-request')
+  findAllVacancyRequest(
+    @Query() paginationDto: PaginationDto,
+    @Query() getDto: GetVacancyRequestDto,
+    @Context() context: AppContext,
+  ) {
+    return this.occupationsService.findAllVacancyRequest(
+      getDto,
+      paginationDto,
+      context,
+    );
+  }
+  @Roles([UserRoles.EMPLOYEE, ...ManagementRoles])
+  @Get('vacancy-request/:id')
+  findOneVacancyRequest(@Param() idDto: IdDto, @Context() context: AppContext) {
+    const { id } = idDto;
+    return this.occupationsService.findOneVacancyRequest(id);
+  }
   @Roles([UserRoles.EMPLOYEE])
   @Post('vacancy-request')
   createVacancyRequest(@Context() context: AppContext) {

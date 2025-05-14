@@ -28,7 +28,14 @@ export class EmployeeRepository
   ): Promise<PagedList<Employee>> {
     const findOption = new FindOptionsBuilder<Employee>()
       .where({
-        deletedAt: null })
+        deletedAt: null,
+      })
+      .relations({
+        user: true,
+        colony: {
+          station: true,
+        },
+      })
       .order({ id: ORDER_BY.DESC })
       .build();
     return this.findWithPagination(paginationDto, findOption);

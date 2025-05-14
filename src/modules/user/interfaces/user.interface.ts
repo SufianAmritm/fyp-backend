@@ -1,4 +1,5 @@
 import { SignUpDto } from 'src/modules/auth/dto/sign-up.dto';
+import { EntityManager } from 'typeorm';
 import { OTP_TYPE } from '../../../common/constants/enums';
 import { AppContext } from '../../../common/interfaces/context';
 import { CreateAdminDto } from '../../admin/dto/create-admin.dto';
@@ -26,7 +27,11 @@ export interface IUserService {
   findOneById(id: number): Promise<User>;
   updateAppSettings(ctx: AppContext, dto: UpdateSettingsDto): Promise<string>;
   getSettings(userId: number): Promise<AppSetting>;
-  sendEmailForNoPassword(user: User, emailData: EmailData): Promise<void>;
+  sendEmailForNoPassword(
+    user: User,
+    emailData: EmailData,
+    manager: EntityManager,
+  ): Promise<void>;
   sendPasswordResetEmail(user: User, otpType: OTP_TYPE): Promise<void>;
   getProfile(id: number): Promise<User>;
   updateProfile(

@@ -1,9 +1,9 @@
+import { AutoMap } from '@automapper/classes';
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { IsInt, IsNotEmpty, IsOptional } from 'class-validator';
 import { CreateTransferRequestDto } from './create-transfer-request.dto';
 import { UpdateVacancyRequestByAdminDto } from './update-vacany-request.dto';
-import { AutoMap } from '@automapper/classes';
-import { IsInt, IsNotEmpty, IsOptional } from 'class-validator';
-import { Transform } from 'class-transformer';
 
 export class UpdateTransferRequestDto extends PartialType(
   CreateTransferRequestDto,
@@ -17,5 +17,5 @@ export class UpdateTransferRequestByAdminDto extends UpdateVacancyRequestByAdmin
   @IsInt()
   @IsNotEmpty()
   @IsOptional()
-  apartmentId: number;
+  apartmentId?: number;
 }

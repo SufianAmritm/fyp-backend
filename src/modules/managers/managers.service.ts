@@ -57,7 +57,7 @@ export class ManagersService implements IManagersService {
       .build();
     const manager =
       await this.managersRepository.findOneWithBuilderOption(findOptions);
-    manager.user.password = undefined;
+      if(manager?.user)    manager.user.password = undefined;
     return manager;
   }
   async create(
@@ -95,10 +95,14 @@ export class ManagersService implements IManagersService {
         Manager,
         transactionManager,
       );
-      await this.userService.sendEmailForNoPassword(user, emailData);
+      await this.userService.sendEmailForNoPassword(
+        user,
+        emailData,
+        transactionManager,
+      );
       runner.end();
       user.password = undefined;
-      return { user, manager };
+      return { ...user, manager };
     } catch (error) {
       console.log(error);
       if (runner) {
@@ -128,7 +132,7 @@ export class ManagersService implements IManagersService {
       .build();
     const manager =
       await this.managersRepository.findOneWithBuilderOption(findOptions);
-    manager.user.password = undefined;
+      if(manager?.user)    manager.user.password = undefined;
     return manager;
   }
   async findOneByUserIdWithColonies(id: number) {
@@ -152,7 +156,7 @@ export class ManagersService implements IManagersService {
       .build();
     const manager =
       await this.managersRepository.findOneWithBuilderOption(findOptions);
-    manager.user.password = undefined;
+      if (manager?.user) manager.user.password = undefined;
     return manager;
   }
   async update(

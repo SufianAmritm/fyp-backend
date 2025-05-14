@@ -13,6 +13,7 @@ export class UpdateApplicationByAdminDto {
   })
   @IsString()
   @IsNotEmpty()
+  @IsOptional()
   reason: string;
   @AutoMap()
   status: EMPLOYEE_VERIFICATION_STATUS;

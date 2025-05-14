@@ -13,13 +13,5 @@ export class CreateTransferRequestDto {
   })
   toColonyId: number;
   @AutoMap()
-  @Transform(({ value }) => Number(value))
-  @IsNumber()
-  @IsNotEmpty()
-  @ApiProperty({
-    example: 1,
-  })
-  fromColonyId: number;
-  @AutoMap()
   createdById: number;
 }

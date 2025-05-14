@@ -44,6 +44,9 @@ export class TransferRequest extends BaseEntity {
   @Column('integer', { name: 'approved_by_to_id', nullable: true })
   approvedByToId: number;
   @AutoMap()
+  @Column('integer', { name: 'cache_apartment_id', nullable: true })
+  cacheApartmentId: number;
+  @AutoMap()
   @Column('integer', { name: 'rejected_by_from_id', nullable: true })
   rejectedByFromId: number;
   @AutoMap()

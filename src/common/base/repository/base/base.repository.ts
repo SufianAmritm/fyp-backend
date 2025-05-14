@@ -12,9 +12,10 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { FindOptionsCustom } from '../../../database/utils/find-options-builder';
 import { IRead } from '../interfaces/read.interface';
 import { IWrite } from '../interfaces/write.interface';
-import { FindOptionsCustom } from '../../../database/utils/find-options-builder';
+import { BadRequestException } from '@nestjs/common';
 
 export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
   public readonly tableName: string;
@@ -36,6 +37,7 @@ export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
       throw new Error(error.message);
     }
   }
+
 
   async findOne(
     whereOption: FindOptionsWhere<T>,

@@ -21,6 +21,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { IUserService } from './interfaces/user.interface';
 
 import { PutObjectCommandInput } from '@aws-sdk/client-s3';
+import { EntityManager } from 'typeorm';
 import {
   EMAIL_SUBJECTS,
   EMAIL_TEMPLATES,
@@ -89,11 +90,14 @@ export class UserService implements IUserService {
       const transactionManager = runner.manager;
 
       await runner.start();
+      console.log(createManagerDto);
+
       const userMap = this.mapper.map(
         createManagerDto,
         CreateManagersDto,
         User,
       );
+      console.log(userMap);
       userMap.roleId = role.id;
       userMap.emailVerified = true;
       const user = await this.userRepository.createWithTransaction<User>(
@@ -419,13 +423,21 @@ export class UserService implements IUserService {
       emailData,
     );
   }
-  async sendEmailForNoPassword(user: User, emailData: EmailData) {
-    const otp = await this.otpService.create({
-      userId: user.id,
-      otp: Math.random().toString(36).substring(2, 8),
-      type: OTP_TYPE.RESET_PASSWORD,
-      expireTimestamp: BigInt(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
+  async sendEmailForNoPassword(
+    user: User,
+    emailData: EmailData,
+    manager: EntityManager,
+  ) {
+    const otp = await this.userRepository.createWithTransaction<Otp>(
+      {
+        userId: user.id,
+        otp: Math.random().toString(36).substring(2, 8),
+        type: OTP_TYPE.RESET_PASSWORD,
+        expireTimestamp: BigInt(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+      Otp,
+      manager,
+    );
     emailData.frontendBaseUrl = `${this.configService.get('FRONTEND_PASSWORD_OTP_RESET_URL')}?otp=${otp.otp}`;
     await this.emailService.send(
       user.email,

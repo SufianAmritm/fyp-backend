@@ -31,6 +31,9 @@ export class ColonyRepository
     search && (whereOptions.name = `%${ILike(search)}%`);
     const findOption = new FindOptionsBuilder<Colony>()
       .where(whereOptions)
+      .relations({
+        station: true,
+      })
       .order({ id: ORDER_BY.DESC })
       .build();
     return this.findWithPagination(paginationDto, findOption);

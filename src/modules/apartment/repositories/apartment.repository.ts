@@ -31,6 +31,12 @@ export class ApartmentRepository
     search && (whereOptions.houseNo = `%${ILike(search)}%`);
     const findOption = new FindOptionsBuilder<Apartment>()
       .where(whereOptions)
+      .relations({
+        colony: {
+          station: true,
+        },
+        occupation: true,
+      })
       .order({ id: ORDER_BY.DESC })
       .build();
     return this.findWithPagination(paginationDto, findOption);

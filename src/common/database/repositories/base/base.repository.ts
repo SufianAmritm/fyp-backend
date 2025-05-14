@@ -17,6 +17,7 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { FindOptions } from '../../builder-pattern/find-options.builder';
 import { IRead } from '../interfaces/read.interface';
 import { IWrite } from '../interfaces/write.interface';
+import { BadRequestException } from '@nestjs/common';
 
 export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
   public readonly tableName: string;
@@ -65,7 +66,6 @@ export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
 
   async create(item: T): Promise<T> {
     try {
-
       return await this.repository.save(this.repository.create(item));
     } catch (error) {
       throw new Error(error.message);
@@ -130,7 +130,100 @@ export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
     }, {} as QueryDeepPartialEntity<T>);
     return this.repository.update(conditions, validUpdates);
   }
+  private formatValue(val: any, param?: boolean): string | boolean {
+    if (val instanceof Date)
+      return param ? `${val.toISOString()}` : `'${val.toISOString()}'`;
+    if (typeof val === 'string')
+      return param
+        ? `${val.replace(/'/g, "''")}`
+        : `'${val.replace(/'/g, "''")}'`;
+    if (typeof val === 'boolean') {
+      if (param) {
+        return val;
+      }
+      return val ? 'TRUE' : 'FALSE';
+    }
+    return val;
+  }
+  /**
+   * Performs a bulk update of entities in batches using raw SQL queries for improved performance.
+   *
+   * @param items - An array of partial entity objects to update. Each object must include the `by` field (e.g., `id`) with a unique value.
+   * @param by - The property name to use as the unique identifier for matching rows to update.
+   *             This field is used in the `CASE` statements to conditionally update each column.
+   *             It must be a key in each `item` and should resolve to a `number` or `string`.
+   * @param batchSize - (Optional) The number of items to process per batch. Default is 20.
+   *
+   * Example:
+   * ```ts
+   * await bulkUpdate([
+   *   { id: 1, name: 'Alice' },
+   *   { id: 2, name: 'Bob' }
+   * ], 'id');
+   * ```
+   * Note:
+   * `It skips reference by, and also skips undefined values`
+   */
+  async bulkUpdate(
+    items: QueryDeepPartialEntity<T>[],
+    by: any,
+    batchSize: number = 20,
+  ): Promise<void> {
+    if (items.length === 0) return undefined;
+    try {
+      const itemLength = items.length;
+      const columnMap = new Map<string, string>();
 
+      this.repository.metadata.columns.forEach((col) => {
+        columnMap.set(col.propertyName, col.databaseName);
+      });
+      const referenceBy = columnMap.get(by);
+      if (!referenceBy) {
+        throw new BadRequestException(`Invalid reference for bulk update${by}`);
+      }
+      const queryColumnMap = new Map<string, { identity: any; val: any }[]>();
+      const identities = [];
+      for (let i = 0; i < itemLength; i += batchSize) {
+        const batch = items.slice(i, i + batchSize);
+        for (const item of batch) {
+          const identity = this.formatValue(item[by]);
+          identities.push(identity);
+
+          for (const [col, val] of Object.entries(item)) {
+            if (!columnMap.has(col) || col === by || val === undefined)
+              continue;
+
+            const dbCol = columnMap.get(col)!;
+
+            if (!queryColumnMap.has(dbCol)) {
+              queryColumnMap.set(dbCol, []);
+            }
+
+            queryColumnMap
+              .get(dbCol)!
+              .push({ identity, val: this.formatValue(val, true) });
+          }
+        }
+      }
+      const params = [];
+      let paramIndex = 0;
+      const cases = Array.from(queryColumnMap, ([key, val]) => {
+        const cases = val.map((v) => {
+          paramIndex++;
+
+          params.push(v.val);
+
+          return ` WHEN ${v.identity} THEN $${paramIndex}`;
+        });
+        return `${key} = CASE "${referenceBy}" ${cases.join(' ')} ELSE ${key} END`;
+      });
+
+      const query = `UPDATE "${this.repository.metadata.tableName}" SET ${cases.join(', ')} WHERE "${referenceBy}" IN (${identities.join(',')})`;
+      return await this.repository.query(query, params);
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
   async updateWithTransaction<T>(
     conditions: FindOptionsWhere<T>,
     updates: QueryDeepPartialEntity<T>,
@@ -138,16 +231,20 @@ export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
     transactionManager: EntityManager,
   ): Promise<void> {
     try {
-      const columns = this.repository.metadata.columns;
-      const validUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
-        if (columns.find((column) => column.propertyName === key)) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {} as QueryDeepPartialEntity<T>);
-      await transactionManager
-        .getRepository(target)
-        .update(conditions, validUpdates);
+      console.log('updates', updates);
+      const repository = transactionManager.getRepository(target);
+      const columns = repository.metadata.columns;
+      console.log('columns', columns);
+      const validUpdates = Object.entries(updates).reduce(
+        (acc, [key, value]) => {
+          if (columns.find((column) => column.propertyName === key)) {
+            acc[key] = value;
+          }
+          return acc;
+        },
+        {} as QueryDeepPartialEntity<T>,
+      );
+      await repository.update(conditions, validUpdates);
     } catch (error) {
       throw new Error(error.message);
     }

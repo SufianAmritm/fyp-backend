@@ -82,11 +82,12 @@ export class ApartmentService implements IApartmentService {
     try {
       await runner.start();
       const manager = runner.manager;
-      await this.apartmentRepository.createWithTransaction(
-        newApartment,
-        Apartment,
-        manager,
-      );
+     const aprtment = await this.apartmentRepository.createWithTransaction(
+       newApartment,
+       Apartment,
+       manager,
+     );
+     newOccupation.apartmentId = aprtment.id;
       await this.apartmentRepository.createWithTransaction(
         newOccupation,
         Occupation,
