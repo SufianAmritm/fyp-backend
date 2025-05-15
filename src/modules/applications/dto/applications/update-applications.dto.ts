@@ -4,6 +4,7 @@ import { Transform } from 'class-transformer';
 import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EMPLOYEE_VERIFICATION_STATUS } from '../../../../common/constants/enums';
 import { CreateApplicationDto } from './create-applications.dto';
+
 export class UpdateApplicationDto extends PartialType(CreateApplicationDto) {}
 
 export class UpdateApplicationByAdminDto {
@@ -15,6 +16,7 @@ export class UpdateApplicationByAdminDto {
   @IsNotEmpty()
   @IsOptional()
   reason: string;
+
   @AutoMap()
   status: EMPLOYEE_VERIFICATION_STATUS;
 

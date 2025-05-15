@@ -1,6 +1,7 @@
 import { PaginationDto } from '../../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../../common/interfaces/context';
 import { CreateApplicationDto } from '../dto/applications/create-applications.dto';
+import { GetApplicationDto } from '../dto/applications/get-applications.dto';
 import {
   UpdateApplicationByAdminDto,
   UpdateApplicationDto,
@@ -10,7 +11,11 @@ import { Application } from '../entities/applications.entity';
 export const IApplicationService = Symbol('IApplicationService');
 export interface IApplicationService {
   create(createApplicationDto: CreateApplicationDto);
-  findAll(paginationDto: PaginationDto, ctx: AppContext);
+  findAll(
+    getApplicationDto: GetApplicationDto,
+    paginationDto: PaginationDto,
+    ctx: AppContext,
+  );
   findOne(id: number);
   updateByAdmin(
     id: number,
@@ -23,4 +28,5 @@ export interface IApplicationService {
     userId: number,
   );
   cancel(id: number, userId: number): Promise<Application>;
+  myApplications(userId: number): Promise<Application[]>;
 }

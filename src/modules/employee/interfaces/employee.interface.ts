@@ -1,6 +1,7 @@
 import { PaginationDto } from '../../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../../common/interfaces/context';
 import { CreateEmployeeDto } from '../dto/create-employee.dto';
+import { GetEmployeeDto } from '../dto/get-employee-dto';
 import { UpdateEmployeeDto } from '../dto/update-employee.dto';
 import { Employee } from '../entities/employee.entity';
 
@@ -18,7 +19,11 @@ export interface IEmployeeService {
   findOneWithOccupationsAndRequests(id: number): Promise<Employee>;
   findOneByUserId(userId: number): Promise<Employee>;
   findOneByUserIdWithColonies(userId: number): Promise<Employee>;
-  findAll(paginationDto: PaginationDto, ctx: AppContext);
+  findAll(
+    getEmployeeDto: GetEmployeeDto,
+    paginationDto: PaginationDto,
+    ctx: AppContext,
+  );
   update(
     id: number,
     updateEmployeeDto: UpdateEmployeeDto,

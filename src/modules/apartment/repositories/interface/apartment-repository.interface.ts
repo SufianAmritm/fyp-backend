@@ -1,6 +1,7 @@
 import { IBaseRepository } from 'src/common/database/repositories/interfaces/base.interface';
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
+import { AppContext } from '../../../../common/interfaces/context';
 import { GetApartmentDto } from '../../dto/request/get.dto';
 import { Apartment } from '../../entities/apartment.entity';
 
@@ -12,5 +13,6 @@ export interface IApartmentRepository<T = DefaultEntity>
   findAll(
     getApartmentDto: GetApartmentDto,
     paginationDto: PaginationDto,
+    context: AppContext,
   ): Promise<PagedList<Apartment>>;
 }

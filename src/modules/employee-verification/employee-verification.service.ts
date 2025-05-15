@@ -39,6 +39,45 @@ export class EmployeeVerificationService
     private readonly userService: IUserService,
     @InjectMapper() private readonly employeeVerificationMapper: Mapper,
   ) {}
+
+  async myVerifications(userId: number): Promise<EmployeeVerification[]> {
+    const employee = await this.employeeService.findOneByUserId(userId);
+    if (!employee) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
+    }
+    const findOptions = new FindOptionsBuilder<EmployeeVerification>()
+      .where({ employeeId: employee.id })
+      .relations({
+        employee: {
+          user: true,
+        },
+        approvedBy: {
+          manager: true,
+        },
+        rejectedBy: {
+          manager: true,
+        },
+        createdBy: {
+          manager: true,
+        },
+      })
+      .order({
+        createdAt: 'DESC',
+      })
+      .build();
+    const res =
+      await this.employeeVerificationRepository.findManyWithBuilderOption(
+        findOptions,
+      );
+    res.forEach((result) => {
+      if (result?.employee) result.employee.user.password = undefined;
+      if (result?.approvedBy) result.approvedBy.password = undefined;
+      if (result?.rejectedBy) result.rejectedBy.password = undefined;
+      if (result?.createdBy) result.createdBy.password = undefined;
+    });
+    return res;
+  }
+
   getEmployeeVerificationStatus(
     employeeId: number,
   ): Promise<EmployeeVerification> {

@@ -14,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { DOMAIN_ENTITY, JWT } from 'src/common/constants';
+import { DOMAIN_ENTITY, JWT, ManagementRoles } from 'src/common/constants';
 import {
   MAX_FILE_SIZES,
   SUPPORT_TYPES,
@@ -29,6 +29,7 @@ import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AppContext } from '../../common/interfaces/context';
 import { CreateManagersDto } from './dto/create-managers.dto';
+import { GetManagersDto } from './dto/get-managers.dto';
 import { UpdateManagersDto } from './dto/update-managers.dto';
 import { IManagersService } from './interfaces/managers.interface';
 
@@ -41,6 +42,7 @@ export class ManagersController {
     @Inject(IManagersService)
     private readonly managersService: IManagersService,
   ) {}
+
   @Roles([UserRoles.ADMIN])
   @Post()
   @SingleFile(
@@ -101,16 +103,23 @@ export class ManagersController {
     return this.managersService.create(createManagersDto, picture);
   }
 
+  @Roles(ManagementRoles)
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
-    return this.managersService.findAll(paginationDto);
+  findAll(
+    @Query() getManagersDto: GetManagersDto,
+    @Query() paginationDto: PaginationDto,
+    @Context() context: AppContext,
+  ) {
+    return this.managersService.findAll(getManagersDto, paginationDto, context);
   }
 
+  @Roles(ManagementRoles)
   @Get(':id')
   findOne(@Param() idDto: IdDto) {
     const { id } = idDto;
     return this.managersService.findOne(+id);
   }
+
   @Roles([UserRoles.ADMIN])
   @Patch(':id')
   @SingleFile(

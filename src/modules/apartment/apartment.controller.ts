@@ -42,13 +42,18 @@ export class ApartmentController {
     createApartmentDto.createdById = context.UserId;
     return this.apartmentService.create(createApartmentDto);
   }
+
   @Get()
   findAll(
     @Query() getApartmentDto: GetApartmentDto,
-
+    @Context() context: AppContext,
     @Query() paginationDto: PaginationDto,
   ) {
-    return this.apartmentService.findAll(getApartmentDto, paginationDto);
+    return this.apartmentService.findAll(
+      getApartmentDto,
+      paginationDto,
+      context,
+    );
   }
 
   @Get(':id')
@@ -56,6 +61,7 @@ export class ApartmentController {
     const { id } = idDto;
     return this.apartmentService.findOne(+id);
   }
+
   @Roles(ManagementRoles)
   @Patch(':id')
   update(
@@ -65,6 +71,10 @@ export class ApartmentController {
   ) {
     const { id } = idDto;
 
-    return this.apartmentService.update(+id, updateApartmentDto,context.UserId);
+    return this.apartmentService.update(
+      +id,
+      updateApartmentDto,
+      context.UserId,
+    );
   }
 }

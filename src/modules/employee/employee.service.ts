@@ -21,6 +21,7 @@ import { IS3Service } from '../aws/interface/aws-s3.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { GetEmployeeDto } from './dto/get-employee-dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { Employee } from './entities/employee.entity';
 import { IEmployeeService } from './interfaces/employee.interface';
@@ -40,6 +41,7 @@ export class EmployeeService implements IEmployeeService {
     private readonly s3Service: IS3Service,
     private readonly utilService: UtilsService,
   ) {}
+
   async findOneWithOccupationsAndRequests(id: number): Promise<Employee> {
     const findOptions = new FindOptionsBuilder<Employee>()
       .where({ id })
@@ -69,6 +71,7 @@ export class EmployeeService implements IEmployeeService {
     if (employee?.user) employee.user.password = undefined;
     return employee;
   }
+
   async getVerificationStatus(userId: number): Promise<{ status: boolean }> {
     const findOptions = new FindOptionsBuilder<Employee>()
       .where({ userId })
@@ -82,12 +85,10 @@ export class EmployeeService implements IEmployeeService {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     })?.[0];
     return {
-      status:
-        recentRequest?.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED
-          ? true
-          : false,
+      status: recentRequest?.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED,
     };
   }
+
   findOneByUserIdWithColonies(userId: number): Promise<Employee> {
     const findOptions = new FindOptionsBuilder<Employee>()
       .where({ userId })
@@ -103,6 +104,7 @@ export class EmployeeService implements IEmployeeService {
       .build();
     return this.employeeRepository.findOneWithBuilderOption(findOptions);
   }
+
   findOneByUserId(userId: number): Promise<Employee> {
     const findOptions = new FindOptionsBuilder<Employee>()
       .where({ userId })
@@ -116,6 +118,7 @@ export class EmployeeService implements IEmployeeService {
       .build();
     return this.employeeRepository.findOneWithBuilderOption(findOptions);
   }
+
   async create(
     createEmployeeDto: CreateEmployeeDto,
     cnicFront: Express.Multer.File,
@@ -188,7 +191,7 @@ export class EmployeeService implements IEmployeeService {
       user.password = undefined;
       return { ...user, employee };
     } catch (error) {
-      console.log(error);
+      console.error(error);
       if (runner) {
         await runner.rollbackTransaction();
       }
@@ -196,8 +199,17 @@ export class EmployeeService implements IEmployeeService {
       throw new Error(error.message);
     }
   }
-  async findAll(paginationDto: PaginationDto, ctx: AppContext) {
-    const employees = await this.employeeRepository.findAll(paginationDto, ctx);
+
+  async findAll(
+    getEmployeeDto: GetEmployeeDto,
+    paginationDto: PaginationDto,
+    ctx: AppContext,
+  ) {
+    const employees = await this.employeeRepository.findAll(
+      getEmployeeDto,
+      paginationDto,
+      ctx,
+    );
     employees.items = employees.items.map((item) => {
       item.user.password = undefined;
       return item;

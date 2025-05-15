@@ -14,6 +14,7 @@ import { UpdateColonyDto } from './dto/update-colony.dto';
 import { Colony } from './entities/colony.entity';
 import { IColonyService } from './interfaces/colony.interface';
 import { IColonyRepository } from './repositories/interface/colony-repository.interface';
+import { AppContext } from '../../common/interfaces/context';
 
 @Injectable()
 export class ColonyService implements IColonyService {
@@ -35,7 +36,7 @@ export class ColonyService implements IColonyService {
     });
     if (exists) {
       throw new BadRequestException(
-        APP_ERROR_MESSAGES.ALREADY_EXISTS('Colony', 'name: ' + name),
+        APP_ERROR_MESSAGES.ALREADY_EXISTS('Colony', `name: ${name}`),
       );
     }
     const updator = await this.userService.findOneById(
@@ -59,8 +60,12 @@ export class ColonyService implements IColonyService {
     return this.colonyRepository.create(newColony);
   }
 
-  findAll(getColonyDto: GetColonyDto, paginationDto: PaginationDto) {
-    return this.colonyRepository.findAll(getColonyDto, paginationDto);
+  findAll(
+    getColonyDto: GetColonyDto,
+    paginationDto: PaginationDto,
+    ctx: AppContext,
+  ) {
+    return this.colonyRepository.findAll(getColonyDto, paginationDto, ctx);
   }
 
   findOne(id: number) {
@@ -75,17 +80,17 @@ export class ColonyService implements IColonyService {
     return this.colonyRepository.findOneWithBuilderOption(findOption);
   }
 
-  async update(id: number, updateColonyDto: UpdateColonyDto,userId:number) {
+  async update(id: number, updateColonyDto: UpdateColonyDto, userId: number) {
     const colony = await this.colonyRepository.findOne({ id });
-    if (!colony) throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Colony'));
-    const updator = await this.userService.findOneById(
-      userId,
-    );
+    if (!colony)
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Colony'));
+    const updator = await this.userService.findOneById(userId);
     if (!updator)
       throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
     if (updator.role.name === UserRoles.MANAGER) {
       const manager = await this.managerService.findOne(updator.id);
-      const canManagerUpdateVerification = manager.stationId === colony.stationId;
+      const canManagerUpdateVerification =
+        manager.stationId === colony.stationId;
 
       if (!canManagerUpdateVerification) {
         throw new BadRequestException(APP_ERROR_MESSAGES.UNAUTHORIZED);

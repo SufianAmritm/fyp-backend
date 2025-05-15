@@ -1,8 +1,9 @@
 import { IBaseRepository } from 'src/common/database/repositories/interfaces/base.interface';
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
-import { Colony } from '../../entities/colony.entity';
 import { GetColonyDto } from '../../dto/request/get.dto';
+import { Colony } from '../../entities/colony.entity';
+import { AppContext } from '../../../../common/interfaces/context';
 
 export const IColonyRepository = Symbol('IColonyRepository');
 
@@ -12,5 +13,6 @@ export interface IColonyRepository<T = DefaultEntity>
   findAll(
     getColonyDto: GetColonyDto,
     paginationDto: PaginationDto,
+    ctx: AppContext,
   ): Promise<PagedList<Colony>>;
 }

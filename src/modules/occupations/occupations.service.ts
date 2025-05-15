@@ -76,15 +76,112 @@ export class OccupationService implements IOccupationService {
     private readonly transactionFactory: DbTransactionFactory,
     @InjectMapper() private readonly occupationsMapper: Mapper,
   ) {}
-  async bulkUpdate(updates: QueryDeepPartialEntity<Occupation>[]) {
-    return await this.occupationsRepository.bulkUpdate(updates,'id', 10);
+
+  async findMyVacancyRequests(userId: number): Promise<VacancyRequest[]> {
+    const employee = await this.employeeService.findOneByUserId(userId);
+    if (!employee) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
+    }
+    const findOptions = new FindOptionsBuilder<VacancyRequest>()
+      .where({
+        employeeId: employee.id,
+      })
+      .relations({
+        occupation: {
+          apartment: true,
+        },
+        approvedBy: {
+          manager: true,
+        },
+        rejectedBy: {
+          manager: true,
+        },
+        employee: {
+          user: true,
+        },
+        createdBy: {
+          manager: true,
+        },
+      })
+      .order({
+        createdAt: 'DESC',
+      })
+      .build();
+    const vacancyRequests =
+      await this.vacancyRequestRepository.findManyWithBuilderOption(
+        findOptions,
+      );
+    vacancyRequests.forEach((vacancyRequest) => {
+      if (vacancyRequest?.approvedBy)
+        vacancyRequest.approvedBy.password = undefined;
+      if (vacancyRequest?.rejectedBy)
+        vacancyRequest.rejectedBy.password = undefined;
+      if (vacancyRequest?.createdBy)
+        vacancyRequest.createdBy.password = undefined;
+      if (vacancyRequest?.employee)
+        vacancyRequest.employee.user.password = undefined;
+    });
+
+    return vacancyRequests;
   }
+
+  async findMyTransferRequests(userId: number): Promise<TransferRequest[]> {
+    const employee = await this.employeeService.findOneByUserId(userId);
+    if (!employee) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
+    }
+    const findOptions = new FindOptionsBuilder<TransferRequest>()
+      .where({ employeeId: employee.id })
+      .relations({
+        createdBy: true,
+        approvedByFrom: {
+          manager: true,
+        },
+        employee: {
+          user: true,
+        },
+        approvedByTo: {
+          manager: true,
+        },
+        rejectedByFrom: {
+          manager: true,
+        },
+        rejectedByTo: {
+          manager: true,
+        },
+        fromColony: true,
+        toColony: true,
+      })
+      .order({
+        createdAt: 'DESC',
+      })
+      .build();
+    const res =
+      await this.transferRequestRepository.findManyWithBuilderOption(
+        findOptions,
+      );
+    res.forEach((request) => {
+      if (request?.approvedByFrom) request.approvedByFrom.password = undefined;
+      if (request?.approvedByTo) request.approvedByTo.password = undefined;
+      if (request?.rejectedByFrom) request.rejectedByFrom.password = undefined;
+      if (request?.rejectedByTo) request.rejectedByTo.password = undefined;
+      if (request?.createdBy) request.createdBy.password = undefined;
+      if (request?.employee) request.employee.user.password = undefined;
+    });
+    return res;
+  }
+
+  async bulkUpdate(updates: QueryDeepPartialEntity<Occupation>[]) {
+    return await this.occupationsRepository.bulkUpdate(updates, 'id', 10);
+  }
+
   findAllForCronJob(days: Date): Promise<Occupation[]> {
     return this.occupationsRepository.find({
       status: OCCUPATION_STATUS.ABOUT_TO_VACANT,
       lastAboutToVacantOn: LessThanOrEqual(days),
     });
   }
+
   async findAllTransferRequest(
     getDto: GetTransferRequestDto,
     paginationDto: PaginationDto,
@@ -100,6 +197,7 @@ export class OccupationService implements IOccupationService {
     });
     return transferRequests;
   }
+
   async findAllVacancyRequest(
     getDto: GetVacancyRequestDto,
     paginationDto: PaginationDto,
@@ -115,6 +213,7 @@ export class OccupationService implements IOccupationService {
     });
     return vacancyRequests;
   }
+
   async updateTransferRequestByAdmin(
     id: number,
     updateTransferRequestByAdminDto: UpdateTransferRequestByAdminDto,
@@ -178,7 +277,6 @@ export class OccupationService implements IOccupationService {
         ),
       );
     }
-    console.log(transferRequest);
     const colonyFrom = transferRequest.fromColony;
     const colonyTo = transferRequest.toColony;
     const isUserFrom = colonyFrom.station.managers.some(
@@ -246,7 +344,7 @@ export class OccupationService implements IOccupationService {
 
     try {
       await runner.start();
-      const manager = runner.manager;
+      const { manager } = runner;
       await this.transferRequestRepository.updateWithTransaction(
         {
           id: transferRequest.id,
@@ -265,9 +363,7 @@ export class OccupationService implements IOccupationService {
             APP_ERROR_MESSAGES.REQUIRED('Apartment'),
           );
         }
-        console.log('actualApartmentId', actualApartmentId);
         const occupation = await this.findOneByApartmentId(actualApartmentId);
-        console.log('occupation', occupation);
         apartment = occupation.apartment;
         if (occupation.apartment.colonyId !== transferRequest.toColonyId) {
           throw new BadRequestException(
@@ -370,7 +466,7 @@ export class OccupationService implements IOccupationService {
       await runner.end();
       return this.findOneTransferRequest(transferRequest.id);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       if (runner) await runner.rollbackTransaction();
       if (error instanceof HttpException) throw error;
 
@@ -379,6 +475,7 @@ export class OccupationService implements IOccupationService {
       );
     }
   }
+
   async updateTransferRequest(
     id: number,
     updateTransferRequestDto: UpdateTransferRequestDto,
@@ -404,6 +501,7 @@ export class OccupationService implements IOccupationService {
     await this.transferRequestRepository.update({ id }, updates);
     return this.findOneTransferRequest(id);
   }
+
   async findOneTransferRequest(id: number) {
     const findOptions = new FindOptionsBuilder<TransferRequest>()
       .where({ id })
@@ -595,6 +693,7 @@ export class OccupationService implements IOccupationService {
       );
       return RESPONSE_MESSAGES.SUCCESSFUL_OPERATION;
     }
+    return RESPONSE_MESSAGES.SUCCESSFUL_OPERATION;
   }
 
   async cancelVacancyRequest(id: number, userId: number) {
@@ -642,9 +741,9 @@ export class OccupationService implements IOccupationService {
     await this.vacancyRequestRepository.update({ id }, vacancyRequestUpdate);
     return RESPONSE_MESSAGES.SUCCESSFUL_OPERATION;
   }
+
   async vacantOccupation(userId: number) {
     const employee = await this.employeeService.findOneByUserId(userId);
-    console.log(employee);
     const { occupations } = employee;
     const occupation = occupations.find(
       (o) => o.status === OCCUPATION_STATUS.OCCUPIED,
@@ -702,6 +801,7 @@ export class OccupationService implements IOccupationService {
       await this.vacancyRequestRepository.create(newVacancyRequest);
     return this.findOneVacancyRequest(request.id);
   }
+
   async updateVacancyRequest(
     id: number,
     updateVacancyRequestDto: UpdateVacancyRequestByAdminDto,
@@ -787,7 +887,7 @@ export class OccupationService implements IOccupationService {
     const runner = await this.transactionFactory.transactionRunner();
     try {
       await runner.start();
-      const manager = runner.manager;
+      const { manager } = runner;
       if (status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
         mapped.approvedById = userId;
         mapped.status = EMPLOYEE_VERIFICATION_STATUS.APPROVED;
@@ -862,7 +962,7 @@ export class OccupationService implements IOccupationService {
       await runner.end();
       return this.findOneVacancyRequest(id);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       if (runner) await runner.rollbackTransaction();
       if (error instanceof HttpException) throw error;
 
@@ -907,6 +1007,7 @@ export class OccupationService implements IOccupationService {
       vacancyRequest.employee.user.password = undefined;
     return vacancyRequest;
   }
+
   async findOneByOccupiedById(occupiedById: number): Promise<Occupation> {
     const findOptions = new FindOptionsBuilder<Occupation>()
       .where({
@@ -937,6 +1038,7 @@ export class OccupationService implements IOccupationService {
     if (occupation?.vacantBy) occupation.vacantBy.user.password = undefined;
     return occupation;
   }
+
   async findOneByApartmentId(apartmentId: number): Promise<Occupation> {
     const findOptions = new FindOptionsBuilder<Occupation>()
       .where({
@@ -969,6 +1071,7 @@ export class OccupationService implements IOccupationService {
     if (occupation?.vacantBy) occupation.vacantBy.user.password = undefined;
     return occupation;
   }
+
   async assignOccupation(
     id: number,
     assignOccupationDto: AssignOccupationDto,
@@ -999,8 +1102,6 @@ export class OccupationService implements IOccupationService {
         assignOccupationDto.employeeId,
       );
     const employeeOccupations = employee.occupations;
-    const employeeVacancyRequests = employee.vacancyRequests;
-    const employeeTransferRequests = employee.transferRequests;
     const updator = await this.userService.findOneById(userId);
     if (!updator)
       throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
@@ -1019,7 +1120,7 @@ export class OccupationService implements IOccupationService {
     const runner = await this.transactionFactory.transactionRunner();
     try {
       await runner.start();
-      const manager = runner.manager;
+      const { manager } = runner;
       await this.occupationsRepository.updateWithTransaction(
         { id: occupation.id },
         {
@@ -1138,9 +1239,18 @@ export class OccupationService implements IOccupationService {
           },
         },
       );
+      await runner.end();
       return this.findOne(occupation.id);
-    } catch (error) {}
+    } catch (error) {
+      if (runner) await runner.rollbackTransaction();
+      if (error instanceof HttpException) throw error;
+
+      throw new InternalServerErrorException(
+        APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
+
   async deAssignOccupation(id: number, userId: number): Promise<any> {
     const findOptions = new FindOptionsBuilder<Occupation>()
       .where({
@@ -1179,7 +1289,7 @@ export class OccupationService implements IOccupationService {
     const runner = await this.transactionFactory.transactionRunner();
     try {
       await runner.start();
-      const manager = runner.manager;
+      const { manager } = runner;
       await this.occupationsRepository.updateWithTransaction(
         {
           occupationId: occupation.id,

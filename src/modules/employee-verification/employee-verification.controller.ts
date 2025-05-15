@@ -34,6 +34,7 @@ export class EmployeeVerificationController {
     @Inject(IEmployeeVerificationService)
     private readonly employeeVerificationService: IEmployeeVerificationService,
   ) {}
+
   @Roles([UserRoles.EMPLOYEE])
   @Post()
   create(
@@ -46,6 +47,7 @@ export class EmployeeVerificationController {
     );
   }
 
+  @Roles(ManagementRoles)
   @Get()
   findAll(
     @Query() paginationDto: PaginationDto,
@@ -54,6 +56,13 @@ export class EmployeeVerificationController {
     return this.employeeVerificationService.findAll(paginationDto, context);
   }
 
+  @Roles(ManagementRoles)
+  @Get('my')
+  myVerification(@Context() context: AppContext) {
+    return this.employeeVerificationService.myVerifications(context.UserId);
+  }
+
+  @Roles(ManagementRoles)
   @Get(':id')
   findOne(@Param() idDto: IdDto) {
     const { id } = idDto;
@@ -76,6 +85,7 @@ export class EmployeeVerificationController {
       context.UserId,
     );
   }
+
   @Roles([UserRoles.EMPLOYEE])
   @Post('cancel/:id')
   cancel(@Param() idDto: IdDto, @Context() context: AppContext) {
@@ -83,6 +93,7 @@ export class EmployeeVerificationController {
 
     return this.employeeVerificationService.cancel(+id, context.UserId);
   }
+
   @Roles(ManagementRoles)
   @Post('reject/:id')
   reject(

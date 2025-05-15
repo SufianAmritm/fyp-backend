@@ -20,6 +20,7 @@ export class CreateApplicationDto {
     ],
   })
   colonyPriorities: CreateApplicationPriorityDto[];
+
   @AutoMap()
   createdById: number;
 }

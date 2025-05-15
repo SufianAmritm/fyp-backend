@@ -26,6 +26,7 @@ module.exports = {
     ],
     'import/prefer-default-export':"off",
     '@typescript-eslint/no-shadow': "off",
+    "@typescript-eslint/no-unused-vars": "off",
     "no-plusplus": "off",
     "no-param-reassign": [2, { "props": false }],
     "@typescript-eslint/no-redeclare":"warn",

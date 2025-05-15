@@ -13,6 +13,7 @@ import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
+import { AppContext } from '../../common/interfaces/context';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { CreateOccupationDto } from '../occupations/dto/create-occupations.dto';
 import { Occupation } from '../occupations/entities/occupations.entity';
@@ -81,13 +82,13 @@ export class ApartmentService implements IApartmentService {
     const runner = await this.transactionFactory.transactionRunner();
     try {
       await runner.start();
-      const manager = runner.manager;
-     const aprtment = await this.apartmentRepository.createWithTransaction(
-       newApartment,
-       Apartment,
-       manager,
-     );
-     newOccupation.apartmentId = aprtment.id;
+      const { manager } = runner;
+      const aprtment = await this.apartmentRepository.createWithTransaction(
+        newApartment,
+        Apartment,
+        manager,
+      );
+      newOccupation.apartmentId = aprtment.id;
       await this.apartmentRepository.createWithTransaction(
         newOccupation,
         Occupation,
@@ -104,8 +105,16 @@ export class ApartmentService implements IApartmentService {
     }
   }
 
-  findAll(getApartmentDto: GetApartmentDto, paginationDto: PaginationDto) {
-    return this.apartmentRepository.findAll(getApartmentDto, paginationDto);
+  findAll(
+    getApartmentDto: GetApartmentDto,
+    paginationDto: PaginationDto,
+    context: AppContext,
+  ) {
+    return this.apartmentRepository.findAll(
+      getApartmentDto,
+      paginationDto,
+      context,
+    );
   }
 
   findOne(id: number) {

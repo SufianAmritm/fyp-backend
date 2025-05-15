@@ -5,7 +5,7 @@ export enum ENVIRONMENTS {
   PROD = 'prod',
 }
 
-export const enum ORDER_BY {
+export enum ORDER_BY {
   DESC = 'DESC',
   ASC = 'ASC',
 }

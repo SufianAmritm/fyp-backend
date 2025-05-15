@@ -301,7 +301,7 @@ export class UserService implements IUserService {
     }
     await this.userRepository.update({ id }, dto);
 
-    return this.getProfile(id);
+    return this.findOneById(id);
   }
 
   async isEmployeeProfileComplete(id: number): Promise<boolean> {
@@ -388,7 +388,7 @@ export class UserService implements IUserService {
       await runner.end();
       user.role = role;
       user.employee = employee;
-      return user;
+      return this.getProfile(user.id);
     } catch (error) {
       console.log(error);
       if (runner) {
@@ -486,6 +486,12 @@ export class UserService implements IUserService {
       .where({ email })
       .relations({
         role: true,
+        manager: true,
+        employee: {
+          colony: {
+            station: true,
+          },
+        },
       })
       .build();
     return this.userRepository.findOneWithBuilderOption(findOptions);
@@ -496,6 +502,12 @@ export class UserService implements IUserService {
       .where({ id })
       .relations({
         role: true,
+        manager: true,
+        employee: {
+          colony: {
+            station: true,
+          },
+        },
       })
       .build();
     const user =
@@ -509,7 +521,11 @@ export class UserService implements IUserService {
       .relations({
         role: true,
         manager: true,
-        employee: true,
+        employee: {
+          colony: {
+            station: true,
+          },
+        },
       })
       .build();
     const user =

@@ -44,6 +44,12 @@ export class OtpService implements IOtpService {
       .relations({
         user: {
           role: true,
+          manager: true,
+          employee: {
+            colony: {
+              station: true,
+            },
+          },
         },
       })
       .build();

@@ -12,9 +12,11 @@ export class VacancyRequest extends BaseEntity {
   @AutoMap()
   @Column('integer', { name: 'occupation_id', nullable: false })
   occupationId: number;
+
   @AutoMap()
   @Column('integer', { name: 'employee_id', nullable: false })
   employeeId: number;
+
   @AutoMap()
   @Column('enum', {
     name: 'status',
@@ -23,18 +25,23 @@ export class VacancyRequest extends BaseEntity {
     default: EMPLOYEE_VERIFICATION_STATUS.PENDING,
   })
   status: EMPLOYEE_VERIFICATION_STATUS;
+
   @AutoMap()
   @Column('character varying', { nullable: true })
   reason: string;
+
   @AutoMap()
   @Column('integer', { name: 'approved_by_id', nullable: true })
   approvedById: number;
+
   @AutoMap()
   @Column('integer', { name: 'rejected_by_id', nullable: true })
   rejectedById: number;
+
   @AutoMap()
   @Column('integer', { name: 'created_by_id', nullable: true })
   createdById: number;
+
   @ManyToOne(() => Occupation, (i) => i.vacancyRequests)
   @JoinColumn({
     name: 'occupation_id',
@@ -42,6 +49,7 @@ export class VacancyRequest extends BaseEntity {
     foreignKeyConstraintName: 'vacancy_requests_occupation_id_fk',
   })
   occupation: Occupation;
+
   @ManyToOne(() => Employee, (i) => i.vacancyRequests)
   @JoinColumn({
     name: 'employee_id',
@@ -49,6 +57,7 @@ export class VacancyRequest extends BaseEntity {
     foreignKeyConstraintName: 'vacancy_requests_employee_id_fk',
   })
   employee: Employee;
+
   @ManyToOne(() => User, (i) => i.vacancyRequests)
   @JoinColumn({
     name: 'created_by_id',
@@ -56,6 +65,7 @@ export class VacancyRequest extends BaseEntity {
     foreignKeyConstraintName: 'vacancy_requests_created_by_id_fk',
   })
   createdBy: User;
+
   @ManyToOne(() => User, (i) => i.vacancyRequestsApproved)
   @JoinColumn({
     name: 'approved_by_id',
@@ -63,6 +73,7 @@ export class VacancyRequest extends BaseEntity {
     foreignKeyConstraintName: 'vacancy_requests_approved_by_id_fk',
   })
   approvedBy: User;
+
   @ManyToOne(() => User, (i) => i.vacancyRequestsRejected)
   @JoinColumn({
     name: 'rejected_by_id',

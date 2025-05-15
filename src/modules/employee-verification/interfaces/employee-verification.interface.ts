@@ -20,4 +20,6 @@ export interface IEmployeeVerificationService {
     employeeId: number,
   ): Promise<EmployeeVerification>;
   cancel(id: number, userId: number): Promise<EmployeeVerification>;
+
+  myVerifications(userId: number): Promise<EmployeeVerification[]>;
 }

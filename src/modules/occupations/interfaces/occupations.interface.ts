@@ -64,4 +64,6 @@ export interface IOccupationService {
     ctx: AppContext,
   ): Promise<PagedList<VacancyRequest>>;
   bulkUpdate(updates: QueryDeepPartialEntity<Occupation>[]);
+  findMyVacancyRequests(userId: number): Promise<VacancyRequest[]>;
+  findMyTransferRequests(userId: number): Promise<TransferRequest[]>;
 }

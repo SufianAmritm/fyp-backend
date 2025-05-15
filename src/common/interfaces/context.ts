@@ -7,6 +7,7 @@ export interface ApplicationContext extends Context {
   get Email(): string;
   get Role(): string;
   get EmailVerified(): boolean;
+  get StationId(): number;
 }
 
 export class AppContext implements ApplicationContext {
@@ -17,17 +18,22 @@ export class AppContext implements ApplicationContext {
   private readonly role: string;
 
   private readonly emailVerified: boolean;
-
+  private readonly stationId: number;
   constructor(data: {
     id: number;
     email: string;
     role: string;
     emailVerified: boolean;
+    stationId: number;
   }) {
     this.userId = data.id;
     this.email = data.email;
     this.role = data.role;
     this.emailVerified = data.emailVerified;
+    this.stationId = data.stationId;
+  }
+  get StationId(): number {
+    return this.stationId;
   }
   [key: string]: any;
   get Role(): string {

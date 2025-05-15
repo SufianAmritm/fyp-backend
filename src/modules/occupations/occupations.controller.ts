@@ -42,6 +42,7 @@ export class OccupationController {
     @Inject(IOccupationService)
     private readonly occupationsService: IOccupationService,
   ) {}
+
   @Roles(ManagementRoles)
   @Get('transfer-request')
   findAllTransferRequest(
@@ -55,7 +56,8 @@ export class OccupationController {
       context,
     );
   }
-  @Roles([UserRoles.EMPLOYEE, ...ManagementRoles])
+
+  @Roles(ManagementRoles)
   @Get('transfer-request/:id')
   findOneTransferRequest(
     @Param() idDto: IdDto,
@@ -64,6 +66,7 @@ export class OccupationController {
     const { id } = idDto;
     return this.occupationsService.findOneTransferRequest(id);
   }
+
   @Roles(ManagementRoles)
   @Get('vacancy-request')
   findAllVacancyRequest(
@@ -77,17 +80,32 @@ export class OccupationController {
       context,
     );
   }
-  @Roles([UserRoles.EMPLOYEE, ...ManagementRoles])
+
+  @Roles(ManagementRoles)
   @Get('vacancy-request/:id')
   findOneVacancyRequest(@Param() idDto: IdDto, @Context() context: AppContext) {
     const { id } = idDto;
     return this.occupationsService.findOneVacancyRequest(id);
   }
+
+  @Roles([UserRoles.EMPLOYEE])
+  @Get('my/vacancy-request')
+  findMyVacancyRequests(@Context() context: AppContext) {
+    return this.occupationsService.findMyVacancyRequests(context.UserId);
+  }
+
+  @Roles([UserRoles.EMPLOYEE])
+  @Get('my/transfer-request')
+  findMyTransferRequests(@Context() context: AppContext) {
+    return this.occupationsService.findMyTransferRequests(context.UserId);
+  }
+
   @Roles([UserRoles.EMPLOYEE])
   @Post('vacancy-request')
   createVacancyRequest(@Context() context: AppContext) {
     return this.occupationsService.vacantOccupation(context.UserId);
   }
+
   @Roles([UserRoles.EMPLOYEE])
   @Post('transfer-request')
   createTransferRequest(
@@ -129,6 +147,7 @@ export class OccupationController {
       context.UserId,
     );
   }
+
   @Roles(ManagementRoles)
   @Post('transfer-request/reject/:id')
   rejectTransferRequest(
@@ -162,6 +181,7 @@ export class OccupationController {
       context.UserId,
     );
   }
+
   @Roles([UserRoles.EMPLOYEE])
   @Post('vacancy-request/cancel/:id')
   cancelVacancyRequest(@Param() idDto: IdDto, @Context() context: AppContext) {
@@ -169,6 +189,7 @@ export class OccupationController {
 
     return this.occupationsService.cancelVacancyRequest(+id, context.UserId);
   }
+
   @Roles([UserRoles.EMPLOYEE])
   @Post('transfer-request/cancel/:id')
   cancelTransferRequest(@Param() idDto: IdDto, @Context() context: AppContext) {
@@ -176,6 +197,7 @@ export class OccupationController {
 
     return this.occupationsService.cancelTransferRequest(+id, context.UserId);
   }
+
   @Roles([UserRoles.EMPLOYEE])
   @Patch('transfer-request/:id')
   updateTransferRequest(
@@ -191,6 +213,7 @@ export class OccupationController {
       context.UserId,
     );
   }
+
   @Roles(ManagementRoles)
   @Post('vacancy-request/reject/:id')
   reject(
@@ -206,6 +229,7 @@ export class OccupationController {
       context.UserId,
     );
   }
+
   @Roles(ManagementRoles)
   @Patch('assign/:id')
   assignOccupation(
@@ -221,6 +245,7 @@ export class OccupationController {
       context.UserId,
     );
   }
+
   @Roles(ManagementRoles)
   @Patch('deassign/:id')
   deAssignOccupation(@Context() context: AppContext, @Param() idDto: IdDto) {
@@ -228,6 +253,7 @@ export class OccupationController {
 
     return this.occupationsService.deAssignOccupation(id, context.UserId);
   }
+
   @Roles([UserRoles.EMPLOYEE])
   @Post('leave-occupation/:id')
   leaveOccupation(@Context() context: AppContext, @Param() idDto: IdDto) {

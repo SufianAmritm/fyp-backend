@@ -32,6 +32,7 @@ export class ColonyController {
     @Inject(IColonyService)
     private readonly colonyService: IColonyService,
   ) {}
+
   @Roles(ManagementRoles)
   @Post()
   create(@Body() createColonyDto: CreateColonyDto, @Context() ctx: AppContext) {
@@ -43,8 +44,9 @@ export class ColonyController {
   findAll(
     @Query() getColonyDto: GetColonyDto,
     @Query() paginationDto: PaginationDto,
+    @Context() ctx: AppContext,
   ) {
-    return this.colonyService.findAll(getColonyDto, paginationDto);
+    return this.colonyService.findAll(getColonyDto, paginationDto, ctx);
   }
 
   @Get(':id')
@@ -55,9 +57,13 @@ export class ColonyController {
 
   @Roles(ManagementRoles)
   @Patch(':id')
-  update(@Param() idDto: IdDto, @Body() updateColonyDto: UpdateColonyDto,@Context() ctx: AppContext) {
+  update(
+    @Param() idDto: IdDto,
+    @Body() updateColonyDto: UpdateColonyDto,
+    @Context() ctx: AppContext,
+  ) {
     const { id } = idDto;
 
-    return this.colonyService.update(+id, updateColonyDto,ctx.UserId);
+    return this.colonyService.update(+id, updateColonyDto, ctx.UserId);
   }
 }

@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { RESPONSE_MESSAGES } from 'src/common/constants';
 import { APP_ERROR_MESSAGES } from 'src/common/constants/errors';
-import { OTP_TYPE } from '../../common/constants/enums';
+import { OTP_TYPE, UserRoles } from '../../common/constants/enums';
 import { UtilsService } from '../../common/utils/UtilsService';
 import { IOtpService } from '../otp/interfaces/otp.interface';
 import { IUserService } from '../user/interfaces/user.interface';
@@ -42,8 +42,23 @@ export class AuthService implements IAuthService {
         await this.userService.update(verified.user.id, {
           emailVerified: true,
         });
+        let stationId: number;
         const { id, email, role } = verified.user;
-        const tokens = await this.getTokens(id, email, role.name, true);
+        if (role.name === UserRoles.EMPLOYEE) {
+          stationId = verified.user.employee.colony.stationId;
+        }
+
+        if (role.name === UserRoles.MANAGER) {
+          stationId = verified.user.manager.stationId;
+        }
+
+        const tokens = await this.getTokens(
+          id,
+          email,
+          role.name,
+          true,
+          stationId,
+        );
         return {
           ...tokens,
           user: verified.user,
@@ -63,7 +78,21 @@ export class AuthService implements IAuthService {
     const user = await this.userService.createUser(signupDto);
 
     const { id, email, role, emailVerified } = user;
-    const tokens = await this.getTokens(id, email, role.name, emailVerified);
+    let stationId: number;
+    if (role.name === UserRoles.EMPLOYEE) {
+      stationId = user.employee.colony.stationId;
+    }
+
+    if (role.name === UserRoles.MANAGER) {
+      stationId = user.manager.stationId;
+    }
+    const tokens = await this.getTokens(
+      id,
+      email,
+      role.name,
+      emailVerified,
+      stationId,
+    );
     return {
       ...tokens,
       user,
@@ -91,7 +120,21 @@ export class AuthService implements IAuthService {
     }
     user.password = undefined;
     const { id, role, emailVerified } = user;
-    const tokens = await this.getTokens(id, email, role.name, emailVerified);
+    let stationId: number;
+    if (role.name === UserRoles.EMPLOYEE) {
+      stationId = user.employee.colony.stationId;
+    }
+
+    if (role.name === UserRoles.MANAGER) {
+      stationId = user.manager.stationId;
+    }
+    const tokens = await this.getTokens(
+      id,
+      email,
+      role.name,
+      emailVerified,
+      stationId,
+    );
     return {
       ...tokens,
       user,
@@ -115,7 +158,21 @@ export class AuthService implements IAuthService {
       password,
     );
     const { id, email, role, emailVerified } = user;
-    const tokens = await this.getTokens(id, email, role.name, emailVerified);
+    let stationId: number;
+    if (role.name === UserRoles.EMPLOYEE) {
+      stationId = user.employee.colony.stationId;
+    }
+
+    if (role.name === UserRoles.MANAGER) {
+      stationId = user.manager.stationId;
+    }
+    const tokens = await this.getTokens(
+      id,
+      email,
+      role.name,
+      emailVerified,
+      stationId,
+    );
     user.password = undefined;
     return {
       ...tokens,
@@ -138,6 +195,7 @@ export class AuthService implements IAuthService {
     email: string,
     role: string,
     emailVerified: boolean,
+    stationId: number = null,
   ): Promise<TokenType> {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(
@@ -146,6 +204,7 @@ export class AuthService implements IAuthService {
           email,
           role,
           emailVerified,
+          stationId,
         },
         {
           secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
@@ -160,6 +219,7 @@ export class AuthService implements IAuthService {
           email,
           role,
           emailVerified,
+          stationId,
         },
         {
           secret: this.configService.get<string>('JWT_REFRESH_SECRET'),

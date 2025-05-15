@@ -27,6 +27,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { AppContext } from '../../common/interfaces/context';
 import { MultiFileValidatorPipe } from '../../common/pipes/multi-file-validation.pipe';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { GetEmployeeDto } from './dto/get-employee-dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { IEmployeeService } from './interfaces/employee.interface';
 
@@ -39,6 +40,7 @@ export class EmployeeController {
     @Inject(IEmployeeService)
     private readonly employeeService: IEmployeeService,
   ) {}
+
   @Roles(ManagementRoles)
   @Post()
   @MultiFile(
@@ -98,7 +100,7 @@ export class EmployeeController {
           validations: {
             maxFileSize: MAX_FILE_SIZES.AVATAR,
             fileType: new RegExp(SUPPORT_TYPES.AVATAR),
-            required: value === 'picture' ? false : true,
+            required: value !== 'picture',
           },
         })),
       ),
@@ -125,20 +127,24 @@ export class EmployeeController {
       picture,
     );
   }
+
   @Roles(ManagementRoles)
   @Get()
   findAll(
+    @Query() getEmployeeDto: GetEmployeeDto,
     @Query() paginationDto: PaginationDto,
     @Context() context: AppContext,
   ) {
-    return this.employeeService.findAll(paginationDto, context);
+    return this.employeeService.findAll(getEmployeeDto, paginationDto, context);
   }
+
   @Roles(ManagementRoles)
   @Get(':id')
   findOne(@Param() idDto: IdDto) {
     const { id } = idDto;
     return this.employeeService.findOne(+id);
   }
+
   @Roles(ManagementRoles)
   @Patch(':id')
   @MultiFile(
@@ -199,7 +205,7 @@ export class EmployeeController {
           validations: {
             maxFileSize: MAX_FILE_SIZES.AVATAR,
             fileType: new RegExp(SUPPORT_TYPES.AVATAR),
-            required: value === 'picture' ? false : true,
+            required: value !== 'picture',
           },
         })),
       ),
@@ -227,6 +233,7 @@ export class EmployeeController {
       picture,
     );
   }
+
   @Roles([UserRoles.EMPLOYEE, ...ManagementRoles])
   @Get('verification-status')
   getVerificationStatus(@Context() context: AppContext) {

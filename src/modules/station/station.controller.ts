@@ -58,7 +58,8 @@ export class StationController {
     const { id } = idDto;
     return this.stationService.findOne(+id);
   }
-@Roles([UserRoles.ADMIN])
+
+  @Roles([UserRoles.ADMIN])
   @Patch(':id')
   update(@Param() idDto: IdDto, @Body() updateStationDto: UpdateStationDto) {
     const { id } = idDto;

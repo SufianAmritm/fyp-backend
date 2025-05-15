@@ -10,10 +10,12 @@ import {
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
+import { AppContext } from '../../common/interfaces/context';
 import { UtilsService } from '../../common/utils/UtilsService';
 import { IS3Service } from '../aws/interface/aws-s3.interface';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateManagersDto } from './dto/create-managers.dto';
+import { GetManagersDto } from './dto/get-managers.dto';
 import { UpdateManagersDto } from './dto/update-managers.dto';
 import { Manager } from './entities/managers.entity';
 import { IManagersService } from './interfaces/managers.interface';
@@ -31,6 +33,7 @@ export class ManagersService implements IManagersService {
     private readonly utilService: UtilsService,
     @InjectMapper() private readonly managersMapper: Mapper,
   ) {}
+
   async findOneByUserIdWithColoniesAndEmployees(id: number) {
     const findOptions = new FindOptionsBuilder<Manager>()
       .where({ id })
@@ -57,9 +60,10 @@ export class ManagersService implements IManagersService {
       .build();
     const manager =
       await this.managersRepository.findOneWithBuilderOption(findOptions);
-      if(manager?.user)    manager.user.password = undefined;
+    if (manager?.user) manager.user.password = undefined;
     return manager;
   }
+
   async create(
     createManagersDto: CreateManagersDto,
     picture?: Express.Multer.File,
@@ -104,7 +108,7 @@ export class ManagersService implements IManagersService {
       user.password = undefined;
       return { ...user, manager };
     } catch (error) {
-      console.log(error);
+      console.error(error);
       if (runner) {
         await runner.rollbackTransaction();
       }
@@ -114,8 +118,16 @@ export class ManagersService implements IManagersService {
     }
   }
 
-  async findAll(paginationDto: PaginationDto) {
-    const managers = await this.managersRepository.findAll(paginationDto);
+  async findAll(
+    getDto: GetManagersDto,
+    paginationDto: PaginationDto,
+    ctx: AppContext,
+  ) {
+    const managers = await this.managersRepository.findAll(
+      getDto,
+      paginationDto,
+      ctx,
+    );
     managers.items = managers.items.map((item) => {
       item.user.password = undefined;
       return item;
@@ -132,9 +144,10 @@ export class ManagersService implements IManagersService {
       .build();
     const manager =
       await this.managersRepository.findOneWithBuilderOption(findOptions);
-      if(manager?.user)    manager.user.password = undefined;
+    if (manager?.user) manager.user.password = undefined;
     return manager;
   }
+
   async findOneByUserIdWithColonies(id: number) {
     const findOptions = new FindOptionsBuilder<Manager>()
       .where({ id })
@@ -156,9 +169,10 @@ export class ManagersService implements IManagersService {
       .build();
     const manager =
       await this.managersRepository.findOneWithBuilderOption(findOptions);
-      if (manager?.user) manager.user.password = undefined;
+    if (manager?.user) manager.user.password = undefined;
     return manager;
   }
+
   async update(
     id: number,
     updateManagersDto: UpdateManagersDto,

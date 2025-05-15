@@ -30,6 +30,7 @@ import { IOccupationService } from '../occupations/interfaces/occupations.interf
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateApplicationPriorityDto } from './dto/application-colonies/create-applications-priority.dto';
 import { CreateApplicationDto } from './dto/applications/create-applications.dto';
+import { GetApplicationDto } from './dto/applications/get-applications.dto';
 import {
   UpdateApplicationByAdminDto,
   UpdateApplicationDto,
@@ -62,6 +63,46 @@ export class ApplicationService implements IApplicationService {
     private readonly transactionFactory: DbTransactionFactory,
     @InjectMapper() private readonly applicationsMapper: Mapper,
   ) {}
+
+  async myApplications(userId: number): Promise<Application[]> {
+    const employee = await this.employeeService.findOneByUserId(userId);
+    if (!employee) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
+    }
+    const findOptions = new FindOptionsBuilder<Application>()
+      .where({ employeeId: employee.id })
+      .relations({
+        colonyPriorities: {
+          colony: true,
+        },
+        employee: {
+          user: true,
+        },
+        approvedBy: {
+          manager: true,
+        },
+        rejectedBy: {
+          manager: true,
+        },
+        createdBy: {
+          manager: true,
+        },
+      })
+      .order({
+        createdAt: 'DESC',
+      })
+      .build();
+    const res =
+      await this.applicationsRepository.findManyWithBuilderOption(findOptions);
+    res.forEach((result) => {
+      if (result?.employee) result.employee.user.password = undefined;
+      if (result?.approvedBy) result.approvedBy.password = undefined;
+      if (result?.rejectedBy) result.rejectedBy.password = undefined;
+      if (result?.createdBy) result.createdBy.password = undefined;
+    });
+    return res;
+  }
+
   async update(
     id: number,
     updateApplicationDto: UpdateApplicationDto,
@@ -84,7 +125,7 @@ export class ApplicationService implements IApplicationService {
       const runner = await this.transactionFactory.transactionRunner();
       try {
         await runner.start();
-        const manager = runner.manager;
+        const { manager } = runner;
 
         const newApplicationPriorities = this.applicationsMapper.mapArray(
           updateApplicationDto.colonyPriorities,
@@ -128,6 +169,7 @@ export class ApplicationService implements IApplicationService {
         );
       }
     }
+    return this.findOne(id);
   }
 
   async create(createApplicationDto: CreateApplicationDto) {
@@ -192,7 +234,7 @@ export class ApplicationService implements IApplicationService {
     const runner = await this.transactionFactory.transactionRunner();
     try {
       await runner.start();
-      const manager = runner.manager;
+      const { manager } = runner;
       const application =
         await this.applicationsRepository.createWithTransaction(
           newApplication,
@@ -237,8 +279,13 @@ export class ApplicationService implements IApplicationService {
     }
   }
 
-  async findAll(paginationDto: PaginationDto, ctx: AppContext) {
+  async findAll(
+    getApplicationDto: GetApplicationDto,
+    paginationDto: PaginationDto,
+    ctx: AppContext,
+  ) {
     const result = await this.applicationsRepository.findAll(
+      getApplicationDto,
       paginationDto,
       ctx,
     );
@@ -274,12 +321,13 @@ export class ApplicationService implements IApplicationService {
       .build();
     const result =
       await this.applicationsRepository.findOneWithBuilderOption(findOptions);
- if (result?.employee) result.employee.user.password = undefined;
- if (result?.approvedBy) result.approvedBy.password = undefined;
- if (result?.rejectedBy) result.rejectedBy.password = undefined;
- if (result?.createdBy) result.createdBy.password = undefined;
+    if (result?.employee) result.employee.user.password = undefined;
+    if (result?.approvedBy) result.approvedBy.password = undefined;
+    if (result?.rejectedBy) result.rejectedBy.password = undefined;
+    if (result?.createdBy) result.createdBy.password = undefined;
     return result;
   }
+
   async cancel(id: number, userId: number) {
     const employee = await this.employeeService.findOneByUserId(userId);
     if (!employee) {
@@ -331,16 +379,15 @@ export class ApplicationService implements IApplicationService {
     await this.applicationsRepository.update({ id }, applicationUpdate);
     return this.findOne(id);
   }
+
   async updateByAdmin(
     id: number,
     updateApplicationDto: UpdateApplicationByAdminDto,
     userId: number,
   ) {
-    console.log(updateApplicationDto);
     const exists = await this.applicationsRepository.findOne({
       id,
     });
-    console.log(exists);
     if (!exists) {
       throw new BadRequestException(
         APP_ERROR_MESSAGES.NOT_FOUND('Application'),
@@ -391,7 +438,7 @@ export class ApplicationService implements IApplicationService {
     const runner = await this.transactionFactory.transactionRunner();
     try {
       await runner.start();
-      const manager = runner.manager;
+      const { manager } = runner;
       const applicationsUpdate = this.applicationsMapper.map(
         updateApplicationDto,
         UpdateApplicationByAdminDto,

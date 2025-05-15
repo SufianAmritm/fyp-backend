@@ -25,6 +25,7 @@ import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AppContext } from '../../common/interfaces/context';
 import { CreateApplicationDto } from './dto/applications/create-applications.dto';
+import { GetApplicationDto } from './dto/applications/get-applications.dto';
 import {
   UpdateApplicationByAdminDto,
   UpdateApplicationDto,
@@ -40,6 +41,7 @@ export class ApplicationController {
     @Inject(IApplicationService)
     private readonly applicationsService: IApplicationService,
   ) {}
+
   @Roles([UserRoles.EMPLOYEE])
   @Post()
   create(
@@ -50,19 +52,33 @@ export class ApplicationController {
     return this.applicationsService.create(createApplicationDto);
   }
 
+  @Roles(ManagementRoles)
   @Get()
   findAll(
+    @Query() getApplicationDto: GetApplicationDto,
     @Query() paginationDto: PaginationDto,
     @Context() context: AppContext,
   ) {
-    return this.applicationsService.findAll(paginationDto, context);
+    return this.applicationsService.findAll(
+      getApplicationDto,
+      paginationDto,
+      context,
+    );
   }
 
+  @Roles([UserRoles.EMPLOYEE])
+  @Get('my')
+  myApplication(@Context() context: AppContext) {
+    return this.applicationsService.myApplications(context.UserId);
+  }
+
+  @Roles(ManagementRoles)
   @Get(':id')
   findOne(@Param() idDto: IdDto) {
     const { id } = idDto;
     return this.applicationsService.findOne(+id);
   }
+
   @Roles([UserRoles.EMPLOYEE])
   @Patch(':id')
   update(
@@ -78,6 +94,7 @@ export class ApplicationController {
       context.UserId,
     );
   }
+
   @Roles(ManagementRoles)
   @Post('approve/:id')
   approve(
@@ -96,6 +113,7 @@ export class ApplicationController {
       context.UserId,
     );
   }
+
   @Roles([UserRoles.EMPLOYEE])
   @Post('cancel/:id')
   cancel(@Param() idDto: IdDto, @Context() context: AppContext) {
@@ -103,6 +121,7 @@ export class ApplicationController {
 
     return this.applicationsService.cancel(+id, context.UserId);
   }
+
   @Roles(ManagementRoles)
   @Post('reject/:id')
   reject(

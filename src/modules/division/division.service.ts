@@ -6,6 +6,7 @@ import { RESPONSE_MESSAGES } from '../../common/constants';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
+import { AppContext } from '../../common/interfaces/context';
 import { CreateDivisionDto } from './dto/create-division.dto';
 import { GetDivisionsDto } from './dto/request/get.dto';
 import { UpdateDivisionDto } from './dto/update-division.dto';
@@ -28,7 +29,7 @@ export class DivisionService implements IDivisionService {
     });
     if (exists) {
       throw new BadRequestException(
-        APP_ERROR_MESSAGES.ALREADY_EXISTS('Division', 'name: ' + name),
+        APP_ERROR_MESSAGES.ALREADY_EXISTS('Division', `name: ${name}`),
       );
     }
     const newDivision = this.divisionMapper.map(
@@ -39,8 +40,12 @@ export class DivisionService implements IDivisionService {
     return this.divisionRepository.create(newDivision);
   }
 
-  findAll(getDivisionDto: GetDivisionsDto, paginationDto: PaginationDto) {
-    return this.divisionRepository.findAll(getDivisionDto, paginationDto);
+  findAll(
+    getDivisionDto: GetDivisionsDto,
+    paginationDto: PaginationDto,
+    ctx: AppContext,
+  ) {
+    return this.divisionRepository.findAll(getDivisionDto, paginationDto, ctx);
   }
 
   findOne(id: number) {
@@ -52,7 +57,7 @@ export class DivisionService implements IDivisionService {
         stations: true,
       })
       .build();
-      
+
     return this.divisionRepository.findOneWithBuilderOption(findOptions);
   }
 
@@ -67,7 +72,7 @@ export class DivisionService implements IDivisionService {
         throw new BadRequestException(
           APP_ERROR_MESSAGES.ALREADY_EXISTS(
             'Division',
-            'name: ' + updateDivisionDto.name,
+            `name: ${updateDivisionDto.name}`,
           ),
         );
       }

@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ORDER_BY } from 'src/common/constants/enums';
-import { FindOptionsBuilder } from 'src/common/database/builder-pattern/find-options.builder';
+import { UserRoles } from 'src/common/constants/enums';
 import { BaseRepository } from 'src/common/database/repositories/base/base.repository';
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { Repository } from 'typeorm';
+import { buildConditions } from '../../../common/database/builder-pattern/build-condition';
 import { AppContext } from '../../../common/interfaces/context';
+import { GetEmployeeDto } from '../dto/get-employee-dto';
 import { Employee } from '../entities/employee.entity';
 import { IEmployeeRepository } from './interface/employee-repository.interface';
 
@@ -23,21 +24,39 @@ export class EmployeeRepository
   }
 
   async findAll(
+    getEmployeeDto: GetEmployeeDto,
     paginationDto: PaginationDto,
     ctx: AppContext,
   ): Promise<PagedList<Employee>> {
-    const findOption = new FindOptionsBuilder<Employee>()
-      .where({
-        deletedAt: null,
-      })
-      .relations({
-        user: true,
-        colony: {
-          station: true,
-        },
-      })
-      .order({ id: ORDER_BY.DESC })
-      .build();
-    return this.findWithPagination(paginationDto, findOption);
+    const whereOr = [];
+    const whereAnd = [];
+    const params: Record<string, any> = {};
+
+    const { search, orderBy, sortBy } = getEmployeeDto;
+    if (search) {
+      whereOr.push(`user.name ILIKE :search`);
+      whereOr.push(`user.email ILIKE :search`);
+
+      params.search = `%${search}%`;
+    }
+    if (ctx.Role === UserRoles.MANAGER) {
+      whereAnd.push(`colony.stationId =:stationId`);
+      params.stationId = ctx.StationId;
+    }
+    const res = await this.repository
+      .createQueryBuilder('employee')
+      .innerJoinAndSelect('employee.user', 'user')
+      .innerJoinAndSelect('employee.colony', 'colony')
+      .innerJoinAndSelect('colony.station', 'station')
+      .where(buildConditions(whereOr, whereAnd))
+      .setParameters(params)
+      .orderBy(`employee.${sortBy}`, orderBy)
+      .getManyAndCount();
+    return new PagedList(
+      res[0],
+      res[1],
+      paginationDto.take,
+      paginationDto.page,
+    );
   }
 }

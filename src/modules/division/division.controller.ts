@@ -33,6 +33,7 @@ export class DivisionController {
     @Inject(IDivisionService)
     private readonly divisionService: IDivisionService,
   ) {}
+
   @Roles([UserRoles.ADMIN])
   @Post()
   create(
@@ -47,8 +48,9 @@ export class DivisionController {
   findAll(
     @Query() getDivisionDto: GetDivisionsDto,
     @Query() paginationDto: PaginationDto,
+    @Context() ctx: AppContext,
   ) {
-    return this.divisionService.findAll(getDivisionDto, paginationDto);
+    return this.divisionService.findAll(getDivisionDto, paginationDto, ctx);
   }
 
   @Get(':id')
@@ -56,6 +58,7 @@ export class DivisionController {
     const { id } = idDto;
     return this.divisionService.findOne(+id);
   }
+
   @Roles([UserRoles.ADMIN])
   @Patch(':id')
   update(@Param() idDto: IdDto, @Body() updateDivisionDto: UpdateDivisionDto) {
