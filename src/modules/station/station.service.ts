@@ -29,7 +29,7 @@ export class StationService implements IStationService {
     });
     if (exists) {
       throw new BadRequestException(
-        APP_ERROR_MESSAGES.ALREADY_EXISTS('Station', 'name: ' + name),
+        APP_ERROR_MESSAGES.ALREADY_EXISTS('Station', `name: ${name}`),
       );
     }
     const newStation = this.stationMapper.map(
@@ -74,7 +74,7 @@ export class StationService implements IStationService {
       });
       if (exists) {
         throw new BadRequestException(
-          APP_ERROR_MESSAGES.ALREADY_EXISTS('Station', 'name: ' + name),
+          APP_ERROR_MESSAGES.ALREADY_EXISTS('Station', `name: ${name}`),
         );
       }
     }

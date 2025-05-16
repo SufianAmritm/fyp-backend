@@ -33,7 +33,8 @@ export class ColonyRepository
 
     const { search, orderBy, sortBy } = getColonyDto;
     if (search) {
-      whereAnd.push(`colony.name ILIKE :search`);
+      whereOr.push(`colony.name ILIKE :search`);
+
       params.search = `%${search}%`;
     }
     // if (ctx.Role === UserRoles.MANAGER || ctx.Role === UserRoles.EMPLOYEE) {
@@ -43,6 +44,7 @@ export class ColonyRepository
     const res = await this.repository
       .createQueryBuilder('colony')
       .innerJoinAndSelect('colony.station', 'station')
+      .innerJoinAndSelect('station.division', 'division')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
       .orderBy(`colony.${sortBy}`, orderBy)

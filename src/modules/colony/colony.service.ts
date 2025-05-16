@@ -6,6 +6,7 @@ import { UserRoles } from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
+import { AppContext } from '../../common/interfaces/context';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateColonyDto } from './dto/create-colony.dto';
@@ -14,7 +15,6 @@ import { UpdateColonyDto } from './dto/update-colony.dto';
 import { Colony } from './entities/colony.entity';
 import { IColonyService } from './interfaces/colony.interface';
 import { IColonyRepository } from './repositories/interface/colony-repository.interface';
-import { AppContext } from '../../common/interfaces/context';
 
 @Injectable()
 export class ColonyService implements IColonyService {
@@ -81,7 +81,7 @@ export class ColonyService implements IColonyService {
   }
 
   async update(id: number, updateColonyDto: UpdateColonyDto, userId: number) {
-    const colony = await this.colonyRepository.findOne({ id });
+    const colony = await this.findOne(id);
     if (!colony)
       throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Colony'));
     const updator = await this.userService.findOneById(userId);
@@ -95,6 +95,14 @@ export class ColonyService implements IColonyService {
       if (!canManagerUpdateVerification) {
         throw new BadRequestException(APP_ERROR_MESSAGES.UNAUTHORIZED);
       }
+    }
+    const ifOccupied = colony.apartments.some(
+      (apartment) => apartment.occupation.occupiedById !== null,
+    );
+    if (ifOccupied && updateColonyDto?.stationId !== colony.stationId) {
+      throw new BadRequestException(
+        'Can not update colony station, because colony apartments are occupied',
+      );
     }
     const colonyUpdate = this.colonyMapper.map(
       updateColonyDto,

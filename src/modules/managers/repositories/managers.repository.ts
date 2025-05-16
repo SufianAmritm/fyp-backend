@@ -45,6 +45,7 @@ export class ManagersRepository
     const res = await this.repository
       .createQueryBuilder('manager')
       .innerJoinAndSelect('manager.station', 'station')
+      .innerJoinAndSelect('station.division', 'division')
       .innerJoinAndSelect('manager.user', 'user')
 
       .where(buildConditions(whereOr, whereAnd))

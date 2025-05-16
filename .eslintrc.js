@@ -28,6 +28,7 @@ module.exports = {
     '@typescript-eslint/no-shadow': "off",
     "@typescript-eslint/no-unused-vars": "off",
     "no-plusplus": "off",
+    "@typescript-eslint/no-unused-expressions": "off",
     "no-param-reassign": [2, { "props": false }],
     "@typescript-eslint/no-redeclare":"warn",
     "class-methods-use-this": "off",

@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { BaseRepository } from 'src/common/database/repositories/base/base.repository';
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
-import { Brackets, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
+import { buildConditions } from '../../../common/database/builder-pattern/build-condition';
 import { GetStationDto } from '../dto/request/get.dto';
 import { Station } from '../entities/station.entity';
 import { IStationRepository } from './interface/station-repository.interface';
@@ -24,28 +25,31 @@ export class StationRepository
     getStationDto: GetStationDto,
     paginationDto: PaginationDto,
   ): Promise<PagedList<Station>> {
-    const { search } = getStationDto;
+    const { search, divisionId, sortBy, orderBy } = getStationDto;
     const { page, take } = paginationDto;
     const skip = (page - 1) * take;
 
     const builder = this.repository
       .createQueryBuilder('station')
       .innerJoinAndSelect('station.division', 'division');
-
+    const params: Record<string, any> = {};
+    const whereOr = [];
+    const whereAnd = [];
     if (search) {
-      builder.where(
-        new Brackets((qb) => {
-          qb.where('division.name ILIKE :search', {
-            search: `%${search}%`,
-          }).orWhere('station.name ILIKE :search', { search: `%${search}%` });
-        }),
-      );
+      whereOr.push(`station.name ILIKE :search`);
+      params.search = `%${search}%`;
     }
+    if (divisionId) {
+      whereAnd.push(`division.id = :divisionId`);
+      params.divisionId = divisionId;
+    }
+
+    builder.where(buildConditions(whereOr, whereAnd)).setParameters(params);
 
     const stations = await builder
       .take(take)
       .skip(skip)
-      .orderBy('station.id', 'DESC')
+      .orderBy(`station.${sortBy}`, orderBy)
       .getManyAndCount();
 
     return new PagedList(stations[0], stations[1], take, page);
