@@ -50,8 +50,15 @@ export class VacancyRequestRepository
       .innerJoinAndSelect('occupation.apartment', 'apartment')
       .innerJoinAndSelect('apartment.colony', 'colony')
       .innerJoinAndSelect('colony.station', 'station')
-      .innerJoinAndSelect('vacancyRequest.employee', 'employee')
+      .innerJoinAndSelect('station.division', 'division')
 
+      .innerJoinAndSelect('vacancyRequest.employee', 'employee')
+      .innerJoinAndSelect('employee.colony', 'employeeColony')
+      .innerJoinAndSelect('employeeColony.station', 'employeeColonyStation')
+      .innerJoinAndSelect(
+        'employeeColonyStation.division',
+        'employeeColonyStationDivision',
+      )
       .innerJoinAndSelect('employee.user', 'user')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)

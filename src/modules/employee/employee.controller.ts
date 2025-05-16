@@ -205,7 +205,7 @@ export class EmployeeController {
           validations: {
             maxFileSize: MAX_FILE_SIZES.AVATAR,
             fileType: new RegExp(SUPPORT_TYPES.AVATAR),
-            required: value !== 'picture',
+            required: null,
           },
         })),
       ),

@@ -509,6 +509,16 @@ export class ApplicationService implements IApplicationService {
           Occupation,
           manager,
         );
+        await this.applicationsRepository.updateWithTransaction<Employee>(
+          {
+            id: occupation.id,
+          },
+          {
+            colonyId: occupation.apartment.colonyId,
+          },
+          Employee,
+          manager,
+        );
         await this.emailService.send(
           employee.user.email,
           EMAIL_SUBJECTS.APPLICATION_APPROVED,

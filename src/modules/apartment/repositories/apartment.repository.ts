@@ -32,7 +32,8 @@ export class ApartmentRepository
     const whereAnd = [];
     const params: Record<string, any> = {};
 
-    const { search, orderBy, sortBy } = getApartmentDto;
+    const { search, orderBy, sortBy, colonyId, colonyIds, status } =
+      getApartmentDto;
     if (search) {
       whereAnd.push(`apartment.houseNo ILIKE :search`);
       params.search = `%${search}%`;
@@ -44,6 +45,18 @@ export class ApartmentRepository
       whereAnd.push(`colony.stationId =:stationId`);
       params.stationId = context.StationId;
     }
+    if (colonyId) {
+      whereAnd.push(`apartment.colonyId =:colonyId`);
+      params.colonyId = colonyId;
+    }
+    if (colonyIds) {
+      whereAnd.push(`apartment.colonyId IN (:...colonyIds)`);
+      params.colonyIds = colonyIds;
+    }
+    if (status) {
+      whereAnd.push(`occupation.status =:status`);
+      params.status = status;
+    }
     const res = await this.repository
       .createQueryBuilder('apartment')
       .innerJoinAndSelect('apartment.colony', 'colony')
@@ -53,6 +66,7 @@ export class ApartmentRepository
       .setParameters(params)
       .orderBy(`apartment.${sortBy}`, orderBy)
       .getManyAndCount();
+    console.log(res);
     return new PagedList(
       res[0],
       res[1],

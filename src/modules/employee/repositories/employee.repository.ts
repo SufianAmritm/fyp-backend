@@ -32,7 +32,7 @@ export class EmployeeRepository
     const whereAnd = [];
     const params: Record<string, any> = {};
 
-    const { search, orderBy, sortBy } = getEmployeeDto;
+    const { search, orderBy, sortBy, stationId } = getEmployeeDto;
     if (search) {
       whereOr.push(`user.name ILIKE :search`);
       whereOr.push(`user.email ILIKE :search`);
@@ -43,11 +43,16 @@ export class EmployeeRepository
       whereAnd.push(`colony.stationId =:stationId`);
       params.stationId = ctx.StationId;
     }
+    if (stationId) {
+      whereAnd.push(`colony.stationId =:stationId`);
+      params.stationId = stationId;
+    }
     const res = await this.repository
       .createQueryBuilder('employee')
       .innerJoinAndSelect('employee.user', 'user')
       .innerJoinAndSelect('employee.colony', 'colony')
       .innerJoinAndSelect('colony.station', 'station')
+      .innerJoinAndSelect('station.division', 'division')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
       .orderBy(`employee.${sortBy}`, orderBy)

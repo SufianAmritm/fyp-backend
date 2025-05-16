@@ -1082,7 +1082,9 @@ export class OccupationService implements IOccupationService {
         id,
       })
       .relations({
-        apartment: true,
+        apartment: {
+          colony: true,
+        },
       })
       .build();
     const occupation =
@@ -1239,9 +1241,18 @@ export class OccupationService implements IOccupationService {
           },
         },
       );
+      await this.vacancyRequestRepository.updateWithTransaction<Employee>(
+        { id: employee.id },
+        {
+          colonyId: occupation.apartment.colonyId,
+        },
+        Employee,
+        manager,
+      );
       await runner.end();
       return this.findOne(occupation.id);
     } catch (error) {
+      console.error(error);
       if (runner) await runner.rollbackTransaction();
       if (error instanceof HttpException) throw error;
 
@@ -1257,7 +1268,9 @@ export class OccupationService implements IOccupationService {
         id,
       })
       .relations({
-        apartment: true,
+        apartment: {
+          colony: true,
+        },
       })
       .build();
     const occupation =
@@ -1322,6 +1335,7 @@ export class OccupationService implements IOccupationService {
           vacantById: occupation.occupiedById,
           deAssignedById: userId,
           assignedById: null,
+          occupiedById: null,
         },
         Occupation,
         manager,
@@ -1343,6 +1357,8 @@ export class OccupationService implements IOccupationService {
       await runner.end();
       return this.findOne(occupation.id);
     } catch (error) {
+      console.error(error);
+
       if (runner) await runner.rollbackTransaction();
       if (error instanceof HttpException) throw error;
 

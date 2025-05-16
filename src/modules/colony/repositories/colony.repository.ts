@@ -31,11 +31,14 @@ export class ColonyRepository
     const whereAnd = [];
     const params: Record<string, any> = {};
 
-    const { search, orderBy, sortBy } = getColonyDto;
+    const { search, orderBy, sortBy, stationId } = getColonyDto;
     if (search) {
       whereOr.push(`colony.name ILIKE :search`);
-
       params.search = `%${search}%`;
+    }
+    if (stationId) {
+      whereAnd.push(`colony.stationId =:stationId`);
+      params.stationId = stationId;
     }
     // if (ctx.Role === UserRoles.MANAGER || ctx.Role === UserRoles.EMPLOYEE) {
     //   whereAnd.push(`colony.stationId =:stationId`);
