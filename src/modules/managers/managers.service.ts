@@ -34,9 +34,25 @@ export class ManagersService implements IManagersService {
     @InjectMapper() private readonly managersMapper: Mapper,
   ) {}
 
-  async findOneByUserIdWithColoniesAndEmployees(id: number) {
+  async findOneByUserId(userId: number): Promise<Manager> {
     const findOptions = new FindOptionsBuilder<Manager>()
-      .where({ id })
+      .where({ userId })
+      .relations({
+        user: true,
+        station: {
+          division: true,
+        },
+      })
+      .build();
+    const manager =
+      await this.managersRepository.findOneWithBuilderOption(findOptions);
+    if (manager?.user) manager.user.password = undefined;
+    return manager;
+  }
+
+  async findOneByUserIdWithColoniesAndEmployees(userId: number) {
+    const findOptions = new FindOptionsBuilder<Manager>()
+      .where({ userId })
       .select({
         user: true,
         station: {
@@ -148,9 +164,9 @@ export class ManagersService implements IManagersService {
     return manager;
   }
 
-  async findOneByUserIdWithColonies(id: number) {
+  async findOneByUserIdWithColonies(userId: number) {
     const findOptions = new FindOptionsBuilder<Manager>()
-      .where({ id })
+      .where({ userId })
       .select({
         user: true,
         station: {

@@ -24,6 +24,7 @@ import { AppContext } from '../../common/interfaces/context';
 import { CreateEmployeeVerificationDto } from './dto/create-employee-verification.dto';
 import { UpdateEmployeeVerificationByAdminDto } from './dto/update-employee-verification.dto';
 import { IEmployeeVerificationService } from './interfaces/employee-verification.interface';
+import { GetEmployeeVerificationDto } from './dto/get-employee-verification.dto';
 
 @ApiTags(DOMAIN_ENTITY.EMPLOYEE_VERIFICATIONS)
 @ApiBearerAuth(JWT)
@@ -50,10 +51,16 @@ export class EmployeeVerificationController {
   @Roles(ManagementRoles)
   @Get()
   findAll(
+    @Query() getDto: GetEmployeeVerificationDto,
+
     @Query() paginationDto: PaginationDto,
     @Context() context: AppContext,
   ) {
-    return this.employeeVerificationService.findAll(paginationDto, context);
+    return this.employeeVerificationService.findAll(
+      getDto,
+      paginationDto,
+      context,
+    );
   }
 
   @Roles(ManagementRoles)

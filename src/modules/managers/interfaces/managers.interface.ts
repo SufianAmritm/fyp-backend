@@ -14,6 +14,7 @@ export interface IManagersService {
     picture: Express.Multer.File,
   );
   findOne(id: number);
+  findOneByUserId(id: number): Promise<Manager>;
   findAll(dto: GetManagersDto, paginationDto: PaginationDto, ctx: AppContext);
   findOneByUserIdWithColonies(id: number): Promise<Manager>;
 

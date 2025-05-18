@@ -45,7 +45,7 @@ export class ColonyService implements IColonyService {
     if (!updator)
       throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
     if (updator.role.name === UserRoles.MANAGER) {
-      const manager = await this.managerService.findOne(updator.id);
+      const manager = await this.managerService.findOneByUserId(updator.id);
       const canManagerUpdateVerification = manager.stationId === stationId;
 
       if (!canManagerUpdateVerification) {
@@ -88,7 +88,7 @@ export class ColonyService implements IColonyService {
     if (!updator)
       throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('User'));
     if (updator.role.name === UserRoles.MANAGER) {
-      const manager = await this.managerService.findOne(updator.id);
+      const manager = await this.managerService.findOneByUserId(updator.id);
       const canManagerUpdateVerification =
         manager.stationId === colony.stationId;
 

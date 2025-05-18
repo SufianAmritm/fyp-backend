@@ -17,6 +17,7 @@ import { IEmployeeService } from '../employee/interfaces/employee.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateEmployeeVerificationDto } from './dto/create-employee-verification.dto';
+import { GetEmployeeVerificationDto } from './dto/get-employee-verification.dto';
 import { UpdateEmployeeVerificationByAdminDto } from './dto/update-employee-verification.dto';
 import { EmployeeVerification } from './entities/employee-verification.entity';
 import { IEmployeeVerificationService } from './interfaces/employee-verification.interface';
@@ -133,8 +134,13 @@ export class EmployeeVerificationService
     return this.employeeVerificationRepository.create(newEmployeeVerification);
   }
 
-  async findAll(paginationDto: PaginationDto, ctx: AppContext) {
+  async findAll(
+    getDto: GetEmployeeVerificationDto,
+    paginationDto: PaginationDto,
+    ctx: AppContext,
+  ) {
     const result = await this.employeeVerificationRepository.findAll(
+      getDto,
       paginationDto,
       ctx,
     );

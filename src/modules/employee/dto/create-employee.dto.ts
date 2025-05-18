@@ -19,6 +19,7 @@ export class CreateEmployeeDto extends OmitType(SignUpDto, ['password']) {
     example: 'razabad',
   })
   address?: string;
+
   @AutoMap()
   @Transform(({ value }) => Number(value))
   @IsNumber()
@@ -28,6 +29,7 @@ export class CreateEmployeeDto extends OmitType(SignUpDto, ['password']) {
     example: 1,
   })
   colonyId: number;
+
   @AutoMap()
   @Transform(({ value }) => Number(value))
   @IsNumber()
@@ -38,18 +40,25 @@ export class CreateEmployeeDto extends OmitType(SignUpDto, ['password']) {
     example: 1,
   })
   members?: number;
+
   @AutoMap()
   userId: number;
+
   @AutoMap()
   profileComplete: boolean;
+
   @AutoMap()
   createdById?: number;
+
   @AutoMap()
   picture?: string;
+
   @AutoMap()
   cnicFront: string;
+
   @AutoMap()
   cnicBack: string;
+
   @AutoMap()
   serviceCard: string;
 }

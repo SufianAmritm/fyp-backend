@@ -33,7 +33,7 @@ export class UserController {
     return this.userService.getProfile(user.UserId);
   }
 
-  @MultiFile(['picture', 'cnic_front', 'cnic_back', 'service_card'], {
+  @MultiFile(['picture', 'cnicFront', 'cnicBack', 'serviceCard'], {
     name: {
       type: 'string',
       example: 'John Doe',
@@ -75,7 +75,7 @@ export class UserController {
     @Body() updateUserDto: UpdateUserDto,
     @UploadedFiles(
       new MultiFileValidatorPipe(
-        ['picture', 'cnic_front', 'cnic_back', 'service_card'].map((value) => ({
+        ['picture', 'cnicFront', 'cnicBack', 'serviceCard'].map((value) => ({
           field: value,
           validations: {
             maxFileSize: MAX_FILE_SIZES.AVATAR,
@@ -87,18 +87,18 @@ export class UserController {
     )
     files: {
       picture?: Express.Multer.File[];
-      cnic_front?: Express.Multer.File[];
-      cnic_back?: Express.Multer.File[];
-      service_card?: Express.Multer.File[];
+      cnicFront?: Express.Multer.File[];
+      cnicBack?: Express.Multer.File[];
+      serviceCard?: Express.Multer.File[];
     },
 
     @Context()
     user: AppContext,
   ) {
     const picture = files.picture?.[0];
-    const cnicFront = files.cnic_front?.[0];
-    const cnicBack = files.cnic_back?.[0];
-    const serviceCard = files.service_card?.[0];
+    const cnicFront = files.cnicFront?.[0];
+    const cnicBack = files.cnicBack?.[0];
+    const serviceCard = files.serviceCard?.[0];
     return this.userService.updateProfile(
       user.UserId,
       updateUserDto,

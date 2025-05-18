@@ -41,7 +41,23 @@ export class UserMappingProfile extends AutomapperProfile {
           mapFrom((source) => source.phoneNumber),
         ),
       );
-      createMap(mapper, CreateEmployeeDto, User);
+      createMap(
+        mapper,
+        CreateEmployeeDto,
+        User,
+        forMember(
+          (x) => x.name,
+          mapFrom((source) => source.name),
+        ),
+        forMember(
+          (x) => x.email,
+          mapFrom((source) => source.email),
+        ),
+        forMember(
+          (x) => x.phoneNumber,
+          mapFrom((source) => source.phoneNumber),
+        ),
+      );
     };
   }
 }

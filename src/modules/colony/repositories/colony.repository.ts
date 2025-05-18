@@ -4,6 +4,7 @@ import { BaseRepository } from 'src/common/database/repositories/base/base.repos
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { Repository } from 'typeorm';
+import { UserRoles } from '../../../common/constants/enums';
 import { buildConditions } from '../../../common/database/builder-pattern/build-condition';
 import { AppContext } from '../../../common/interfaces/context';
 import { GetColonyDto } from '../dto/request/get.dto';
@@ -40,10 +41,10 @@ export class ColonyRepository
       whereAnd.push(`colony.stationId =:stationId`);
       params.stationId = stationId;
     }
-    // if (ctx.Role === UserRoles.MANAGER || ctx.Role === UserRoles.EMPLOYEE) {
-    //   whereAnd.push(`colony.stationId =:stationId`);
-    //   params.stationId = ctx.StationId;
-    // }
+    if (ctx.Role === UserRoles.MANAGER || ctx.Role === UserRoles.EMPLOYEE) {
+      whereAnd.push(`colony.stationId =:stationId`);
+      params.stationId = ctx.StationId;
+    }
     const res = await this.repository
       .createQueryBuilder('colony')
       .innerJoinAndSelect('colony.station', 'station')
@@ -58,16 +59,5 @@ export class ColonyRepository
       paginationDto.take,
       paginationDto.page,
     );
-    // const { search } = getColonyDto;
-    // const whereOptions: FindOptionsWhere<Colony> = {};
-    // search && (whereOptions.name = `%${ILike(search)}%`);
-    // const findOption = new FindOptionsBuilder<Colony>()
-    //   .where(whereOptions)
-    //   .relations({
-    //     station: true,
-    //   })
-    //   .order({ id: ORDER_BY.DESC })
-    //   .build();
-    // return this.findWithPagination(paginationDto, findOption);
   }
 }

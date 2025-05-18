@@ -66,7 +66,6 @@ export class ApartmentRepository
       .setParameters(params)
       .orderBy(`apartment.${sortBy}`, orderBy)
       .getManyAndCount();
-    console.log(res);
     return new PagedList(
       res[0],
       res[1],

@@ -51,7 +51,10 @@ export class TransferRequestRepository
       .innerJoinAndSelect('transferRequest.fromColony', 'fromColony')
       .innerJoinAndSelect('transferRequest.toColony', 'toColony')
       .innerJoinAndSelect('fromColony.station', 'fromColonyStation')
+      .innerJoinAndSelect('fromColonyStation.division', 'fromColonyDivision')
       .innerJoinAndSelect('toColony.station', 'toColonyStation')
+      .innerJoinAndSelect('toColonyStation.division', 'toColonyDivision')
+
       .innerJoinAndSelect('transferRequest.employee', 'employee')
       .innerJoinAndSelect('employee.user', 'user')
       .where(buildConditions(whereOr, whereAnd))

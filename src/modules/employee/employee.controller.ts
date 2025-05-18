@@ -44,7 +44,7 @@ export class EmployeeController {
   @Roles(ManagementRoles)
   @Post()
   @MultiFile(
-    ['picture', 'cnic_front', 'cnic_back', 'service_card'],
+    ['picture', 'cnicFront', 'cnicBack', 'serviceCard'],
     {
       name: {
         type: 'string',
@@ -95,7 +95,7 @@ export class EmployeeController {
     @Body() createEmployeeDto: CreateEmployeeDto,
     @UploadedFiles(
       new MultiFileValidatorPipe(
-        ['picture', 'cnic_front', 'cnic_back', 'service_card'].map((value) => ({
+        ['picture', 'cnicFront', 'cnicBack', 'serviceCard'].map((value) => ({
           field: value,
           validations: {
             maxFileSize: MAX_FILE_SIZES.AVATAR,
@@ -107,17 +107,17 @@ export class EmployeeController {
     )
     files: {
       picture?: Express.Multer.File[];
-      cnic_front?: Express.Multer.File[];
-      cnic_back?: Express.Multer.File[];
-      service_card?: Express.Multer.File[];
+      cnicFront?: Express.Multer.File[];
+      cnicBack?: Express.Multer.File[];
+      serviceCard?: Express.Multer.File[];
     },
 
     @Context() context: AppContext,
   ) {
     const picture = files.picture?.[0];
-    const cnicFront = files.cnic_front?.[0];
-    const cnicBack = files.cnic_back?.[0];
-    const serviceCard = files.service_card?.[0];
+    const cnicFront = files.cnicFront?.[0];
+    const cnicBack = files.cnicBack?.[0];
+    const serviceCard = files.serviceCard?.[0];
     createEmployeeDto.createdById = context.UserId;
     return this.employeeService.create(
       createEmployeeDto,
@@ -148,7 +148,7 @@ export class EmployeeController {
   @Roles(ManagementRoles)
   @Patch(':id')
   @MultiFile(
-    ['picture', 'cnic_front', 'cnic_back', 'service_card'],
+    ['picture', 'cnicFront', 'cnicBack', 'serviceCard'],
     {
       name: {
         type: 'string',
@@ -200,7 +200,7 @@ export class EmployeeController {
     @Body() updateEmployeeDto: UpdateEmployeeDto,
     @UploadedFiles(
       new MultiFileValidatorPipe(
-        ['picture', 'cnic_front', 'cnic_back', 'service_card'].map((value) => ({
+        ['picture', 'cnicFront', 'cnicBack', 'serviceCard'].map((value) => ({
           field: value,
           validations: {
             maxFileSize: MAX_FILE_SIZES.AVATAR,
@@ -212,17 +212,17 @@ export class EmployeeController {
     )
     files: {
       picture?: Express.Multer.File[];
-      cnic_front?: Express.Multer.File[];
-      cnic_back?: Express.Multer.File[];
-      service_card?: Express.Multer.File[];
+      cnicFront?: Express.Multer.File[];
+      cnicBack?: Express.Multer.File[];
+      serviceCard?: Express.Multer.File[];
     },
     @Context() context: AppContext,
   ) {
     const { id } = idDto;
     const picture = files.picture?.[0];
-    const cnicFront = files.cnic_front?.[0];
-    const cnicBack = files.cnic_back?.[0];
-    const serviceCard = files.service_card?.[0];
+    const cnicFront = files.cnicFront?.[0];
+    const cnicBack = files.cnicBack?.[0];
+    const serviceCard = files.serviceCard?.[0];
     return this.employeeService.update(
       +id,
       updateEmployeeDto,

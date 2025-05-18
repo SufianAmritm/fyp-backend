@@ -9,19 +9,19 @@ import { DOMAIN_ENTITY, RESPONSE_MESSAGES } from 'src/common/constants';
 
 import { Mapper } from '@automapper/core';
 import { InjectMapper } from '@automapper/nestjs';
+import { PutObjectCommandInput } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { APP_ERROR_MESSAGES } from 'src/common/constants/errors';
 import {
   DbTransactionFactory,
   TransactionRunner,
 } from 'src/common/database/utils/db-transaction-factory';
+import { EntityManager } from 'typeorm';
 import { SignUpDto } from '../auth/dto/sign-up.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 import { IUserService } from './interfaces/user.interface';
 
-import { PutObjectCommandInput } from '@aws-sdk/client-s3';
-import { EntityManager } from 'typeorm';
 import {
   EMAIL_SUBJECTS,
   EMAIL_TEMPLATES,
@@ -68,6 +68,7 @@ export class UserService implements IUserService {
     private readonly utilService: UtilsService,
     @InjectMapper() private readonly mapper: Mapper,
   ) {}
+
   async createManager(
     createManagerDto: CreateManagersDto,
   ): Promise<NewManagerUserReturn> {
@@ -131,9 +132,11 @@ export class UserService implements IUserService {
       throw new Error(error.message);
     }
   }
+
   async createEmployee(
     createEmployeeDto: CreateEmployeeDto,
   ): Promise<NewEmployeeUserReturn> {
+    console.log(createEmployeeDto, 'createEmployeeDto');
     let runner: TransactionRunner;
     try {
       const { email } = createEmployeeDto;
@@ -158,6 +161,7 @@ export class UserService implements IUserService {
         CreateEmployeeDto,
         User,
       );
+      console.log(userMap, 'userMap');
       userMap.roleId = role.id;
       const user = await this.userRepository.createWithTransaction<User>(
         userMap,
@@ -192,6 +196,7 @@ export class UserService implements IUserService {
       );
     }
   }
+
   async createAdmin(createAdminDto: CreateAdminDto): Promise<User> {
     let runner: TransactionRunner;
     try {
@@ -312,6 +317,7 @@ export class UserService implements IUserService {
       });
     return isComplete;
   }
+
   async getSettings(userId: number): Promise<AppSetting> {
     return this.settingRepository.findOne({ userId });
   }
@@ -399,6 +405,7 @@ export class UserService implements IUserService {
       throw new Error(error.message);
     }
   }
+
   async sendPasswordResetEmail(user: User, otpType: OTP_TYPE) {
     const otp = await this.otpService.create({
       userId: user.id,
@@ -423,6 +430,7 @@ export class UserService implements IUserService {
       emailData,
     );
   }
+
   async sendEmailForNoPassword(
     user: User,
     emailData: EmailData,
@@ -515,12 +523,15 @@ export class UserService implements IUserService {
     if (user) user.password = undefined;
     return user;
   }
+
   async getProfile(id: number): Promise<User> {
     const findOptions = new FindOptionsBuilder<User>()
       .where({ id })
       .relations({
         role: true,
-        manager: true,
+        manager: {
+          station: true,
+        },
         employee: {
           colony: {
             station: true,
