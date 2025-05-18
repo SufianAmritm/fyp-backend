@@ -48,9 +48,8 @@ export class DivisionController {
   findAll(
     @Query() getDivisionDto: GetDivisionsDto,
     @Query() paginationDto: PaginationDto,
-    @Context() ctx: AppContext,
   ) {
-    return this.divisionService.findAll(getDivisionDto, paginationDto, ctx);
+    return this.divisionService.findAll(getDivisionDto, paginationDto);
   }
 
   @Get(':id')

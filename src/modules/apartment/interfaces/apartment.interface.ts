@@ -14,4 +14,8 @@ export interface IApartmentService {
   );
   findOne(id: number);
   update(id: number, updateApartmentDto: UpdateApartmentDto, userId: number);
+  findAllForTransfer(
+    getApartmentDto: GetApartmentDto,
+    paginationDto: PaginationDto,
+  );
 }

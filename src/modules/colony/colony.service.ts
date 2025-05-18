@@ -64,8 +64,21 @@ export class ColonyService implements IColonyService {
     getColonyDto: GetColonyDto,
     paginationDto: PaginationDto,
     ctx: AppContext,
+    transfer?: boolean,
   ) {
-    return this.colonyRepository.findAll(getColonyDto, paginationDto, ctx);
+    return this.colonyRepository.findAll(
+      getColonyDto,
+      paginationDto,
+      ctx,
+      transfer,
+    );
+  }
+
+  findAllForTransfer(getColonyDto: GetColonyDto, paginationDto: PaginationDto) {
+    return this.colonyRepository.findAllForTransfer(
+      getColonyDto,
+      paginationDto,
+    );
   }
 
   findOne(id: number) {

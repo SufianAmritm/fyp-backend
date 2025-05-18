@@ -36,6 +36,11 @@ export class ManagersRepository
     if (search) {
       whereOr.push(`user.name ILIKE :search`);
       whereOr.push(`user.email ILIKE :search`);
+      whereOr.push(`user.phoneNumber ILIKE :search`);
+
+      whereOr.push(`station.name ILIKE :search`);
+      whereOr.push(`division.name ILIKE :search`);
+
       params.search = `%${search}%`;
     }
     if (ctx.Role === UserRoles.MANAGER) {
@@ -50,7 +55,12 @@ export class ManagersRepository
 
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
-      .orderBy(`manager.${sortBy}`, orderBy)
+      .orderBy(
+        sortBy.includes('.')
+          ? sortBy.split('.').slice(-2).join('.')
+          : `manager.${sortBy}`,
+        orderBy,
+      )
       .getManyAndCount();
     return new PagedList(
       res[0],

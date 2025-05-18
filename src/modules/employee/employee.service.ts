@@ -18,6 +18,7 @@ import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { UtilsService } from '../../common/utils/UtilsService';
 import { IS3Service } from '../aws/interface/aws-s3.interface';
+import { EmployeeVerification } from '../employee-verification/entities/employee-verification.entity';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
@@ -72,7 +73,7 @@ export class EmployeeService implements IEmployeeService {
     return employee;
   }
 
-  async getVerificationStatus(userId: number): Promise<{ status: boolean }> {
+  async getVerificationStatus(userId: number): Promise<EmployeeVerification> {
     const findOptions = new FindOptionsBuilder<Employee>()
       .where({ userId })
       .relations({
@@ -81,12 +82,16 @@ export class EmployeeService implements IEmployeeService {
       .build();
     const employee =
       await this.employeeRepository.findOneWithBuilderOption(findOptions);
-    const recentRequest = employee.verification?.sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    })?.[0];
-    return {
-      status: recentRequest?.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED,
-    };
+    const recentRequest = employee.verification
+      ?.filter(
+        (request) => request.status !== EMPLOYEE_VERIFICATION_STATUS.CANCELLED,
+      )
+      ?.sort((a, b) => {
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      })?.[0];
+    return recentRequest;
   }
 
   findOneByUserIdWithColonies(userId: number): Promise<Employee> {

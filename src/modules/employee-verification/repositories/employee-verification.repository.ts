@@ -36,6 +36,8 @@ export class EmployeeVerificationRepository
     if (search) {
       whereOr.push(`user.name ILIKE :search`);
       whereOr.push(`user.email ILIKE :search`);
+      whereOr.push(`station.name ILIKE :search`);
+      whereOr.push(`"employeeVerifications".status::text ILIKE :search`);
 
       params.search = `%${search}%`;
     }
@@ -54,7 +56,12 @@ export class EmployeeVerificationRepository
       .leftJoinAndSelect('employeeVerifications.createdBy', 'createdBy')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
-      .orderBy(`employee.${sortBy}`, orderBy)
+      .orderBy(
+        sortBy.includes('.')
+          ? sortBy.split('.').slice(-2).join('.')
+          : `employeeVerifications.${sortBy}`,
+        orderBy,
+      )
       .getManyAndCount();
     return new PagedList(
       res[0],

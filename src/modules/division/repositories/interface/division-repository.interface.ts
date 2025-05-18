@@ -3,7 +3,6 @@ import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { GetDivisionsDto } from '../../dto/request/get.dto';
 import { Division } from '../../entities/division.entity';
-import { AppContext } from '../../../../common/interfaces/context';
 
 export const IDivisionRepository = Symbol('IDivisionRepository');
 
@@ -13,6 +12,5 @@ export interface IDivisionRepository<T = DefaultEntity>
   findAll(
     getDivisionDto: GetDivisionsDto,
     paginationDto: PaginationDto,
-    ctx: AppContext,
   ): Promise<PagedList<Division>>;
 }

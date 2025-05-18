@@ -17,6 +17,7 @@ export class CreateApartmentDto {
     example: '40',
   })
   houseNo: string;
+
   @AutoMap()
   @IsString()
   @IsNotEmpty()
@@ -24,6 +25,7 @@ export class CreateApartmentDto {
     example: '40',
   })
   streetNo: string;
+
   @AutoMap()
   @IsString()
   @IsNotEmpty()
@@ -31,6 +33,7 @@ export class CreateApartmentDto {
     example: 'razabad 40',
   })
   address: string;
+
   @AutoMap()
   @IsString()
   @IsNotEmpty()
@@ -39,6 +42,7 @@ export class CreateApartmentDto {
   })
   @IsOptional()
   description: string;
+
   @AutoMap()
   @Transform(({ value }) => Number(value))
   @IsNumber()
@@ -48,6 +52,27 @@ export class CreateApartmentDto {
     example: 1,
   })
   colonyId: number;
+
+  @AutoMap()
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
+  @IsNotEmpty()
+  @IsPositive()
+  @ApiProperty({
+    example: 1,
+  })
+  rooms: number;
+
+  @AutoMap()
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
+  @IsNotEmpty()
+  @IsPositive()
+  @ApiProperty({
+    example: 1,
+  })
+  bathrooms: number;
+
   @AutoMap()
   createdById: number;
 }

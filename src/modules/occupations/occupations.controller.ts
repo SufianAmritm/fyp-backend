@@ -24,6 +24,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { AppContext } from '../../common/interfaces/context';
 import { AssignOccupationDto } from './dto/assign-occupation.dto';
 import { CreateTransferRequestDto } from './dto/create-transfer-request.dto';
+import { CreateVacancyRequestDto } from './dto/create-vacancy-request.dto';
 import { GetTransferRequestDto } from './dto/get-transfer-requests.dto';
 import { GetVacancyRequestDto } from './dto/get-vacany-requests.dto';
 import { UpdateVacancyRequestByAdminDto } from './dto/update-vacany-request.dto';
@@ -89,9 +90,23 @@ export class OccupationController {
   }
 
   @Roles([UserRoles.EMPLOYEE])
+  @Get('my')
+  findMyOccupations(@Context() context: AppContext) {
+    return this.occupationsService.findMyOccupations(context.UserId);
+  }
+
+  @Roles([UserRoles.EMPLOYEE])
   @Get('my/vacancy-request')
-  findMyVacancyRequests(@Context() context: AppContext) {
-    return this.occupationsService.findMyVacancyRequests(context.UserId);
+  findMyVacancyRequests(
+    @Query() paginationDto: PaginationDto,
+    @Query() getDto: GetVacancyRequestDto,
+    @Context() context: AppContext,
+  ) {
+    return this.occupationsService.findMyVacancyRequests(
+      getDto,
+      paginationDto,
+      context,
+    );
   }
 
   @Roles([UserRoles.EMPLOYEE])
@@ -102,8 +117,14 @@ export class OccupationController {
 
   @Roles([UserRoles.EMPLOYEE])
   @Post('vacancy-request')
-  createVacancyRequest(@Context() context: AppContext) {
-    return this.occupationsService.vacantOccupation(context.UserId);
+  createVacancyRequest(
+    @Context() context: AppContext,
+    @Body() createVacancyRequestDto: CreateVacancyRequestDto,
+  ) {
+    return this.occupationsService.vacantOccupation(
+      context.UserId,
+      createVacancyRequestDto,
+    );
   }
 
   @Roles([UserRoles.EMPLOYEE])
@@ -117,19 +138,7 @@ export class OccupationController {
       context.UserId,
     );
   }
-  // @Get()
-  // findAll(
-  //   @Query() paginationDto: PaginationDto,
-  //   @Context() context: AppContext,
-  // ) {
-  //   return this.occupationsService.findAll(paginationDto, context);
-  // }
 
-  // @Get(':id')
-  // findOne(@Param() idDto: IdDto) {
-  //   const { id } = idDto;
-  //   return this.occupationsService.findOne(+id);
-  // }
   @Roles(ManagementRoles)
   @Post('transfer-request/approve/:id')
   approveTransferRequest(

@@ -68,8 +68,16 @@ export class ApplicationController {
 
   @Roles([UserRoles.EMPLOYEE])
   @Get('my')
-  myApplication(@Context() context: AppContext) {
-    return this.applicationsService.myApplications(context.UserId);
+  myApplication(
+    @Query() getApplicationDto: GetApplicationDto,
+    @Query() paginationDto: PaginationDto,
+    @Context() context: AppContext,
+  ) {
+    return this.applicationsService.myApplications(
+      context,
+      getApplicationDto,
+      paginationDto,
+    );
   }
 
   @Roles(ManagementRoles)

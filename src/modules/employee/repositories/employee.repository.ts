@@ -36,6 +36,13 @@ export class EmployeeRepository
     if (search) {
       whereOr.push(`user.name ILIKE :search`);
       whereOr.push(`user.email ILIKE :search`);
+      whereOr.push(`user.phoneNumber ILIKE :search`);
+      !(ctx.Role === UserRoles.MANAGER) &&
+        whereOr.push(`station.name ILIKE :search`);
+      !(ctx.Role === UserRoles.MANAGER) &&
+        whereOr.push(`division.name ILIKE :search`);
+      ctx.Role === UserRoles.MANAGER &&
+        whereOr.push(`colony.name ILIKE :search`);
 
       params.search = `%${search}%`;
     }
@@ -55,7 +62,12 @@ export class EmployeeRepository
       .innerJoinAndSelect('station.division', 'division')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
-      .orderBy(`employee.${sortBy}`, orderBy)
+      .orderBy(
+        sortBy.includes('.')
+          ? sortBy.split('.').slice(-2).join('.')
+          : `employee.${sortBy}`,
+        orderBy,
+      )
       .getManyAndCount();
     return new PagedList(
       res[0],

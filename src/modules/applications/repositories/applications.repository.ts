@@ -34,13 +34,19 @@ export class ApplicationRepository
 
     const { search, orderBy, sortBy } = getApplicationDto;
     if (search) {
-      whereOr.push(`employeeUser.email ILIKE :search`);
-      whereOr.push(`employeeUser.name ILIKE :search`);
+      whereOr.push(`user.email ILIKE :search`);
+      whereOr.push(`user.name ILIKE :search`);
+      whereOr.push(`"application".status::text ILIKE :search`);
+
       params.search = `%${search}%`;
     }
     if (ctx.Role === UserRoles.MANAGER) {
       whereAnd.push(`employeeColony.stationId =:stationId`);
       params.stationId = ctx.StationId;
+    }
+    if (ctx.Role === UserRoles.EMPLOYEE) {
+      whereAnd.push(`user.id =:userId`);
+      params.userId = ctx.UserId;
     }
     const res = await this.repository
       .createQueryBuilder('application')
@@ -49,16 +55,24 @@ export class ApplicationRepository
       .innerJoinAndSelect('colony.station', 'station')
       .innerJoinAndSelect('station.division', 'division')
       .innerJoinAndSelect('application.employee', 'employee')
-      .innerJoinAndSelect('employee.user', 'employeeUser')
+      .innerJoinAndSelect('employee.user', 'user')
       .leftJoinAndSelect('application.approvedBy', 'approvedBy')
       .leftJoinAndSelect('application.rejectedBy', 'rejectedBy')
       .leftJoinAndSelect('application.createdBy', 'createdBy')
       .innerJoinAndSelect('employee.colony', 'employeeColony')
       .innerJoinAndSelect('employeeColony.station', 'employeeColonyStation')
-      .innerJoinAndSelect('employeeColonyStation.division', 'employeeStationDivision')
+      .innerJoinAndSelect(
+        'employeeColonyStation.division',
+        'employeeStationDivision',
+      )
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
-      .orderBy(`application.${sortBy}`, orderBy)
+      .orderBy(
+        sortBy.includes('.')
+          ? sortBy.split('.').slice(-2).join('.')
+          : `application.${sortBy}`,
+        orderBy,
+      )
       .getManyAndCount();
     return new PagedList(
       res[0],

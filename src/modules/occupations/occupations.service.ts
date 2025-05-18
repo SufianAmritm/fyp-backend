@@ -8,7 +8,7 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { LessThanOrEqual } from 'typeorm';
+import { In, LessThanOrEqual } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { RESPONSE_MESSAGES } from '../../common/constants';
 import {
@@ -77,41 +77,70 @@ export class OccupationService implements IOccupationService {
     @InjectMapper() private readonly occupationsMapper: Mapper,
   ) {}
 
-  async findMyVacancyRequests(userId: number): Promise<VacancyRequest[]> {
+  async findMyOccupations(userId: number): Promise<Occupation[]> {
     const employee = await this.employeeService.findOneByUserId(userId);
     if (!employee) {
       throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
     }
-    const findOptions = new FindOptionsBuilder<VacancyRequest>()
+    const findOptions = new FindOptionsBuilder<Occupation>()
       .where({
-        employeeId: employee.id,
+        occupiedById: employee.id,
+        status: In([
+          OCCUPATION_STATUS.OCCUPIED,
+          OCCUPATION_STATUS.ABOUT_TO_VACANT,
+        ]),
       })
       .relations({
-        occupation: {
-          apartment: true,
+        apartment: {
+          colony: {
+            station: {
+              division: true,
+            },
+          },
         },
-        approvedBy: {
+        assignedBy: {
           manager: true,
         },
-        rejectedBy: {
+        deAssignedBy: {
           manager: true,
         },
-        employee: {
+        occupiedBy: {
           user: true,
         },
-        createdBy: {
-          manager: true,
+        vacantBy: {
+          user: true,
         },
       })
-      .order({
-        createdAt: 'DESC',
-      })
       .build();
-    const vacancyRequests =
-      await this.vacancyRequestRepository.findManyWithBuilderOption(
-        findOptions,
-      );
-    vacancyRequests.forEach((vacancyRequest) => {
+
+    const occupations =
+      await this.occupationsRepository.findManyWithBuilderOption(findOptions);
+    occupations.forEach((occupation) => {
+      if (occupation?.assignedBy) occupation.assignedBy.password = undefined;
+      if (occupation?.deAssignedBy)
+        occupation.deAssignedBy.password = undefined;
+      if (occupation?.occupiedBy)
+        occupation.occupiedBy.user.password = undefined;
+      if (occupation?.vacantBy) occupation.vacantBy.user.password = undefined;
+    });
+    return occupations;
+  }
+
+  async findMyVacancyRequests(
+    getDto: GetVacancyRequestDto,
+    paginationDto: PaginationDto,
+    context: AppContext,
+  ): Promise<PagedList<VacancyRequest>> {
+    const employee = await this.employeeService.findOneByUserId(context.UserId);
+    if (!employee) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
+    }
+    const vacancyRequests = await this.vacancyRequestRepository.findAll(
+      getDto,
+      paginationDto,
+      context,
+    );
+    vacancyRequests.items.forEach((vacancyRequest) => {
       if (vacancyRequest?.approvedBy)
         vacancyRequest.approvedBy.password = undefined;
       if (vacancyRequest?.rejectedBy)
@@ -742,7 +771,10 @@ export class OccupationService implements IOccupationService {
     return RESPONSE_MESSAGES.SUCCESSFUL_OPERATION;
   }
 
-  async vacantOccupation(userId: number) {
+  async vacantOccupation(
+    userId: number,
+    createVacancyRequestDto: CreateVacancyRequestDto,
+  ) {
     const employee = await this.employeeService.findOneByUserId(userId);
     const { occupations } = employee;
     const occupation = occupations.find(
@@ -797,6 +829,7 @@ export class OccupationService implements IOccupationService {
     newVacancyRequest.occupationId = occupation.id;
     newVacancyRequest.createdById = userId;
     newVacancyRequest.employeeId = employee.id;
+    newVacancyRequest.vacancyReason = createVacancyRequestDto.reason;
     const request =
       await this.vacancyRequestRepository.create(newVacancyRequest);
     return this.findOneVacancyRequest(request.id);

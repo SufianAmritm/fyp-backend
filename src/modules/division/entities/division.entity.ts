@@ -11,6 +11,7 @@ import {
 import { TABLES } from '../../../common/database/tables';
 import { Station } from '../../station/entities/station.entity';
 import { User } from '../../user/entities/user.entity';
+
 @Index('divisions_name_uk', ['name'], {
   unique: true,
   where: 'deleted_at IS NOT NULL',
@@ -20,9 +21,11 @@ export class Division extends BaseEntity {
   @AutoMap()
   @Column('character varying', { name: 'name', nullable: false })
   name: string;
+
   @AutoMap()
   @Column('character varying', { nullable: false })
   description: string;
+
   @AutoMap()
   @Column('integer', { name: 'created_by_id' })
   createdById: number;
@@ -34,6 +37,7 @@ export class Division extends BaseEntity {
     foreignKeyConstraintName: 'divisions_created_by_id_fk',
   })
   createdBy: User;
+
   @AutoMap()
   @OneToMany(() => Station, (i) => i.division)
   stations: Station[];

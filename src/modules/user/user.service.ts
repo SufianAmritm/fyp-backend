@@ -25,6 +25,7 @@ import { IUserService } from './interfaces/user.interface';
 import {
   EMAIL_SUBJECTS,
   EMAIL_TEMPLATES,
+  EMPLOYEE_VERIFICATION_STATUS,
   OTP_TYPE,
   UserRoles,
 } from '../../common/constants/enums';
@@ -536,12 +537,19 @@ export class UserService implements IUserService {
           colony: {
             station: true,
           },
+          occupations: true,
+          verification: true,
         },
       })
       .build();
     const user =
       await this.userRepository.findOneWithBuilderOption(findOptions);
     if (user) user.password = undefined;
+    if (user?.employee?.verification?.length > 0)
+      user.employee.verification = user.employee.verification.filter(
+        (verification) =>
+          verification.status !== EMPLOYEE_VERIFICATION_STATUS.CANCELLED,
+      );
     return user;
   }
 

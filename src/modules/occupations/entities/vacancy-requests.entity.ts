@@ -31,6 +31,10 @@ export class VacancyRequest extends BaseEntity {
   reason: string;
 
   @AutoMap()
+  @Column('character varying', { name: 'vacancy_reason', nullable: true })
+  vacancyReason: string;
+
+  @AutoMap()
   @Column('integer', { name: 'approved_by_id', nullable: true })
   approvedById: number;
 

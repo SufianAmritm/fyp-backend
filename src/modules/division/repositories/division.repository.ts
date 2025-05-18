@@ -5,7 +5,6 @@ import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { Repository } from 'typeorm';
 import { buildConditions } from '../../../common/database/builder-pattern/build-condition';
-import { AppContext } from '../../../common/interfaces/context';
 import { GetDivisionsDto } from '../dto/request/get.dto';
 import { Division } from '../entities/division.entity';
 import { IDivisionRepository } from './interface/division-repository.interface';
@@ -25,7 +24,6 @@ export class DivisionRepository
   async findAll(
     getDivisionDto: GetDivisionsDto,
     paginationDto: PaginationDto,
-    ctx: AppContext,
   ): Promise<PagedList<Division>> {
     const whereOr = [];
     const whereAnd = [];
@@ -34,13 +32,20 @@ export class DivisionRepository
     const { search, orderBy, sortBy } = getDivisionDto;
     if (search) {
       whereAnd.push(`division.name ILIKE :search`);
+      whereAnd.push(`division.description ILIKE :search`);
+
       params.search = `%${search}%`;
     }
     const res = await this.repository
       .createQueryBuilder('division')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
-      .orderBy(`division.${sortBy}`, orderBy)
+      .orderBy(
+        sortBy.includes('.')
+          ? sortBy.split('.').slice(-2).join('.')
+          : `division.${sortBy}`,
+        orderBy,
+      )
       .getManyAndCount();
     return new PagedList(
       res[0],
@@ -48,13 +53,5 @@ export class DivisionRepository
       paginationDto.take,
       paginationDto.page,
     );
-    // const { search } = getDivisionDto;
-    // const whereOptions: FindOptionsWhere<Division> = {};
-    // search && (whereOptions.name = `%${ILike(search)}%`);
-    // const findOption = new FindOptionsBuilder<Division>()
-    //   .where(whereOptions)
-    //   .order({ id: ORDER_BY.DESC })
-    //   .build();
-    // return this.findWithPagination(paginationDto, findOption);
   }
 }

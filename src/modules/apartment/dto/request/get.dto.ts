@@ -24,6 +24,7 @@ export class GetApartmentDto extends SearchKeyDto {
     example: 1,
   })
   colonyId: number;
+
   @IsOptional()
   @Transform(({ value }) => value.split(',').map(Number))
   @IsInt({
@@ -36,6 +37,7 @@ export class GetApartmentDto extends SearchKeyDto {
     example: [1],
   })
   colonyIds: number[];
+
   @IsOptional()
   @IsEnum(OCCUPATION_STATUS)
   @IsString()

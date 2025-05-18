@@ -56,6 +56,17 @@ export class ApartmentController {
     );
   }
 
+  @Get('transfer')
+  findAllForTransfer(
+    @Query() getApartmentDto: GetApartmentDto,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.apartmentService.findAllForTransfer(
+      getApartmentDto,
+      paginationDto,
+    );
+  }
+
   @Get(':id')
   findOne(@Param() idDto: IdDto) {
     const { id } = idDto;

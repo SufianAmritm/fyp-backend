@@ -117,6 +117,16 @@ export class ApartmentService implements IApartmentService {
     );
   }
 
+  findAllForTransfer(
+    getApartmentDto: GetApartmentDto,
+    paginationDto: PaginationDto,
+  ) {
+    return this.apartmentRepository.findAllForTransfer(
+      getApartmentDto,
+      paginationDto,
+    );
+  }
+
   findOne(id: number) {
     const findOption = new FindOptionsBuilder<Apartment>()
       .where({ id })

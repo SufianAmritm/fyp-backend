@@ -1,5 +1,6 @@
 import { PaginationDto } from '../../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../../common/interfaces/context';
+import { PagedList } from '../../../common/types/paged-list';
 import { CreateApplicationDto } from '../dto/applications/create-applications.dto';
 import { GetApplicationDto } from '../dto/applications/get-applications.dto';
 import {
@@ -28,5 +29,9 @@ export interface IApplicationService {
     userId: number,
   );
   cancel(id: number, userId: number): Promise<Application>;
-  myApplications(userId: number): Promise<Application[]>;
+  myApplications(
+    ctx: AppContext,
+    getApplicationDto: GetApplicationDto,
+    paginationDto: PaginationDto,
+  ): Promise<PagedList<Application>>;
 }

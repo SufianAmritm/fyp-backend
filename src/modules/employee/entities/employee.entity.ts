@@ -10,34 +10,39 @@ import {
 } from 'typeorm';
 import { TABLES } from '../../../common/database/tables';
 import { Application } from '../../applications/entities/applications.entity';
+import { Colony } from '../../colony/entities/colony.entity';
 import { EmployeeVerification } from '../../employee-verification/entities/employee-verification.entity';
 import { Occupation } from '../../occupations/entities/occupations.entity';
-import { VacancyRequest } from '../../occupations/entities/vacancy-requests.entity';
-import { Station } from '../../station/entities/station.entity';
-import { User } from '../../user/entities/user.entity';
 import { TransferRequest } from '../../occupations/entities/transfer-requests.entity';
-import { Colony } from '../../colony/entities/colony.entity';
+import { VacancyRequest } from '../../occupations/entities/vacancy-requests.entity';
+import { User } from '../../user/entities/user.entity';
 
 @Entity(TABLES.EMPLOYEES, { schema: 'public' })
 export class Employee extends BaseEntity {
   @AutoMap()
   @Column('character varying', { nullable: true })
   picture: string;
+
   @AutoMap()
   @Column('character varying', { name: 'cnic_front', nullable: true })
   cnicFront: string;
+
   @AutoMap()
   @Column('character varying', { name: 'cnic_back', nullable: true })
   cnicBack: string;
+
   @AutoMap()
   @Column('character varying', { name: 'service_card', nullable: true })
   serviceCard: string;
+
   @AutoMap()
   @Column('character varying', { nullable: true })
   address: string;
+
   @AutoMap()
   @Column('integer', { name: 'colony_id', nullable: true })
   colonyId: number;
+
   @AutoMap()
   @Column('integer', { nullable: true })
   members: number;
@@ -45,12 +50,15 @@ export class Employee extends BaseEntity {
   @AutoMap()
   @Column('integer', { name: 'user_id', nullable: false })
   userId: number;
+
   @AutoMap()
   @Column('bool', { name: 'profile_complete', nullable: false, default: false })
   profileComplete: boolean;
+
   @AutoMap()
   @Column('integer', { name: 'created_by_id', nullable: true })
   createdById: number;
+
   @ManyToOne(() => User, (i) => i.employees)
   @JoinColumn({
     name: 'created_by_id',
@@ -58,6 +66,7 @@ export class Employee extends BaseEntity {
     foreignKeyConstraintName: 'employees_created_by_id_fk',
   })
   createdBy: User;
+
   @ManyToOne(() => Colony, (i) => i.employees)
   @JoinColumn({
     name: 'colony_id',
@@ -65,6 +74,7 @@ export class Employee extends BaseEntity {
     foreignKeyConstraintName: 'employees_colony_id_fk',
   })
   colony: Colony;
+
   @OneToOne(() => User, (i) => i.employee)
   @JoinColumn({
     name: 'user_id',
@@ -72,8 +82,10 @@ export class Employee extends BaseEntity {
     foreignKeyConstraintName: 'employees_user_id_fk',
   })
   user: User;
+
   @OneToMany(() => EmployeeVerification, (i) => i.employee)
   verification: EmployeeVerification[];
+
   @OneToMany(() => Application, (i) => i.employee)
   applications: Application[];
 
@@ -82,8 +94,10 @@ export class Employee extends BaseEntity {
 
   @OneToOne(() => Occupation, (i) => i.vacantBy)
   occupationVacants: Occupation[];
+
   @OneToMany(() => VacancyRequest, (i) => i.employee)
   vacancyRequests: VacancyRequest[];
+
   @OneToMany(() => TransferRequest, (i) => i.employee)
   transferRequests: TransferRequest[];
 }

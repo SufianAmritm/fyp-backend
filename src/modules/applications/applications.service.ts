@@ -20,6 +20,7 @@ import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-o
 import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
+import { PagedList } from '../../common/types/paged-list';
 import { IEmailService } from '../email/interfaces/email.interface';
 import { IEmployeeVerificationService } from '../employee-verification/interfaces/employee-verification.interface';
 import { Employee } from '../employee/entities/employee.entity';
@@ -64,37 +65,21 @@ export class ApplicationService implements IApplicationService {
     @InjectMapper() private readonly applicationsMapper: Mapper,
   ) {}
 
-  async myApplications(userId: number): Promise<Application[]> {
-    const employee = await this.employeeService.findOneByUserId(userId);
+  async myApplications(
+    ctx: AppContext,
+    getApplicationDto: GetApplicationDto,
+    paginationDto: PaginationDto,
+  ): Promise<PagedList<Application>> {
+    const employee = await this.employeeService.findOneByUserId(ctx.UserId);
     if (!employee) {
       throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Employee'));
     }
-    const findOptions = new FindOptionsBuilder<Application>()
-      .where({ employeeId: employee.id })
-      .relations({
-        colonyPriorities: {
-          colony: true,
-        },
-        employee: {
-          user: true,
-        },
-        approvedBy: {
-          manager: true,
-        },
-        rejectedBy: {
-          manager: true,
-        },
-        createdBy: {
-          manager: true,
-        },
-      })
-      .order({
-        createdAt: 'DESC',
-      })
-      .build();
-    const res =
-      await this.applicationsRepository.findManyWithBuilderOption(findOptions);
-    res.forEach((result) => {
+    const res = await this.applicationsRepository.findAll(
+      getApplicationDto,
+      paginationDto,
+      ctx,
+    );
+    res.items.forEach((result) => {
       if (result?.employee) result.employee.user.password = undefined;
       if (result?.approvedBy) result.approvedBy.password = undefined;
       if (result?.rejectedBy) result.rejectedBy.password = undefined;
@@ -181,8 +166,8 @@ export class ApplicationService implements IApplicationService {
     }
     const employeeId = employee.id;
     const employeeVerification =
-      await this.employeeVerificationService.getEmployeeVerificationStatus(
-        employeeId,
+      await this.employeeService.getVerificationStatus(
+        createApplicationDto.createdById,
       );
     if (!employeeVerification) {
       throw new BadRequestException(

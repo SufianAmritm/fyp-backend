@@ -12,7 +12,9 @@ export interface IColonyService {
     getColonyDto: GetColonyDto,
     paginationDto: PaginationDto,
     ctx: AppContext,
+    transfer?: boolean,
   );
+  findAllForTransfer(getColonyDto: GetColonyDto, paginationDto: PaginationDto);
   findOne(id: number): Promise<Colony>;
   update(id: number, updateColonyDto: UpdateColonyDto, userId: number);
 }

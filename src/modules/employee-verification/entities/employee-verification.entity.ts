@@ -11,6 +11,7 @@ export class EmployeeVerification extends BaseEntity {
   @AutoMap()
   @Column('integer', { name: 'employee_id', nullable: false })
   employeeId: number;
+
   @AutoMap()
   @Column('enum', {
     enum: EMPLOYEE_VERIFICATION_STATUS,
@@ -18,18 +19,23 @@ export class EmployeeVerification extends BaseEntity {
     default: EMPLOYEE_VERIFICATION_STATUS.PENDING,
   })
   status: EMPLOYEE_VERIFICATION_STATUS;
+
   @AutoMap()
   @Column('character varying', { nullable: true })
   reason: string;
+
   @AutoMap()
   @Column('integer', { name: 'created_by_id', nullable: false })
   createdById: number;
+
   @AutoMap()
   @Column('integer', { name: 'approved_by_id', nullable: true })
   approvedById: number;
+
   @AutoMap()
   @Column('integer', { name: 'rejected_by_id', nullable: true })
   rejectedById: number;
+
   @ManyToOne(() => Employee, (employee) => employee.verification)
   @JoinColumn({
     name: 'employee_id',
@@ -37,6 +43,7 @@ export class EmployeeVerification extends BaseEntity {
     foreignKeyConstraintName: 'employee_verification_employee_id_fkey',
   })
   employee: Employee;
+
   @ManyToOne(() => User, (user) => user.employeeVerifications)
   @JoinColumn({
     name: 'created_by_id',
@@ -44,6 +51,7 @@ export class EmployeeVerification extends BaseEntity {
     foreignKeyConstraintName: 'employee_verification_created_by_id_fkey',
   })
   createdBy: User;
+
   @ManyToOne(() => User, (user) => user.employeeVerificationsApproved)
   @JoinColumn({
     name: 'approved_by_id',
@@ -51,6 +59,7 @@ export class EmployeeVerification extends BaseEntity {
     foreignKeyConstraintName: 'employee_verification_approved_by_id_fkey',
   })
   approvedBy: User;
+
   @ManyToOne(() => User, (user) => user.employeeVerificationsRejected)
   @JoinColumn({
     name: 'rejected_by_id',

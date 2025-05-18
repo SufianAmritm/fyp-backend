@@ -38,6 +38,7 @@ export class TransferRequestRepository
       whereOr.push(`user.email ILIKE :search`);
       whereOr.push(`fromColony.name ILIKE :search`);
       whereOr.push(`toColony.name ILIKE :search`);
+      whereOr.push(`"transferRequest".status::text ILIKE :search`);
 
       params.search = `%${search}%`;
     }
@@ -59,7 +60,12 @@ export class TransferRequestRepository
       .innerJoinAndSelect('employee.user', 'user')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
-      .orderBy(`transferRequest.${sortBy}`, orderBy)
+      .orderBy(
+        sortBy.includes('.')
+          ? sortBy.split('.').slice(-2).join('.')
+          : `transferRequest.${sortBy}`,
+        orderBy,
+      )
       .getManyAndCount();
     return new PagedList(
       res[0],

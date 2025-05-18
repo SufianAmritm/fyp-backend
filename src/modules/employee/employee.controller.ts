@@ -138,6 +138,12 @@ export class EmployeeController {
     return this.employeeService.findAll(getEmployeeDto, paginationDto, context);
   }
 
+  @Roles([UserRoles.EMPLOYEE, ...ManagementRoles])
+  @Get('verification-status')
+  getVerificationStatus(@Context() context: AppContext) {
+    return this.employeeService.getVerificationStatus(context.UserId);
+  }
+
   @Roles(ManagementRoles)
   @Get(':id')
   findOne(@Param() idDto: IdDto) {
@@ -232,12 +238,6 @@ export class EmployeeController {
       serviceCard,
       picture,
     );
-  }
-
-  @Roles([UserRoles.EMPLOYEE, ...ManagementRoles])
-  @Get('verification-status')
-  getVerificationStatus(@Context() context: AppContext) {
-    return this.employeeService.getVerificationStatus(context.UserId);
   }
 
   // @Delete(':id')

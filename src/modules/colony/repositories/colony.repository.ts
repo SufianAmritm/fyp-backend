@@ -27,6 +27,7 @@ export class ColonyRepository
     getColonyDto: GetColonyDto,
     paginationDto: PaginationDto,
     ctx: AppContext,
+    transfer?: boolean,
   ): Promise<PagedList<Colony>> {
     const whereOr = [];
     const whereAnd = [];
@@ -35,13 +36,21 @@ export class ColonyRepository
     const { search, orderBy, sortBy, stationId } = getColonyDto;
     if (search) {
       whereOr.push(`colony.name ILIKE :search`);
+      whereOr.push(`station.name ILIKE :search`);
+      whereOr.push(`division.name ILIKE :search`);
+      whereOr.push(`colony.description ILIKE :search`);
+
       params.search = `%${search}%`;
     }
     if (stationId) {
       whereAnd.push(`colony.stationId =:stationId`);
       params.stationId = stationId;
     }
-    if (ctx.Role === UserRoles.MANAGER || ctx.Role === UserRoles.EMPLOYEE) {
+    if (ctx.Role === UserRoles.MANAGER) {
+      whereAnd.push(`colony.stationId =:stationId`);
+      params.stationId = ctx.StationId;
+    }
+    if (ctx.Role === UserRoles.EMPLOYEE && !transfer) {
       whereAnd.push(`colony.stationId =:stationId`);
       params.stationId = ctx.StationId;
     }
@@ -51,7 +60,50 @@ export class ColonyRepository
       .innerJoinAndSelect('station.division', 'division')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
-      .orderBy(`colony.${sortBy}`, orderBy)
+      .orderBy(
+        sortBy.includes('.')
+          ? sortBy.split('.').slice(-2).join('.')
+          : `colony.${sortBy}`,
+        orderBy,
+      )
+      .getManyAndCount();
+    return new PagedList(
+      res[0],
+      res[1],
+      paginationDto.take,
+      paginationDto.page,
+    );
+  }
+
+  async findAllForTransfer(
+    getColonyDto: GetColonyDto,
+    paginationDto: PaginationDto,
+  ): Promise<PagedList<Colony>> {
+    const whereOr = [];
+    const whereAnd = [];
+    const params: Record<string, any> = {};
+
+    const { search, orderBy, sortBy } = getColonyDto;
+    if (search) {
+      whereOr.push(`colony.name ILIKE :search`);
+      whereOr.push(`station.name ILIKE :search`);
+      whereOr.push(`division.name ILIKE :search`);
+      whereOr.push(`colony.description ILIKE :search`);
+
+      params.search = `%${search}%`;
+    }
+    const res = await this.repository
+      .createQueryBuilder('colony')
+      .innerJoinAndSelect('colony.station', 'station')
+      .innerJoinAndSelect('station.division', 'division')
+      .where(buildConditions(whereOr, whereAnd))
+      .setParameters(params)
+      .orderBy(
+        sortBy.includes('.')
+          ? sortBy.split('.').slice(-2).join('.')
+          : `colony.${sortBy}`,
+        orderBy,
+      )
       .getManyAndCount();
     return new PagedList(
       res[0],

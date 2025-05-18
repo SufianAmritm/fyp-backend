@@ -53,6 +53,14 @@ export class StationController {
     return this.stationService.findAll(getStationDto, paginationDto);
   }
 
+  @Get('transfer')
+  findAllForTransfer(
+    @Query() getStationDto: GetStationDto,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.stationService.findAllForTransfer(getStationDto, paginationDto);
+  }
+
   @Get(':id')
   findOne(@Param() idDto: IdDto) {
     const { id } = idDto;

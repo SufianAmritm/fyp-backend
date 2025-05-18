@@ -11,21 +11,35 @@ export class Apartment extends BaseEntity {
   @AutoMap()
   @Column('character varying', { nullable: false, name: 'house_no' })
   houseNo: string;
+
   @AutoMap()
   @Column('character varying', { nullable: false, name: 'street_no' })
   streetNo: string;
+
   @AutoMap()
   @Column('character varying', { nullable: false })
   address: string;
+
+  @AutoMap()
+  @Column('integer', { name: 'rooms', nullable: true })
+  rooms: number;
+
+  @AutoMap()
+  @Column('integer', { name: 'bathrooms', nullable: true })
+  bathrooms: number;
+
   @AutoMap()
   @Column('character varying', { nullable: false })
   description: string;
+
   @AutoMap()
   @Column('integer', { name: 'colony_id', nullable: false })
   colonyId: number;
+
   @AutoMap()
   @Column('integer', { name: 'created_by_id', nullable: false })
   createdById: number;
+
   @ManyToOne(() => User, (i) => i.apartments)
   @JoinColumn({
     name: 'created_by_id',
@@ -41,6 +55,7 @@ export class Apartment extends BaseEntity {
     foreignKeyConstraintName: 'apartments_colony_id_fk',
   })
   colony: Colony;
+
   @OneToOne(() => Occupation, (i) => i.apartment)
   occupation: Occupation;
 }

@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsNumber, Min } from 'class-validator';
-import { SearchKeyDto } from '../../../../common/dtos/request/searchkey.dto';
 import { Transform } from 'class-transformer';
+import { IsNumber, IsOptional, Min } from 'class-validator';
+import { SearchKeyDto } from '../../../../common/dtos/request/searchkey.dto';
 
 export class GetColonyDto extends SearchKeyDto {
   @IsOptional()

@@ -35,12 +35,20 @@ export class ApartmentRepository
     const { search, orderBy, sortBy, colonyId, colonyIds, status } =
       getApartmentDto;
     if (search) {
-      whereAnd.push(`apartment.houseNo ILIKE :search`);
+      whereOr.push(`apartment.houseNo ILIKE :search`);
+      whereOr.push(`apartment.streetNo ILIKE :search`);
+      whereOr.push(`"apartment".rooms::text ILIKE :search`);
+      whereOr.push(`"apartment".bathrooms::text ILIKE :search`);
+
+      whereOr.push(`colony.name ILIKE :search`);
+      whereOr.push(`station.name ILIKE :search`);
+      whereOr.push(`"occupation".status::text ILIKE :search`);
+
       params.search = `%${search}%`;
     }
     if (
-      context.Role === UserRoles.EMPLOYEE ||
-      context.Role === UserRoles.MANAGER
+      context.Role === UserRoles.MANAGER ||
+      context.Role === UserRoles.EMPLOYEE
     ) {
       whereAnd.push(`colony.stationId =:stationId`);
       params.stationId = context.StationId;
@@ -64,7 +72,52 @@ export class ApartmentRepository
       .innerJoinAndSelect('apartment.occupation', 'occupation')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
-      .orderBy(`apartment.${sortBy}`, orderBy)
+      .orderBy(
+        sortBy.includes('.')
+          ? sortBy.split('.').slice(-2).join('.')
+          : `apartment.${sortBy}`,
+        orderBy,
+      )
+      .getManyAndCount();
+    return new PagedList(
+      res[0],
+      res[1],
+      paginationDto.take,
+      paginationDto.page,
+    );
+  }
+
+  async findAllForTransfer(
+    getApartmentDto: GetApartmentDto,
+    paginationDto: PaginationDto,
+  ): Promise<PagedList<Apartment>> {
+    const whereOr = [];
+    const whereAnd = [];
+    const params: Record<string, any> = {};
+
+    const { search, orderBy, sortBy } = getApartmentDto;
+    if (search) {
+      whereOr.push(`apartment.houseNo ILIKE :search`);
+      whereOr.push(`apartment.streetNo ILIKE :search`);
+      whereOr.push(`colony.name ILIKE :search`);
+      whereOr.push(`station.name ILIKE :search`);
+      whereOr.push(`"occupation".status::text ILIKE :search`);
+
+      params.search = `%${search}%`;
+    }
+    const res = await this.repository
+      .createQueryBuilder('apartment')
+      .innerJoinAndSelect('apartment.colony', 'colony')
+      .innerJoinAndSelect('colony.station', 'station')
+      .innerJoinAndSelect('apartment.occupation', 'occupation')
+      .where(buildConditions(whereOr, whereAnd))
+      .setParameters(params)
+      .orderBy(
+        sortBy.includes('.')
+          ? sortBy.split('.').slice(-2).join('.')
+          : `apartment.${sortBy}`,
+        orderBy,
+      )
       .getManyAndCount();
     return new PagedList(
       res[0],

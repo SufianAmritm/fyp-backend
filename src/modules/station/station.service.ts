@@ -44,6 +44,16 @@ export class StationService implements IStationService {
     return this.stationRepository.findAll(getStationDto, paginationDto);
   }
 
+  findAllForTransfer(
+    getStationDto: GetStationDto,
+    paginationDto: PaginationDto,
+  ) {
+    return this.stationRepository.findAllForTransfer(
+      getStationDto,
+      paginationDto,
+    );
+  }
+
   async findOne(id: number) {
     const findOptions = new FindOptionsBuilder<Station>()
       .where({

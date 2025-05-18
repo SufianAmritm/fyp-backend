@@ -49,6 +49,14 @@ export class ColonyController {
     return this.colonyService.findAll(getColonyDto, paginationDto, ctx);
   }
 
+  @Get('transfer')
+  findAllForTransfer(
+    @Query() getColonyDto: GetColonyDto,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    return this.colonyService.findAllForTransfer(getColonyDto, paginationDto);
+  }
+
   @Get(':id')
   findOne(@Param() idDto: IdDto) {
     const { id } = idDto;

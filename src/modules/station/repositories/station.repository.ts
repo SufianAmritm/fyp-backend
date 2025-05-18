@@ -29,14 +29,14 @@ export class StationRepository
     const { page, take } = paginationDto;
     const skip = (page - 1) * take;
 
-    const builder = this.repository
-      .createQueryBuilder('station')
-      .innerJoinAndSelect('station.division', 'division');
     const params: Record<string, any> = {};
     const whereOr = [];
     const whereAnd = [];
     if (search) {
       whereOr.push(`station.name ILIKE :search`);
+      whereOr.push(`division.name ILIKE :search`);
+      whereOr.push(`station.description ILIKE :search`);
+
       params.search = `%${search}%`;
     }
     if (divisionId) {
@@ -44,12 +44,54 @@ export class StationRepository
       params.divisionId = divisionId;
     }
 
-    builder.where(buildConditions(whereOr, whereAnd)).setParameters(params);
-
-    const stations = await builder
+    const stations = await this.repository
+      .createQueryBuilder('station')
+      .innerJoinAndSelect('station.division', 'division')
+      .where(buildConditions(whereOr, whereAnd))
+      .setParameters(params)
       .take(take)
       .skip(skip)
-      .orderBy(`station.${sortBy}`, orderBy)
+      .orderBy(
+        sortBy.includes('.')
+          ? sortBy.split('.').slice(-2).join('.')
+          : `station.${sortBy}`,
+        orderBy,
+      )
+      .getManyAndCount();
+
+    return new PagedList(stations[0], stations[1], take, page);
+  }
+
+  async findAllForTransfer(
+    getStationDto: GetStationDto,
+    paginationDto: PaginationDto,
+  ): Promise<PagedList<Station>> {
+    const { search, sortBy, orderBy } = getStationDto;
+    const { page, take } = paginationDto;
+    const skip = (page - 1) * take;
+    const params: Record<string, any> = {};
+    const whereOr = [];
+    const whereAnd = [];
+    if (search) {
+      whereOr.push(`station.name ILIKE :search`);
+      whereOr.push(`division.name ILIKE :search`);
+      whereOr.push(`station.description ILIKE :search`);
+
+      params.search = `%${search}%`;
+    }
+    const stations = await this.repository
+      .createQueryBuilder('station')
+      .innerJoinAndSelect('station.division', 'division')
+      .where(buildConditions(whereOr, whereAnd))
+      .setParameters(params)
+      .take(take)
+      .skip(skip)
+      .orderBy(
+        sortBy.includes('.')
+          ? sortBy.split('.').slice(-2).join('.')
+          : `station.${sortBy}`,
+        orderBy,
+      )
       .getManyAndCount();
 
     return new PagedList(stations[0], stations[1], take, page);

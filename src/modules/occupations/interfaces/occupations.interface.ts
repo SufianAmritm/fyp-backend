@@ -4,6 +4,7 @@ import { AppContext } from '../../../common/interfaces/context';
 import { PagedList } from '../../../common/types/paged-list';
 import { AssignOccupationDto } from '../dto/assign-occupation.dto';
 import { CreateTransferRequestDto } from '../dto/create-transfer-request.dto';
+import { CreateVacancyRequestDto } from '../dto/create-vacancy-request.dto';
 import { GetTransferRequestDto } from '../dto/get-transfer-requests.dto';
 import { GetVacancyRequestDto } from '../dto/get-vacany-requests.dto';
 import { UpdateVacancyRequestByAdminDto } from '../dto/update-vacany-request.dto';
@@ -27,7 +28,10 @@ export interface IOccupationService {
   findOneByApartmentId(id: number): Promise<Occupation>;
   findOneByOccupiedById(id: number): Promise<Occupation>;
 
-  vacantOccupation(userId: number);
+  vacantOccupation(
+    userId: number,
+    createVacancyRequestDto: CreateVacancyRequestDto,
+  );
   updateVacancyRequest(
     id: number,
     updateVacancyRequestDto: UpdateVacancyRequestByAdminDto,
@@ -64,6 +68,11 @@ export interface IOccupationService {
     ctx: AppContext,
   ): Promise<PagedList<VacancyRequest>>;
   bulkUpdate(updates: QueryDeepPartialEntity<Occupation>[]);
-  findMyVacancyRequests(userId: number): Promise<VacancyRequest[]>;
+  findMyVacancyRequests(
+    getDto: GetVacancyRequestDto,
+    paginationDto: PaginationDto,
+    ctx: AppContext,
+  ): Promise<PagedList<VacancyRequest>>;
   findMyTransferRequests(userId: number): Promise<TransferRequest[]>;
+  findMyOccupations(userId: number): Promise<Occupation[]>;
 }

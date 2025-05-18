@@ -8,11 +8,14 @@ import { Apartment } from '../../entities/apartment.entity';
 export const IApartmentRepository = Symbol('IApartmentRepository');
 
 type DefaultEntity = Apartment;
-export interface IApartmentRepository<T = DefaultEntity>
-  extends IBaseRepository<T> {
+export interface IApartmentRepository<T = DefaultEntity> extends IBaseRepository<T> {
   findAll(
     getApartmentDto: GetApartmentDto,
     paginationDto: PaginationDto,
     context: AppContext,
+  ): Promise<PagedList<Apartment>>;
+  findAllForTransfer(
+    getApartmentDto: GetApartmentDto,
+    paginationDto: PaginationDto,
   ): Promise<PagedList<Apartment>>;
 }

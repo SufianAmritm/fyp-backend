@@ -37,12 +37,19 @@ export class VacancyRequestRepository
       whereOr.push(`user.name ILIKE :search`);
       whereOr.push(`user.email ILIKE :search`);
       whereOr.push(`apartment.houseNo ILIKE :search`);
+      whereOr.push(`apartment.streetNo ILIKE :search`);
+      whereOr.push(`colony.name ILIKE :search`);
+      whereOr.push(`"vacancyRequest".status::text ILIKE :search`);
 
       params.search = `%${search}%`;
     }
     if (ctx.Role === UserRoles.MANAGER) {
       whereAnd.push(`colony.stationId =:stationId`);
       params.stationId = ctx.StationId;
+    }
+    if (ctx.Role === UserRoles.EMPLOYEE) {
+      whereAnd.push(`user.id =:userId`);
+      params.userId = ctx.UserId;
     }
     const res = await this.repository
       .createQueryBuilder('vacancyRequest')
@@ -62,7 +69,12 @@ export class VacancyRequestRepository
       .innerJoinAndSelect('employee.user', 'user')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
-      .orderBy(`vacancyRequest.${sortBy}`, orderBy)
+      .orderBy(
+        sortBy.includes('.')
+          ? sortBy.split('.').slice(-2).join('.')
+          : `vacancyRequest.${sortBy}`,
+        orderBy,
+      )
       .getManyAndCount();
     return new PagedList(
       res[0],
