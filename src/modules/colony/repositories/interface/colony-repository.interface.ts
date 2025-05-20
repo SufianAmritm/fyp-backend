@@ -8,8 +8,7 @@ import { Colony } from '../../entities/colony.entity';
 export const IColonyRepository = Symbol('IColonyRepository');
 
 type DefaultEntity = Colony;
-export interface IColonyRepository<T = DefaultEntity>
-  extends IBaseRepository<T> {
+export interface IColonyRepository<T = DefaultEntity> extends IBaseRepository<T> {
   findAll(
     getColonyDto: GetColonyDto,
     paginationDto: PaginationDto,
@@ -20,4 +19,5 @@ export interface IColonyRepository<T = DefaultEntity>
     getColonyDto: GetColonyDto,
     paginationDto: PaginationDto,
   ): Promise<PagedList<Colony>>;
+  downloadCsv(context: AppContext);
 }

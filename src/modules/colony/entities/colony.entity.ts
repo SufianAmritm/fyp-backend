@@ -15,7 +15,7 @@ export class Colony extends BaseEntity {
   @Column('character varying', { nullable: false })
   name: string;
   @AutoMap()
-  @Column('character varying', { nullable: false })
+  @Column('character varying', { nullable: true })
   description: string;
   @AutoMap()
   @Column('integer', { name: 'station_id', nullable: false })

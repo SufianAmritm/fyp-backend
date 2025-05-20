@@ -111,3 +111,9 @@ export enum  ApartmentCsvHeaders  {
   BATHROOMS='Bathrooms*',
   DESCRIPTION='Description',
 };
+export enum ColonyCsvHeaders {
+  COLONY = 'Colony*',
+  STATION = 'Station*',
+  DESCRIPTION = 'Description',
+  DIVISION = 'Division*',
+}

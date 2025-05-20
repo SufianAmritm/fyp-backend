@@ -144,7 +144,6 @@ export class ApartmentService implements IApartmentService {
         rec['createdById'] = context.UserId;
         const nw = plainToInstance(Apartment, rec);
         const occ = new Occupation();
-        occ.apartment = nw;
         nw.occupation = occ;
         return nw;
       });

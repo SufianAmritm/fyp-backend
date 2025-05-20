@@ -9,6 +9,7 @@ import { IColonyService } from './interfaces/colony.interface';
 import { ColonyMappingProfile } from './mapping/colony.mapping';
 import { ColonyRepository } from './repositories/colony.repository';
 import { IColonyRepository } from './repositories/interface/colony-repository.interface';
+import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
 
 const colonyEntities = [Colony];
 const colonyRepositoryProvider = [
@@ -34,6 +35,7 @@ const colonyServiceProvider = [
     ...colonyServiceProvider,
     ...colonyRepositoryProvider,
     ColonyMappingProfile,
+    DbTransactionFactory
   ],
   exports: [...colonyServiceProvider],
 })
