@@ -114,14 +114,16 @@ export class ApartmentRepository
     res.on('data', (row: any) => {
       console.log(row);
       const formattedRow = {
-        ApartmentID: row.apartment_id,
-        HouseNo: row.apartment_house_no,
-        StreetNo: row.apartment_street_no,
-        Address: row.apartment_address,
-        Description: row.apartment_description,
+        ApartmentID: row.apartment_id || '',
+        HouseNo: row.apartment_house_no || '',
+        StreetNo: row.apartment_street_no || '',
+        Rooms: row.apartment_rooms || '',
+        Bathrooms: row.apartment_bathrooms || '',
+        Address: row.apartment_address || '',
+        Description: row.apartment_description || '',
         Colony: row.colony_name,
         Station: row.station_name,
-        OccupationStatus: row.occupation_status,
+        OccupationStatus: row.occupation_status || '',
         LastOccupiedOn: row.occupation_last_occupied_on?.toISOString() || '',
         LastVacantOn: row.occupation_last_vacant_on?.toISOString() || '',
         OccupiedBy: row.user_name || 'Unoccupied',

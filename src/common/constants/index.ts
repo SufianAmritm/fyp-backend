@@ -103,3 +103,12 @@ export const EmployeeProfileCompleteColumns = [
   'address',
   'members',
 ];
+export const DefaultCsvSettings = {
+  arbitraryReg: /\(\)/,
+  impReg: /\*$/,
+  // arbitraryReplacementReg: /\(\s*.*?\s*\)/,
+  arbitraryReplacementReg: /\(\s*(.*?)\s*\)/,
+
+  arbitraryVal: '()',
+  rowStart: 1,
+};

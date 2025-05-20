@@ -101,3 +101,13 @@ export enum OCCUPATION_STATUS {
   VACANT = 'vacant',
   ABOUT_TO_VACANT = 'about_to_vacant',
 }
+export enum  ApartmentCsvHeaders  {
+  HOUSE_NO='HouseNo*',
+  ADDRESS='Address*',
+  STREET_NO='StreetNo*',
+  COLONY='Colony*',
+  STATION='Station*',
+  ROOMS='Rooms*',
+  BATHROOMS='Bathrooms*',
+  DESCRIPTION='Description',
+};

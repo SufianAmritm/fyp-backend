@@ -7,17 +7,22 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import { PassThrough } from 'stream';
-import { RESPONSE_MESSAGES } from '../../common/constants';
-import { UserRoles } from '../../common/constants/enums';
+import { In } from 'typeorm';
+import { DefaultCsvSettings, RESPONSE_MESSAGES } from '../../common/constants';
+import { ApartmentCsvHeaders, UserRoles } from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
+import { UtilsService } from '../../common/utils/UtilsService';
+import { Colony } from '../colony/entities/colony.entity';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { CreateOccupationDto } from '../occupations/dto/create-occupations.dto';
 import { Occupation } from '../occupations/entities/occupations.entity';
+import { Station } from '../station/entities/station.entity';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateApartmentDto } from './dto/create-apartment.dto';
 import { GetApartmentDto } from './dto/request/get.dto';
@@ -35,11 +40,137 @@ export class ApartmentService implements IApartmentService {
     @Inject(IManagersService) private readonly managerService: IManagersService,
     private readonly transactionFactory: DbTransactionFactory,
     @InjectMapper() private readonly apartmentMapper: Mapper,
+    private readonly utilService: UtilsService,
   ) {}
   downloadCsv(context: AppContext): Promise<PassThrough> {
     return this.apartmentRepository.downloadCsv(context);
   }
 
+  async uploadCsv(context: AppContext, file: Express.Multer.File) {
+    const dto = {
+      houseNo: 'HouseNo',
+      streetNo: 'StreetNo',
+      address: 'Address',
+      description: 'Description',
+      colony: 'Colony',
+      station: 'Station',
+      rooms: 'Rooms',
+      bathrooms: 'Bathrooms',
+    };
+    let records: (typeof dto)[] = [];
+    try {
+      records = await this.utilService.processCSVFile<typeof dto>(file, {
+        dto,
+        validatorColumns: Object.values(ApartmentCsvHeaders),
+        ...DefaultCsvSettings,
+        rowStart: 2,
+      });
+    } catch (error) {
+      console.error(error);
+      if (error instanceof HttpException) return error;
+      throw new InternalServerErrorException(
+        APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    if (!records || records.length === 0) {
+      throw new BadRequestException(
+        APP_ERROR_MESSAGES.FAILED_OPERATION('parse csv'),
+      );
+    }
+    const findOptions = new FindOptionsBuilder<Apartment>()
+      .where({})
+      .relations({
+        colony: true,
+      })
+      .build();
+    const existingApartments =
+      await this.apartmentRepository.findManyWithBuilderOption(findOptions);
+    const runner = await this.transactionFactory.transactionRunner();
+    const manager = runner.manager;
+    const stationNames = records.map((rec) => rec.station);
+    const colonyNames = records.map((rec) => rec.colony);
+    const stations = await manager.getRepository(Station).find({
+      where: {
+        name: In(stationNames),
+      },
+    });
+    const colonies = await manager.getRepository(Colony).find({
+      where: {
+        name: In(colonyNames),
+      },
+    });
+    try {
+      await runner.start();
+      const recordsMapped = records.map((rec) => {
+        const station = stations.find((s) => s.name === rec.station);
+        const colony = colonies.find((s) => s.name === rec.colony);
+        if (!station) {
+          throw new BadRequestException(
+            APP_ERROR_MESSAGES.NOT_FOUND('Station' + rec.station),
+          );
+        }
+        if (!colony) {
+          throw new BadRequestException(
+            APP_ERROR_MESSAGES.NOT_FOUND('Colony' + rec.colony),
+          );
+        }
+        if (colony.stationId !== station.id) {
+          throw new BadRequestException(
+            `Colony ${rec.colony} does not belong to Station ${rec.station}`,
+          );
+        }
+        if (context.Role === UserRoles.MANAGER) {
+          if (context.StationId !== station.id) {
+            throw new BadRequestException(
+              `You can not add apartments for station ${rec.station}`,
+            );
+          }
+        }
+        const exists = existingApartments.find((apartment) => {
+          return (
+            apartment.colonyId === colony.id &&
+            apartment.streetNo === rec.streetNo &&
+            apartment.houseNo === rec.houseNo &&
+            apartment.colony.stationId === station.id
+          );
+        });
+        if (exists) {
+          throw new BadRequestException(
+            `Apartment streetNo:${rec.streetNo} houseNo:${rec.houseNo} already exists`,
+          );
+        }
+        rec['colonyId'] = colony.id;
+        rec['createdById'] = context.UserId;
+        const nw = plainToInstance(Apartment, rec);
+        const occ = new Occupation();
+        occ.apartment = nw;
+        nw.occupation = occ;
+        return nw;
+      });
+      await this.apartmentRepository.bulkCreateWithTransaction(
+        recordsMapped,
+        Apartment,
+        manager,
+      );
+      await this.apartmentRepository.bulkCreateWithTransaction(
+        recordsMapped.map((apartment) => apartment.occupation),
+        Occupation,
+        manager,
+      );
+      await runner.end();
+      return RESPONSE_MESSAGES.SUCCESSFUL_OPERATION;
+    } catch (error) {
+      console.error(error);
+      if (runner) {
+        await runner.rollbackTransaction();
+      }
+      if (error instanceof HttpException) return error;
+      throw new InternalServerErrorException(
+        APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
   async create(createApartmentDto: CreateApartmentDto) {
     const { houseNo, streetNo, colonyId } = createApartmentDto;
     const user = await this.userService.findOneById(

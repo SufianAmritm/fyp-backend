@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { compare, genSalt, hash } from 'bcryptjs';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { parse } from 'csv-parse';
 import * as fs from 'fs';
 import * as path from 'path';
 import { QueryFailedError } from 'typeorm';
@@ -212,5 +213,138 @@ export class UtilsService {
       throw new BadRequestException(message);
     }
     throw error;
+  }
+
+  async processCSVFile<T>(
+    file: Express.Multer.File,
+    settings: {
+      dto: Record<string, any>;
+      validatorColumns: string[];
+      rowStart: number;
+      arbitraryReg: RegExp;
+      impReg: RegExp;
+      arbitraryReplacementReg: RegExp;
+      arbitraryVal: string;
+    },
+  ): Promise<T[]> {
+    const parser = parse(file.buffer, {
+      columns: true,
+      skip_empty_lines: true,
+    });
+
+    const {
+      validatorColumns,
+      rowStart,
+      arbitraryReg,
+      arbitraryReplacementReg,
+      arbitraryVal,
+      impReg,
+      dto,
+    } = settings;
+
+    const dtoMap = new Map<string, any>();
+    for (const [key, val] of Object.entries(dto)) {
+      dtoMap.set(key, val);
+    }
+
+    let row = rowStart;
+    const records: T[] = [];
+
+    // Wrap the parser in a Promise
+    return new Promise((resolve, reject) => {
+      parser.on('data', (chunk) => {
+        try {
+          const columnsFromCSV = new Set(Object.keys(chunk));
+          const record = {} as unknown as T;
+
+          validatorColumns.forEach((col) => {
+            if (impReg.test(col)) {
+              const columnName = col.slice(0, -1);
+              const isArbitrary = arbitraryReg.test(columnName);
+
+              if (!columnsFromCSV.has(columnName) && !isArbitrary) {
+                throw new BadRequestException(
+                  `Column ${columnName} is missing at row ${row}`,
+                );
+              } else if (!columnsFromCSV.has(columnName) && isArbitrary) {
+                const baseName = columnName.replace(
+                  arbitraryReplacementReg,
+                  arbitraryVal,
+                );
+                const hasMatchingColumn = Array.from(columnsFromCSV).some(
+                  (csvCol) => {
+                    const csvBaseName = csvCol.replace(
+                      arbitraryReplacementReg,
+                      arbitraryVal,
+                    );
+                    return csvBaseName === baseName;
+                  },
+                );
+                if (!hasMatchingColumn) {
+                  throw new BadRequestException(
+                    `Column ${columnName} is missing at row ${row}`,
+                  );
+                }
+              } else {
+                const columnValue = chunk[columnName];
+                if (!columnName || columnValue === '') {
+                  throw new BadRequestException(
+                    `Column ${columnName} value is required at row ${row}`,
+                  );
+                }
+              }
+            }
+          });
+
+          dtoMap.forEach((from, to) => {
+            if (typeof from === 'object') {
+              if (from.value) {
+                let value = '';
+                let arbitraryValue = '';
+                const baseName = from.value.replace(
+                  arbitraryReplacementReg,
+                  arbitraryVal,
+                );
+                Object.entries(chunk).forEach(([key, csvValue]) => {
+                  const csvBaseName = key.replace(
+                    arbitraryReplacementReg,
+                    arbitraryVal,
+                  );
+                  if (csvBaseName === baseName) {
+                    value = csvValue as any;
+                    arbitraryValue = key.match(arbitraryReplacementReg)[1];
+                  }
+                  record[to] = {
+                    value,
+                    arbitraryValue,
+                  };
+                });
+              }
+            } else {
+              let fr = from;
+              if (impReg.test(from)) {
+                fr = from.slice(0, -1);
+              }
+              record[to] = chunk[fr];
+            }
+          });
+
+          records.push(record);
+          row++;
+        } catch (error) {
+          reject(error);
+        }
+      });
+
+      parser.on('end', () => {
+        console.info('CSV parse complete');
+        resolve(records);
+      });
+
+      parser.on('error', (error) => {
+        console.error(error.message, error.stack);
+        reject(error);
+      });
+    });
   }
 }

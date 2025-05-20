@@ -21,4 +21,5 @@ export interface IApartmentRepository<T = DefaultEntity>
     paginationDto: PaginationDto,
   ): Promise<PagedList<Apartment>>;
   downloadCsv(context: AppContext): Promise<PassThrough>;
+
 }

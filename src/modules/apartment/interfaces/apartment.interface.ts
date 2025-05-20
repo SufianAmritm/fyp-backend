@@ -20,4 +20,5 @@ export interface IApartmentService {
     paginationDto: PaginationDto,
   );
   downloadCsv(context: AppContext): Promise<PassThrough>;
+  uploadCsv(context: AppContext, file: Express.Multer.File);
 }

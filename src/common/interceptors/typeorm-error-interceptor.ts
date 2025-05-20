@@ -16,6 +16,7 @@ export class TypeORMErrorInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       catchError((error) => {
+        console.log('TypeORMErrorInterceptor', error);
         if (error instanceof QueryFailedError) {
           return throwError(() => this.handleTypeORMError(error));
         }

@@ -3,7 +3,7 @@ import { APP_ERROR_MESSAGES } from '../constants/errors';
 type validations = Array<{
   field: string;
   validations: {
-    maxFileSize: number;
+    maxFileSize?: number;
     fileType: RegExp;
     required: boolean;
   };
@@ -16,6 +16,7 @@ export class MultiFileValidatorPipe implements PipeTransform {
   }
 
   transform(value: multerFiles, metadata: ArgumentMetadata) {
+    console.log(value)
     this.validations.forEach((validation) => {
       if (validation.validations.required && !value[validation.field]) {
         throw new Error(APP_ERROR_MESSAGES.REQUIRED(validation.field));
@@ -25,8 +26,10 @@ export class MultiFileValidatorPipe implements PipeTransform {
       const validation = this.validations.find((item) => item.field === key);
       if (validation) {
         const file = value[0];
-        if (file.size > validation.validations.maxFileSize) {
-          throw new Error(APP_ERROR_MESSAGES.MAX_FILE_SIZE_5MB);
+        if (validation.validations.maxFileSize) {
+          if (file.size > validation.validations.maxFileSize) {
+            throw new Error(APP_ERROR_MESSAGES.MAX_FILE_SIZE_5MB);
+          }
         }
         const extension = file.originalname.split('.').pop();
         console.log(extension);
