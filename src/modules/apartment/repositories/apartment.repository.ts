@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as fastcsv from 'fast-csv';
 import { BaseRepository } from 'src/common/database/repositories/base/base.repository';
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
+import { PassThrough } from 'stream';
 import { Repository } from 'typeorm';
 import { UserRoles } from '../../../common/constants/enums';
 import { buildConditions } from '../../../common/database/builder-pattern/build-condition';
@@ -10,7 +12,6 @@ import { AppContext } from '../../../common/interfaces/context';
 import { GetApartmentDto } from '../dto/request/get.dto';
 import { Apartment } from '../entities/apartment.entity';
 import { IApartmentRepository } from './interface/apartment-repository.interface';
-
 @Injectable()
 export class ApartmentRepository
   extends BaseRepository<Apartment>
@@ -86,7 +87,62 @@ export class ApartmentRepository
       paginationDto.page,
     );
   }
+  async downloadCsv(context: AppContext) {
+    const params: Record<string, any> = {};
+    const whereAnd = [];
+    if (context.Role === UserRoles.MANAGER) {
+      whereAnd.push(`colony.stationId =:stationId`);
+      params.stationId = context.StationId;
+    }
+    const res = await this.repository
+      .createQueryBuilder('apartment')
+      .innerJoinAndSelect('apartment.colony', 'colony')
+      .innerJoinAndSelect('colony.station', 'station')
+      .innerJoinAndSelect('apartment.occupation', 'occupation')
+      .leftJoinAndSelect('occupation.occupiedBy', 'occupiedBy')
+      .leftJoinAndSelect('occupiedBy.user', 'user')
+      .where(buildConditions([], whereAnd))
+      .setParameters(params)
+      .orderBy('colony.id', 'ASC')
+      .stream();
 
+    const csvStream = new PassThrough();
+    const fastCsvStream = fastcsv.format({ headers: true });
+
+    fastCsvStream.pipe(csvStream);
+
+    res.on('data', (row: any) => {
+      console.log(row);
+      const formattedRow = {
+        ApartmentID: row.apartment_id,
+        HouseNo: row.apartment_house_no,
+        StreetNo: row.apartment_street_no,
+        Address: row.apartment_address,
+        Description: row.apartment_description,
+        Colony: row.colony_name,
+        Station: row.station_name,
+        OccupationStatus: row.occupation_status,
+        LastOccupiedOn: row.occupation_last_occupied_on?.toISOString() || '',
+        LastVacantOn: row.occupation_last_vacant_on?.toISOString() || '',
+        OccupiedBy: row.user_name || 'Unoccupied',
+        OccupiedByEmail: row.user_email || '',
+        OccupiedByPhone: row.user_phoneNumber || '',
+        EmployeeID: row.occupiedBy_id || '',
+      };
+      if (!fastCsvStream.write(formattedRow)) {
+        res.pause();
+        fastCsvStream.once('drain', () => res.resume());
+      }
+    });
+
+    res.on('end', () => fastCsvStream.end());
+    res.on('error', (err) => {
+      console.error('Data stream error:', err);
+      fastCsvStream.destroy(err);
+    });
+
+    return csvStream;
+  }
   async findAllForTransfer(
     getApartmentDto: GetApartmentDto,
     paginationDto: PaginationDto,

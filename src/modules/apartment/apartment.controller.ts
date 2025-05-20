@@ -7,9 +7,11 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
 import { DOMAIN_ENTITY, JWT, ManagementRoles } from 'src/common/constants';
 import { Context } from '../../common/decorators/context';
 import { Roles } from '../../common/decorators/role-metadata.decorator';
@@ -54,6 +56,15 @@ export class ApartmentController {
       paginationDto,
       context,
     );
+  }
+  @Get('csv')
+  async downloadCsv(@Context() context: AppContext, @Res() res: Response) {
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="apartments.csv"');
+
+    const stream = await this.apartmentService.downloadCsv(context);
+
+    stream.pipe(res);
   }
 
   @Get('transfer')

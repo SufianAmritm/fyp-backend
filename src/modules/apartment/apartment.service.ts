@@ -7,6 +7,7 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { PassThrough } from 'stream';
 import { RESPONSE_MESSAGES } from '../../common/constants';
 import { UserRoles } from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
@@ -35,6 +36,9 @@ export class ApartmentService implements IApartmentService {
     private readonly transactionFactory: DbTransactionFactory,
     @InjectMapper() private readonly apartmentMapper: Mapper,
   ) {}
+  downloadCsv(context: AppContext): Promise<PassThrough> {
+    return this.apartmentRepository.downloadCsv(context);
+  }
 
   async create(createApartmentDto: CreateApartmentDto) {
     const { houseNo, streetNo, colonyId } = createApartmentDto;

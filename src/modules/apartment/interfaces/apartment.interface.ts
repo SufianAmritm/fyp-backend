@@ -1,3 +1,4 @@
+import { PassThrough } from 'stream';
 import { PaginationDto } from '../../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../../common/interfaces/context';
 import { CreateApartmentDto } from '../dto/create-apartment.dto';
@@ -18,4 +19,5 @@ export interface IApartmentService {
     getApartmentDto: GetApartmentDto,
     paginationDto: PaginationDto,
   );
+  downloadCsv(context: AppContext): Promise<PassThrough>;
 }
