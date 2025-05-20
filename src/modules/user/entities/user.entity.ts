@@ -24,6 +24,7 @@ import { VacancyRequest } from '../../occupations/entities/vacancy-requests.enti
 import { Otp } from '../../otp/entities/otp.entity';
 import { Station } from '../../station/entities/station.entity';
 import { AppSetting } from './settings.entity';
+import { UserNotification } from '../../notifications/entities/user-notifications.entity';
 
 @Unique('user_email_ukey', ['email'])
 @Entity(TABLES.USER, { schema: 'public' })
@@ -151,4 +152,6 @@ export class User extends BaseEntity {
 
   @OneToMany(() => TransferRequest, (i) => i.createdBy)
   transferRequests: TransferRequest[];
+  @OneToMany(() => UserNotification, (i) => i.user)
+  notifications: UserNotification[];
 }

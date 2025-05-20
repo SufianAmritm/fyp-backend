@@ -14,7 +14,9 @@ import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { IEmailService } from '../email/interfaces/email.interface';
 import { IEmployeeService } from '../employee/interfaces/employee.interface';
+import { IEventsGateway } from '../events/interface/events.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
+import { IUserNotificationService } from '../notifications/interfaces/user-notification.interface';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateEmployeeVerificationDto } from './dto/create-employee-verification.dto';
 import { GetEmployeeVerificationDto } from './dto/get-employee-verification.dto';
@@ -34,6 +36,10 @@ export class EmployeeVerificationService
     private readonly managerService: IManagersService,
     @Inject(IEmployeeService)
     private readonly employeeService: IEmployeeService,
+    @Inject(IUserNotificationService)
+    private readonly notificationService: IUserNotificationService,
+    @Inject(IEventsGateway)
+    private readonly eventGateway: IEventsGateway,
     @Inject(IEmailService)
     private readonly emailService: IEmailService,
     @Inject(IUserService)
@@ -338,6 +344,16 @@ export class EmployeeVerificationService
           },
         },
       );
+      await this.notificationService.create({
+        userId: exists.employee.user.id,
+        title: 'Employee Verification Approved',
+        text: 'Your profile has been verified successfully.',
+      });
+      await this.eventGateway.sendEvent({
+        to: exists.employee.userId.toString(),
+        pub: 'notification',
+        data: {},
+      });
     }
     if (
       employeeVerificationUpdate.status ===
@@ -357,6 +373,16 @@ export class EmployeeVerificationService
           },
         },
       );
+      await this.notificationService.create({
+        userId: exists.employee.user.id,
+        title: 'Employee Verification Rejected',
+        text: 'Your profile has been rejected.',
+      });
+      await this.eventGateway.sendEvent({
+        to: exists.employee.userId.toString(),
+        pub: 'notification',
+        data: {},
+      });
     }
     return this.findOne(id);
   }

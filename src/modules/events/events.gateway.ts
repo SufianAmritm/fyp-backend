@@ -52,11 +52,12 @@ export class EventsGateway
         return;
       }
 
-      const context = {
-        userId: verified.id,
+      const context: JwtPayload = {
+        id: verified.id,
         role: verified.role,
         email: verified.email,
         emailVerified: verified.emailVerified,
+        stationId: verified.stationId,
       };
 
       client.handshake[this.CONTEXT] = context;
@@ -82,21 +83,6 @@ export class EventsGateway
       return null;
     }
   }
-
-  // Message send events
-  // @ApiOperation({ summary: 'Message send event' })
-  // @ApiBody({ type: messageSendEventDto })
-  // @SubscribeMessage('message-send')
-  // async sendMessage(@MessageBody() data: messageSendEventDto) {
-  //   try {
-  //     await this.userService.sendMessage(data.userId, data, MESSAGE_TYPE.TEXT);
-  //   } catch (error) {
-  //     console.error(error);
-
-  //     this.server.to(data.userId).emit('error', error);
-  //   }
-
-  // }
 
   async verifyToken(token: string): Promise<JwtPayload> {
     return new Promise((resolve, reject) => {

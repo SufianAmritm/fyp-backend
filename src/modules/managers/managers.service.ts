@@ -13,6 +13,7 @@ import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { UtilsService } from '../../common/utils/UtilsService';
 import { IS3Service } from '../aws/interface/aws-s3.interface';
+import { IUserNotificationService } from '../notifications/interfaces/user-notification.interface';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateManagersDto } from './dto/create-managers.dto';
 import { GetManagersDto } from './dto/get-managers.dto';
@@ -20,6 +21,7 @@ import { UpdateManagersDto } from './dto/update-managers.dto';
 import { Manager } from './entities/managers.entity';
 import { IManagersService } from './interfaces/managers.interface';
 import { IManagersRepository } from './repositories/interface/managers-repository.interface';
+import { IEventsGateway } from '../events/interface/events.interface';
 
 @Injectable()
 export class ManagersService implements IManagersService {
@@ -28,6 +30,10 @@ export class ManagersService implements IManagersService {
     private readonly managersRepository: IManagersRepository,
     @Inject(IUserService)
     private readonly userService: IUserService,
+    @Inject(IUserNotificationService)
+    private readonly notificationService: IUserNotificationService,
+    @Inject(IEventsGateway)
+    private readonly eventGateway: IEventsGateway,
     @Inject(IS3Service)
     private readonly s3Service: IS3Service,
     private readonly utilService: UtilsService,
@@ -231,6 +237,16 @@ export class ManagersService implements IManagersService {
       .build();
     const man =
       await this.managersRepository.findOneWithBuilderOption(findOptions);
+    await this.notificationService.create({
+      userId: man.userId,
+      title: 'Profile Updated',
+      text: 'Your profile has been updated',
+    });
+    await this.eventGateway.sendEvent({
+      to: manager.userId.toString(),
+      pub: 'notification',
+      data: {},
+    });
     return man;
   }
 

@@ -12,7 +12,9 @@ export class VacancyRequest extends BaseEntity {
   @AutoMap()
   @Column('integer', { name: 'occupation_id', nullable: false })
   occupationId: number;
-
+  @AutoMap()
+  @Column('character varying', { name: 'uid', nullable: false })
+  uId: string;
   @AutoMap()
   @Column('integer', { name: 'employee_id', nullable: false })
   employeeId: number;

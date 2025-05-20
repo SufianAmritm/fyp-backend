@@ -37,6 +37,7 @@ export class ApplicationRepository
       whereOr.push(`user.email ILIKE :search`);
       whereOr.push(`user.name ILIKE :search`);
       whereOr.push(`"application".status::text ILIKE :search`);
+      whereOr.push(`application.uid ILIKE :search`);
 
       params.search = `%${search}%`;
     }

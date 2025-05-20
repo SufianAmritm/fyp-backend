@@ -11,6 +11,8 @@ import { IEmployeeVerificationService } from './interfaces/employee-verification
 import { EmployeeVerificationMappingProfile } from './mapping/employee-verification.mapping';
 import { EmployeeVerificationRepository } from './repositories/employee-verification.repository';
 import { IEmployeeVerificationRepository } from './repositories/interface/employee-verification-repository.interface';
+import { NotificationModule } from '../notifications/notification.module';
+import { EventsModule } from '../events/events.module';
 
 const employeeVerificationEntities = [EmployeeVerification];
 const employeeVerificationRepositoryProvider = [
@@ -32,6 +34,8 @@ const employeeVerificationServiceProvider = [
     ManagersModule,
     EmailModule,
     EmployeeModule,
+    NotificationModule,
+    EventsModule,
   ],
   controllers: [EmployeeVerificationController],
   providers: [

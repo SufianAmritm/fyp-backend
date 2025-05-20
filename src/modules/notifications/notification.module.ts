@@ -4,9 +4,9 @@ import { UserNotification } from './entities/user-notifications.entity';
 import { IUserNotificationService } from './interfaces/user-notification.interface';
 import { UserNotificationMappingProfile } from './mapping/notification.mapping';
 import { NotificationController } from './notification.controller';
+import { UserNotificationService } from './notification.service';
 import { IUserNotificationRepository } from './respositories/interface/notification-repository.interface';
 import { UserNotificationRepository } from './respositories/notification.repository';
-import { UserNotificationService } from './notification.service';
 
 const notificationEntities = [UserNotification];
 const notificationRepositoryProvider = [

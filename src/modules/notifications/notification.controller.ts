@@ -1,12 +1,21 @@
-import { Controller, Get, Inject, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Patch,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { DOMAIN_ENTITY, JWT, X_API_KEY } from 'src/common/constants';
 import { ApiKeyGuard } from 'src/common/guards/api-key.guard';
-import { AuthGuard } from '../../common/guards/auth.guard';
-import { AppContext } from '../../common/interfaces/context';
-import { IUserNotificationService } from './interfaces/user-notification.interface';
 import { Context } from '../../common/decorators/context';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
+import { AuthGuard } from '../../common/guards/auth.guard';
+import { AppContext } from '../../common/interfaces/context';
+import { MarkSeenDto } from './dto/mark-seen.dto';
+import { IUserNotificationService } from './interfaces/user-notification.interface';
 
 @ApiTags(DOMAIN_ENTITY.NOTIFICATIONS)
 @ApiBearerAuth(X_API_KEY)
@@ -20,11 +29,6 @@ export class NotificationController {
     private readonly notificationService: IUserNotificationService,
   ) {}
 
-  // @Post()
-  // create(@Body() createNotificationDto: CreateNotificationDto) {
-  //   return this.notificationService.create(createNotificationDto);
-  // }
-
   @Get()
   findAll(
     @Query() paginationDto: PaginationDto,
@@ -32,24 +36,9 @@ export class NotificationController {
   ) {
     return this.notificationService.findAll(paginationDto, context);
   }
-
-  // @Get(':id')
-  // findOne(@Param() idDto: IdDto) {
-  //   const { id } = idDto;
-  //   return this.notificationService.findOne(+id);
-  // }
-
-  // @Patch(':id')
-  // update(@Param() idDto: IdDto, @Body() updateNotificationDto: UpdateNotificationDto) {
-  //   const { id } = idDto;
-
-  //   return this.notificationService.update(+id, updateNotificationDto);
-  // }
-
-  // @Delete(':id')
-  // remove(@Param() idDto: IdDto) {
-  //   const { id } = idDto;
-
-  //   return this.notificationService.remove(+id);
-  // }
+  @Patch('seen')
+  seen(@Body() seenDto: MarkSeenDto, @Context() context: AppContext) {
+    seenDto.userId = context.UserId;
+    return this.notificationService.markSeen(seenDto);
+  }
 }

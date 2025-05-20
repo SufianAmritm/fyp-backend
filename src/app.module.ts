@@ -26,8 +26,8 @@ import { envSchema } from './modules/env/env';
 import { EnvModule } from './modules/env/env.module';
 import { EventsModule } from './modules/events/events.module';
 import { ManagersModule } from './modules/managers/managers.module';
+import { NotificationModule } from './modules/notifications/notification.module';
 import { OccupationModule } from './modules/occupations/occupations.module';
-import { RolePermissionModule } from './modules/role-permission/role-permission.module';
 import { RoleModule } from './modules/role/role.module';
 import { StationModule } from './modules/station/station.module';
 import { UserModule } from './modules/user/user.module';
@@ -68,10 +68,11 @@ import { UserModule } from './modules/user/user.module';
     ManagersModule,
     OccupationModule,
     RoleModule,
-    RolePermissionModule,
+    EventsModule,
     SeederModule,
     StationModule,
     UserModule,
+    NotificationModule,
     EventsModule,
   ],
   controllers: [AppController],

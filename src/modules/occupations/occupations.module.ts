@@ -1,7 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
+import { ColonyModule } from '../colony/colony.module';
+import { EmailModule } from '../email/email.module';
 import { EmployeeModule } from '../employee/employee.module';
+import { ManagersModule } from '../managers/managers.module';
+import { NotificationModule } from '../notifications/notification.module';
 import { UserModule } from '../user/user.module';
 import { Occupation } from './entities/occupations.entity';
 import { TransferRequest } from './entities/transfer-requests.entity';
@@ -16,9 +20,7 @@ import { IVacancyRequestRepository } from './repositories/interface/vacancy-requ
 import { OccupationRepository } from './repositories/occupations.repository';
 import { TransferRequestRepository } from './repositories/transfer-request.repository';
 import { VacancyRequestRepository } from './repositories/vacany-request.repository';
-import { ManagersModule } from '../managers/managers.module';
-import { EmailModule } from '../email/email.module';
-import { ColonyModule } from '../colony/colony.module';
+import { EventsModule } from '../events/events.module';
 
 const occupationsEntities = [Occupation, VacancyRequest, TransferRequest];
 const occupationsRepositoryProvider = [
@@ -49,6 +51,8 @@ const occupationsServiceProvider = [
     ManagersModule,
     EmailModule,
     ColonyModule,
+    NotificationModule,
+    EventsModule
   ],
   controllers: [OccupationController],
   providers: [

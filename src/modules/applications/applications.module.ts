@@ -17,6 +17,9 @@ import { ApplicationPriorityRepository } from './repositories/application-priori
 import { ApplicationRepository } from './repositories/applications.repository';
 import { IApplicationPriorityRepository } from './repositories/interface/application-priority-repository.interface';
 import { IApplicationRepository } from './repositories/interface/applications-repository.interface';
+import { NotificationModule } from '../notifications/notification.module';
+import { EventsGateway } from '../events/events.gateway';
+import { EventsModule } from '../events/events.module';
 
 const applicationsEntities = [Application, ApplicationPriority];
 const applicationsRepositoryProvider = [
@@ -43,7 +46,9 @@ const applicationsServiceProvider = [
     EmployeeModule,
     UserModule,
     ManagersModule,
-    EmailModule
+    EmailModule,
+    NotificationModule,
+    EventsModule,
   ],
   controllers: [ApplicationController],
   providers: [

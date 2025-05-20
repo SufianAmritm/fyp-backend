@@ -13,6 +13,9 @@ export class TransferRequest extends BaseEntity {
   @Column('integer', { name: 'from_colony_id', nullable: false })
   fromColonyId: number;
   @AutoMap()
+  @Column('character varying', { name: 'uid', nullable: false })
+  uId: string;
+  @AutoMap()
   @Column('integer', { name: 'employee_id', nullable: false })
   employeeId: number;
   @AutoMap()

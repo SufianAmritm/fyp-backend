@@ -9,6 +9,8 @@ import { IEmployeeService } from './interfaces/employee.interface';
 import { EmployeeMappingProfile } from './mapping/employee.mapping';
 import { EmployeeRepository } from './repositories/employee.repository';
 import { IEmployeeRepository } from './repositories/interface/employee-repository.interface';
+import { NotificationModule } from '../notifications/notification.module';
+import { EventsModule } from '../events/events.module';
 
 const employeeEntities = [Employee];
 const employeeRepositoryProvider = [
@@ -28,6 +30,8 @@ const employeeServiceProvider = [
     TypeOrmModule.forFeature(employeeEntities),
     UserModule,
     ManagersModule,
+    NotificationModule,
+    EventsModule,
   ],
   controllers: [EmployeeController],
   providers: [

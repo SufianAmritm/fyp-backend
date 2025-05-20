@@ -39,6 +39,7 @@ export class TransferRequestRepository
       whereOr.push(`fromColony.name ILIKE :search`);
       whereOr.push(`toColony.name ILIKE :search`);
       whereOr.push(`"transferRequest".status::text ILIKE :search`);
+      whereOr.push('transferRequest.uid ILIKE :search');
 
       params.search = `%${search}%`;
     }

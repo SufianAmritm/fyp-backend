@@ -13,6 +13,9 @@ export class Application extends BaseEntity {
   @Column('integer', { name: 'employee_id', nullable: false })
   employeeId: number;
   @AutoMap()
+  @Column('character varying', { name: 'uid', nullable: false })
+  uId: string;
+  @AutoMap()
   @Column('enum', {
     enum: EMPLOYEE_VERIFICATION_STATUS,
     nullable: false,

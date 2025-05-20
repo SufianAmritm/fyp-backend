@@ -1,6 +1,5 @@
 import { AutoMap } from '@automapper/classes';
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { RolePermission } from 'src/modules/role-permission/entities/role-permission.entity';
 import { User } from 'src/modules/user/entities/user.entity';
 import { Column, Entity, Index, OneToMany } from 'typeorm';
 import { TABLES } from '../../../common/database/tables';
@@ -15,8 +14,6 @@ export class Role extends BaseEntity {
   @Column('character varying', { nullable: false })
   name: string;
 
-  @OneToMany(() => RolePermission, (rolePermission) => rolePermission.role)
-  rolePermission: RolePermission[];
 
   @OneToMany(() => User, (user) => user.role)
   user: User[];

@@ -40,6 +40,7 @@ export class VacancyRequestRepository
       whereOr.push(`apartment.streetNo ILIKE :search`);
       whereOr.push(`colony.name ILIKE :search`);
       whereOr.push(`"vacancyRequest".status::text ILIKE :search`);
+      whereOr.push('vacancyRequest.uid ILIKE :search');
 
       params.search = `%${search}%`;
     }

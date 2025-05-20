@@ -29,7 +29,9 @@ import { IColonyService } from '../colony/interfaces/colony.interface';
 import { IEmailService } from '../email/interfaces/email.interface';
 import { Employee } from '../employee/entities/employee.entity';
 import { IEmployeeService } from '../employee/interfaces/employee.interface';
+import { IEventsGateway } from '../events/interface/events.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
+import { IUserNotificationService } from '../notifications/interfaces/user-notification.interface';
 import { IUserService } from '../user/interfaces/user.interface';
 import { AssignOccupationDto } from './dto/assign-occupation.dto';
 import { CreateOccupationDto } from './dto/create-occupations.dto';
@@ -65,6 +67,10 @@ export class OccupationService implements IOccupationService {
     private readonly colonyService: IColonyService,
     @Inject(IEmailService)
     private readonly emailService: IEmailService,
+    @Inject(IUserNotificationService)
+    private readonly notificationService: IUserNotificationService,
+    @Inject(IEventsGateway)
+    private readonly eventGateway: IEventsGateway,
     @Inject(IManagersService)
     private readonly managerService: IManagersService,
     @Inject(IUserService)
@@ -465,12 +471,23 @@ export class OccupationService implements IOccupationService {
           EMAIL_TEMPLATES.TRANSFER_REQUEST_REJECTED,
           {
             reason: updateTransferRequestByAdminDto.reason,
+            uid: transferRequest.uId,
             transfer: {
               fromColony: colonyFrom.name,
               toColony: colonyTo.name,
             },
           },
         );
+        await this.notificationService.create({
+          userId: transferRequest.createdById,
+          title: 'Transfer Request Rejected',
+          text: `Your transfer request #${transferRequest.uId} has been rejected.`,
+        });
+        await this.eventGateway.sendEvent({
+          to: transferRequest.createdById.toString(),
+          pub: 'notification',
+          data: {},
+        });
       }
       if (mapped.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
         await this.emailService.send(
@@ -479,6 +496,7 @@ export class OccupationService implements IOccupationService {
           EMAIL_TEMPLATES.TRANSFER_REQUEST_APPROVED,
           {
             reason: updateTransferRequestByAdminDto.reason,
+            uid: transferRequest.uId,
             transfer: {
               fromColony: colonyFrom.name,
               toColony: colonyTo.name,
@@ -491,6 +509,16 @@ export class OccupationService implements IOccupationService {
             },
           },
         );
+        await this.notificationService.create({
+          userId: transferRequest.createdById,
+          title: 'Transfer Request Approved',
+          text: `Your transfer request #${transferRequest.uId} has been approved.`,
+        });
+        await this.eventGateway.sendEvent({
+          to: transferRequest.createdById.toString(),
+          pub: 'notification',
+          data: {},
+        });
       }
       await runner.end();
       return this.findOneTransferRequest(transferRequest.id);
@@ -622,10 +650,12 @@ export class OccupationService implements IOccupationService {
       CreateTransferRequestDto,
       TransferRequest,
     );
+    const randomId = Math.floor(Math.random() * 1000000).toString();
+
     newTransferRequest.createdById = userId;
     newTransferRequest.employeeId = employee.id;
     newTransferRequest.fromColonyId = currentOccupation.apartment.colonyId;
-
+    newTransferRequest.uId = randomId;
     if (newTransferRequest.fromColonyId === newTransferRequest.toColonyId) {
       newTransferRequest.withinStation = true;
     }
@@ -826,10 +856,12 @@ export class OccupationService implements IOccupationService {
       CreateVacancyRequestDto,
       VacancyRequest,
     );
+    const randomId = Math.floor(Math.random() * 1000000).toString();
     newVacancyRequest.occupationId = occupation.id;
     newVacancyRequest.createdById = userId;
     newVacancyRequest.employeeId = employee.id;
     newVacancyRequest.vacancyReason = createVacancyRequestDto.reason;
+    newVacancyRequest.uId = randomId;
     const request =
       await this.vacancyRequestRepository.create(newVacancyRequest);
     return this.findOneVacancyRequest(request.id);
@@ -965,6 +997,7 @@ export class OccupationService implements IOccupationService {
           EMAIL_TEMPLATES.VACANCY_REQUEST_REJECTED,
           {
             reason: updateVacancyRequestDto.reason,
+            uid: vacancyRequest.uId,
             apartment: {
               houseNo: vacancyRequest.occupation.apartment.houseNo,
               streetNo: vacancyRequest.occupation.apartment.streetNo,
@@ -973,6 +1006,16 @@ export class OccupationService implements IOccupationService {
             },
           },
         );
+        await this.notificationService.create({
+          userId: vacancyRequest.createdById,
+          title: 'Vacancy Request Rejected',
+          text: `Your vacancy request #${vacancyRequest.uId} has been rejected.`,
+        });
+        await this.eventGateway.sendEvent({
+          to: vacancyRequest.createdById.toString(),
+          pub: 'notification',
+          data: {},
+        });
       }
       if (
         updateVacancyRequestDto.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED
@@ -983,6 +1026,7 @@ export class OccupationService implements IOccupationService {
           EMAIL_TEMPLATES.VACANCY_REQUEST_APPROVED,
           {
             reason: updateVacancyRequestDto.reason,
+            uid: vacancyRequest.uId,
             apartment: {
               houseNo: vacancyRequest.occupation.apartment.houseNo,
               streetNo: vacancyRequest.occupation.apartment.streetNo,
@@ -991,6 +1035,16 @@ export class OccupationService implements IOccupationService {
             },
           },
         );
+        await this.notificationService.create({
+          userId: vacancyRequest.createdById,
+          title: 'Vacancy Request Approved',
+          text: `Your vacancy request #${vacancyRequest.uId} has been approved.`,
+        });
+        await this.eventGateway.sendEvent({
+          to: vacancyRequest.createdById.toString(),
+          pub: 'notification',
+          data: {},
+        });
       }
       await runner.end();
       return this.findOneVacancyRequest(id);
@@ -1198,6 +1252,16 @@ export class OccupationService implements IOccupationService {
             },
           },
         );
+        await this.notificationService.create({
+          userId: employee.userId,
+          title: 'Apartment Deassigned',
+          text: `You have been deassigned from an apartment in ${employeeCurrentOccupation.apartment.colony.name}, ${employeeCurrentOccupation.apartment.address}.`,
+        });
+        await this.eventGateway.sendEvent({
+          to: employee.userId.toString(),
+          pub: 'notification',
+          data: {},
+        });
       }
       const pendingVacancyRequest = employee.vacancyRequests.find(
         (vacancyRequest) =>
@@ -1221,6 +1285,7 @@ export class OccupationService implements IOccupationService {
           {
             reason:
               'Admin directly assigned user an apartment, leading to any existing vacancy requests being cancelled.',
+            uid: pendingVacancyRequest.uId,
             apartment: {
               houseNo: pendingVacancyRequest.occupation.apartment.houseNo,
               streetNo: pendingVacancyRequest.occupation.apartment.streetNo,
@@ -1230,6 +1295,16 @@ export class OccupationService implements IOccupationService {
             },
           },
         );
+        await this.notificationService.create({
+          userId: pendingVacancyRequest.createdById,
+          title: 'Vacancy Request Rejected',
+          text: `Your vacancy request #${pendingVacancyRequest.uId} has been rejected.`,
+        });
+        await this.eventGateway.sendEvent({
+          to: pendingVacancyRequest.createdById.toString(),
+          pub: 'notification',
+          data: {},
+        });
       }
       const pendingTransferRequest = employee.transferRequests.find(
         (transferRequest) =>
@@ -1253,12 +1328,23 @@ export class OccupationService implements IOccupationService {
           {
             reason:
               'Admin directly assigned user an apartment, leading to any existing transfer requests being cancelled.',
+            uid: pendingTransferRequest.uId,
             transfer: {
               fromColony: pendingTransferRequest.fromColony.name,
               toColony: pendingTransferRequest.toColony.name,
             },
           },
         );
+        await this.notificationService.create({
+          userId: pendingTransferRequest.createdById,
+          title: 'Transfer Request Rejected',
+          text: `Your transfer request #${pendingTransferRequest.uId} has been rejected.`,
+        });
+        await this.eventGateway.sendEvent({
+          to: pendingTransferRequest.createdById.toString(),
+          pub: 'notification',
+          data: {},
+        });
       }
       await this.emailService.send(
         employee.user.email,
@@ -1274,6 +1360,16 @@ export class OccupationService implements IOccupationService {
           },
         },
       );
+      await this.notificationService.create({
+        userId: employee.userId,
+        title: 'Apartment Assigned',
+        text: `You have been assigned an apartment #${occupation.apartment.houseNo} in ${occupation.apartment.colony.name} colony.`,
+      });
+      await this.eventGateway.sendEvent({
+        to: employee.userId.toString(),
+        pub: 'notification',
+        data: {},
+      });
       await this.vacancyRequestRepository.updateWithTransaction<Employee>(
         { id: employee.id },
         {
@@ -1387,6 +1483,16 @@ export class OccupationService implements IOccupationService {
           },
         },
       );
+      await this.notificationService.create({
+        userId: employee.userId,
+        title: 'Apartment Deassigned',
+        text: `You have been deassigned from an apartment in ${occupation.apartment.colony.name}, ${occupation.apartment.address}.`,
+      });
+      await this.eventGateway.sendEvent({
+        to: employee.userId.toString(),
+        pub: 'notification',
+        data: {},
+      });
       await runner.end();
       return this.findOne(occupation.id);
     } catch (error) {

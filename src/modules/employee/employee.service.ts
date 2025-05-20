@@ -19,7 +19,9 @@ import { AppContext } from '../../common/interfaces/context';
 import { UtilsService } from '../../common/utils/UtilsService';
 import { IS3Service } from '../aws/interface/aws-s3.interface';
 import { EmployeeVerification } from '../employee-verification/entities/employee-verification.entity';
+import { IEventsGateway } from '../events/interface/events.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
+import { IUserNotificationService } from '../notifications/interfaces/user-notification.interface';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { GetEmployeeDto } from './dto/get-employee-dto';
@@ -36,6 +38,10 @@ export class EmployeeService implements IEmployeeService {
     @InjectMapper() private readonly employeeMapper: Mapper,
     @Inject(IUserService)
     private readonly userService: IUserService,
+    @Inject(IUserNotificationService)
+    private readonly notificationService: IUserNotificationService,
+    @Inject(IEventsGateway)
+    private readonly eventGateway: IEventsGateway,
     @Inject(IManagersService)
     private readonly managerService: IManagersService,
     @Inject(IS3Service)
@@ -295,6 +301,16 @@ export class EmployeeService implements IEmployeeService {
     );
     await this.employeeRepository.update({ id }, employeeUpdate);
     await this.userService.updateProfile(employee.userId, updateEmployeeDto);
+    await this.notificationService.create({
+      userId: employee.userId,
+      title: 'Profile Updated',
+      text: 'Your profile has been updated',
+    });
+    await this.eventGateway.sendEvent({
+      to: employee.userId.toString(),
+      pub: 'notification',
+      data: {},
+    });
     return this.findOne(id);
   }
 

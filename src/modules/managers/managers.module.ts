@@ -9,6 +9,8 @@ import { ManagersService } from './managers.service';
 import { ManagersMappingProfile } from './mapping/managers.mapping';
 import { IManagersRepository } from './repositories/interface/managers-repository.interface';
 import { ManagersRepository } from './repositories/managers.repository';
+import { NotificationModule } from '../notifications/notification.module';
+import { EventsModule } from '../events/events.module';
 
 const managersEntities = [Manager];
 const managersRepositoryProvider = [
@@ -24,7 +26,13 @@ const managersServiceProvider = [
   },
 ];
 @Module({
-  imports: [TypeOrmModule.forFeature(managersEntities), AwsModule, UserModule],
+  imports: [
+    TypeOrmModule.forFeature(managersEntities),
+    AwsModule,
+    UserModule,
+    NotificationModule,
+    EventsModule
+  ],
   controllers: [ManagersController],
   providers: [
     ...managersServiceProvider,

@@ -25,7 +25,9 @@ import { IEmailService } from '../email/interfaces/email.interface';
 import { IEmployeeVerificationService } from '../employee-verification/interfaces/employee-verification.interface';
 import { Employee } from '../employee/entities/employee.entity';
 import { IEmployeeService } from '../employee/interfaces/employee.interface';
+import { IEventsGateway } from '../events/interface/events.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
+import { IUserNotificationService } from '../notifications/interfaces/user-notification.interface';
 import { Occupation } from '../occupations/entities/occupations.entity';
 import { IOccupationService } from '../occupations/interfaces/occupations.interface';
 import { IUserService } from '../user/interfaces/user.interface';
@@ -49,8 +51,12 @@ export class ApplicationService implements IApplicationService {
     private readonly applicationsRepository: IApplicationRepository,
     @Inject(IOccupationService)
     private readonly occupationService: IOccupationService,
+    @Inject(IEventsGateway)
+    private readonly eventGateway: IEventsGateway,
     @Inject(IUserService)
     private readonly userService: IUserService,
+    @Inject(IUserNotificationService)
+    private readonly notificationService: IUserNotificationService,
     @Inject(IManagersService)
     private readonly managerService: IManagersService,
     @Inject(IEmployeeService)
@@ -220,6 +226,8 @@ export class ApplicationService implements IApplicationService {
     try {
       await runner.start();
       const { manager } = runner;
+      const randomId = Math.floor(Math.random() * 1000000).toString();
+      newApplication.uId = randomId;
       const application =
         await this.applicationsRepository.createWithTransaction(
           newApplication,
@@ -451,8 +459,19 @@ export class ApplicationService implements IApplicationService {
           {
             reason: updateApplicationDto.reason,
             employeeName: employee.user.name,
+            uid: exists.uId,
           },
         );
+        await this.notificationService.create({
+          userId: employee.user.id,
+          title: 'Application Rejected',
+          text: `Your application #${exists.uId} has been rejected`,
+        });
+        await this.eventGateway.sendEvent({
+          to: employee.user.id.toString(),
+          pub: 'notification',
+          data: {},
+        });
       }
 
       if (
@@ -510,6 +529,7 @@ export class ApplicationService implements IApplicationService {
           EMAIL_TEMPLATES.APPLICATION_APPROVED,
           {
             reason: updateApplicationDto.reason,
+            uid: exists.uId,
             apartment: {
               employeeName: employee.user.name,
               houseNo: occupation.apartment.houseNo,
@@ -519,6 +539,16 @@ export class ApplicationService implements IApplicationService {
             },
           },
         );
+        await this.notificationService.create({
+          userId: employee.user.id,
+          title: 'Application Approved',
+          text: `Your application #${exists.uId} has been approved`,
+        });
+        await this.eventGateway.sendEvent({
+          to: employee.user.id.toString(),
+          pub: 'notification',
+          data: {},
+        });
       }
       await runner.end();
 
