@@ -176,7 +176,7 @@ export class ColonyService implements IColonyService {
         }
         rec['stationId'] = station.id;
         rec['createdById'] = context.UserId;
-        return plainToInstance(Apartment, rec);
+        return plainToInstance(Colony, rec);
       });
       await this.colonyRepository.bulkCreateWithTransaction(
         recordsMapped,

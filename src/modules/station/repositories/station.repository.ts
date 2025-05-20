@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as fastcsv from 'fast-csv';
 import { BaseRepository } from 'src/common/database/repositories/base/base.repository';
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
+import { PassThrough } from 'stream';
 import { Repository } from 'typeorm';
 import { buildConditions } from '../../../common/database/builder-pattern/build-condition';
 import { GetStationDto } from '../dto/request/get.dto';
 import { Station } from '../entities/station.entity';
 import { IStationRepository } from './interface/station-repository.interface';
-
+import { AppContext } from '../../../common/interfaces/context';
 @Injectable()
 export class StationRepository
   extends BaseRepository<Station>
@@ -95,5 +97,66 @@ export class StationRepository
       .getManyAndCount();
 
     return new PagedList(stations[0], stations[1], take, page);
+  }
+  async downloadCsv(context: AppContext) {
+    const res = await this.repository
+      .createQueryBuilder('station')
+      .innerJoinAndSelect('station.division', 'division')
+      .orderBy('division.id', 'ASC')
+      .stream();
+
+    const csvStream = new PassThrough();
+    const fastCsvStream = fastcsv.format({ headers: true });
+
+    fastCsvStream.pipe(csvStream);
+
+    res.on('data', async (row: any) => {
+      res.pause();
+
+      const [colonies, employees, apartments] = await Promise.all([
+        this.repository.query(
+          `SELECT COUNT(*) FROM public.colonies WHERE "station_id" = $1`,
+          [row.station_id],
+        ),
+        this.repository.query(
+          ` SELECT COUNT(e.*)
+          FROM public.employees e
+          INNER JOIN public.colonies c ON e.colony_id = c.id
+          WHERE c.station_id = $1
+          `,
+          [row.station_id],
+        ),
+        this.repository.query(
+          ` SELECT COUNT (a.*)
+          FROM public.apartments a
+          INNER JOIN public.colonies c ON a.colony_id = c.id
+          WHERE c.station_id = $1
+          `,
+          [row.station_id],
+        ),
+      ]);
+
+      const formattedRow = {
+        Station: row.station_name,
+        Division: row.division_name,
+        Colonies: colonies[0].count,
+        Employees: employees[0].count,
+        Apartments: apartments[0].count,
+      };
+      if (!fastCsvStream.write(formattedRow)) {
+        res.pause();
+        fastCsvStream.once('drain', () => res.resume());
+      } else {
+        res.resume();
+      }
+    });
+
+    res.on('end', () => fastCsvStream.end());
+    res.on('error', (err) => {
+      console.error('Data stream error:', err);
+      fastCsvStream.destroy(err);
+    });
+
+    return csvStream;
   }
 }

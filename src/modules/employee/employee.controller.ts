@@ -7,10 +7,12 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UploadedFiles,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
 import { DOMAIN_ENTITY, JWT, ManagementRoles } from 'src/common/constants';
 import {
   MAX_FILE_SIZES,
@@ -137,7 +139,18 @@ export class EmployeeController {
   ) {
     return this.employeeService.findAll(getEmployeeDto, paginationDto, context);
   }
+  @Roles(ManagementRoles)
+  @Get('csv')
+  async downloadCsv(@Context() context: AppContext, @Res() res: Response) {
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="employees.csv"',
+    );
+    const stream = await this.employeeService.downloadCsv(context);
 
+    stream.pipe(res);
+  }
   @Roles([UserRoles.EMPLOYEE, ...ManagementRoles])
   @Get('verification-status')
   getVerificationStatus(@Context() context: AppContext) {

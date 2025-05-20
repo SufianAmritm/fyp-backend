@@ -1,3 +1,4 @@
+import { Division } from '../../../modules/division/entities/division.entity';
 export enum ENVIRONMENTS {
   DEV = 'dev',
   QA = 'qa',
@@ -101,19 +102,29 @@ export enum OCCUPATION_STATUS {
   VACANT = 'vacant',
   ABOUT_TO_VACANT = 'about_to_vacant',
 }
-export enum  ApartmentCsvHeaders  {
-  HOUSE_NO='HouseNo*',
-  ADDRESS='Address*',
-  STREET_NO='StreetNo*',
-  COLONY='Colony*',
-  STATION='Station*',
-  ROOMS='Rooms*',
-  BATHROOMS='Bathrooms*',
-  DESCRIPTION='Description',
-};
+export enum ApartmentCsvHeaders {
+  HOUSE_NO = 'HouseNo*',
+  ADDRESS = 'Address*',
+  STREET_NO = 'StreetNo*',
+  COLONY = 'Colony*',
+  STATION = 'Station*',
+  ROOMS = 'Rooms*',
+  BATHROOMS = 'Bathrooms*',
+  DESCRIPTION = 'Description',
+}
 export enum ColonyCsvHeaders {
   COLONY = 'Colony*',
   STATION = 'Station*',
   DESCRIPTION = 'Description',
   DIVISION = 'Division*',
+}
+export enum StationCsvHeaders {
+  STATION = 'Station*',
+  DIVISION = 'Division*',
+  DESCRIPTION = 'Description',
+}
+
+export enum DivisionCsvHeaders {
+  DIVISION = 'Division*',
+  DESCRIPTION = 'Description',
 }

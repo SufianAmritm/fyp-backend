@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
+import { DivisionController } from './division.controller';
+import { DivisionService } from './division.service';
 import { Division } from './entities/division.entity';
 import { IDivisionService } from './interfaces/division.interface';
 import { DivisionMappingProfile } from './mapping/division.mapping';
-import { DivisionController } from './division.controller';
-import { IDivisionRepository } from './repositories/interface/division-repository.interface';
 import { DivisionRepository } from './repositories/division.repository';
-import { DivisionService } from './division.service';
+import { IDivisionRepository } from './repositories/interface/division-repository.interface';
 
 const divisionEntities = [Division];
 const divisionRepositoryProvider = [
@@ -28,6 +29,7 @@ const divisionServiceProvider = [
     ...divisionServiceProvider,
     ...divisionRepositoryProvider,
     DivisionMappingProfile,
+    DbTransactionFactory,
   ],
   exports: [...divisionServiceProvider],
 })

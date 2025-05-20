@@ -23,7 +23,7 @@ export class Division extends BaseEntity {
   name: string;
 
   @AutoMap()
-  @Column('character varying', { nullable: false })
+  @Column('character varying', { nullable: true })
   description: string;
 
   @AutoMap()

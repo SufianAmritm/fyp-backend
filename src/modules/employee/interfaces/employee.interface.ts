@@ -35,4 +35,5 @@ export interface IEmployeeService {
     picture?: Express.Multer.File,
   );
   getVerificationStatus(id: number): Promise<EmployeeVerification>;
+  downloadCsv(context: AppContext);
 }

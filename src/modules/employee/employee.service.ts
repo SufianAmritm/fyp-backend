@@ -48,6 +48,9 @@ export class EmployeeService implements IEmployeeService {
     private readonly s3Service: IS3Service,
     private readonly utilService: UtilsService,
   ) {}
+  downloadCsv(context: AppContext) {
+    return this.employeeRepository.downloadCsv(context);
+  }
 
   async findOneWithOccupationsAndRequests(id: number): Promise<Employee> {
     const findOptions = new FindOptionsBuilder<Employee>()

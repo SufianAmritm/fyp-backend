@@ -2,8 +2,8 @@ import { IBaseRepository } from 'src/common/database/repositories/interfaces/bas
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { AppContext } from '../../../../common/interfaces/context';
-import { Employee } from '../../entities/employee.entity';
 import { GetEmployeeDto } from '../../dto/get-employee-dto';
+import { Employee } from '../../entities/employee.entity';
 
 export const IEmployeeRepository = Symbol('IEmployeeRepository');
 
@@ -15,4 +15,5 @@ export interface IEmployeeRepository<T = DefaultEntity>
     paginationDto: PaginationDto,
     ctx: AppContext,
   ): Promise<PagedList<Employee>>;
+  downloadCsv(context: AppContext);
 }

@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
+import { EventsModule } from '../events/events.module';
 import { ManagersModule } from '../managers/managers.module';
+import { NotificationModule } from '../notifications/notification.module';
 import { UserModule } from '../user/user.module';
 import { EmployeeController } from './employee.controller';
 import { EmployeeService } from './employee.service';
@@ -9,8 +12,6 @@ import { IEmployeeService } from './interfaces/employee.interface';
 import { EmployeeMappingProfile } from './mapping/employee.mapping';
 import { EmployeeRepository } from './repositories/employee.repository';
 import { IEmployeeRepository } from './repositories/interface/employee-repository.interface';
-import { NotificationModule } from '../notifications/notification.module';
-import { EventsModule } from '../events/events.module';
 
 const employeeEntities = [Employee];
 const employeeRepositoryProvider = [
@@ -38,6 +39,7 @@ const employeeServiceProvider = [
     ...employeeServiceProvider,
     ...employeeRepositoryProvider,
     EmployeeMappingProfile,
+    DbTransactionFactory,
   ],
   exports: [...employeeServiceProvider],
 })

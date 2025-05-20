@@ -7,6 +7,7 @@ import { StationController } from './station.controller';
 import { IStationRepository } from './repositories/interface/station-repository.interface';
 import { StationRepository } from './repositories/station.repository';
 import { StationService } from './station.service';
+import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
 
 const stationEntities = [Station];
 const stationRepositoryProvider = [
@@ -28,6 +29,7 @@ const stationServiceProvider = [
     ...stationServiceProvider,
     ...stationRepositoryProvider,
     StationMappingProfile,
+    DbTransactionFactory
   ],
   exports: [...stationServiceProvider],
 })
