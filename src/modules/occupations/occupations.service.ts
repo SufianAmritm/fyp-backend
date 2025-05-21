@@ -332,12 +332,18 @@ export class OccupationService implements IOccupationService {
     }
     const colonyFrom = transferRequest.fromColony;
     const colonyTo = transferRequest.toColony;
+    console.log(colonyFrom);
+    console.log(colonyTo);
+    console.log(userId);
     const isUserFrom = colonyFrom.station.managers.some(
       (manager) => manager.user.id === userId,
     );
+    console.log(isUserFrom);
+
     const isUserTo = colonyTo.station.managers.some(
       (manager) => manager.user.id === userId,
     );
+    console.log(isUserTo);
     const user = await this.userService.findOneById(userId);
     const isAdmin = user.role.name === UserRoles.ADMIN;
     if (!isUserFrom && !isUserTo && !isAdmin) {
@@ -407,7 +413,7 @@ export class OccupationService implements IOccupationService {
         manager,
       );
       let apartment: Apartment = null;
-      if (mapped.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
+      if (mapped.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED && isUserTo) {
         const { apartmentId } = updateTransferRequestByAdminDto;
         const actualApartmentId =
           transferRequest.cacheApartmentId || apartmentId;
@@ -530,7 +536,7 @@ export class OccupationService implements IOccupationService {
           employeeId: transferRequest.employee.id,
         });
       }
-      if (mapped.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
+      if (mapped.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED && isUserTo) {
         await this.emailService.send(
           transferRequest.employee.user.email,
           EMAIL_SUBJECTS.TRANSFER_REQUEST_APPROVED,

@@ -19,4 +19,5 @@ export interface IManagersService {
   findOneByUserIdWithColonies(id: number): Promise<Manager>;
 
   findOneByUserIdWithColoniesAndEmployees(id: number): Promise<Manager>;
+  isFrom(context: AppContext, fromColonyId: number, toColonyId: number);
 }

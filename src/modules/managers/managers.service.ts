@@ -13,6 +13,7 @@ import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { UtilsService } from '../../common/utils/UtilsService';
 import { IS3Service } from '../aws/interface/aws-s3.interface';
+import { IEventsGateway } from '../events/interface/events.interface';
 import { IUserNotificationService } from '../notifications/interfaces/user-notification.interface';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateManagersDto } from './dto/create-managers.dto';
@@ -21,7 +22,6 @@ import { UpdateManagersDto } from './dto/update-managers.dto';
 import { Manager } from './entities/managers.entity';
 import { IManagersService } from './interfaces/managers.interface';
 import { IManagersRepository } from './repositories/interface/managers-repository.interface';
-import { IEventsGateway } from '../events/interface/events.interface';
 
 @Injectable()
 export class ManagersService implements IManagersService {
@@ -39,7 +39,28 @@ export class ManagersService implements IManagersService {
     private readonly utilService: UtilsService,
     @InjectMapper() private readonly managersMapper: Mapper,
   ) {}
-
+  async isFrom(context: AppContext, fromColonyId: number, toColonyId: number) {
+    const manager = await this.managersRepository.findOne(
+      {
+        userId: context.UserId,
+      },
+      {},
+      {
+        station: {
+          colonies: true,
+        },
+      },
+    );
+    if (!manager) {
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Manager'));
+    }
+    return {
+      isFrom: manager.station.colonies.some(
+        (colony) => colony.id === fromColonyId,
+      ),
+      isTo: manager.station.colonies.some((colony) => colony.id === toColonyId),
+    };
+  }
   async findOneByUserId(userId: number): Promise<Manager> {
     const findOptions = new FindOptionsBuilder<Manager>()
       .where({ userId })

@@ -43,6 +43,7 @@ export class ColonyService implements IColonyService {
     private readonly transactionFactory: DbTransactionFactory,
   ) {}
 
+
   async create(createColonyDto: CreateColonyDto) {
     const { name, stationId } = createColonyDto;
     const exists = await this.colonyRepository.findOne({

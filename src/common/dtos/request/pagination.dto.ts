@@ -26,5 +26,5 @@ export class PaginationDto {
   @IsNumber({ maxDecimalPlaces: 0 })
   @IsInt()
   @Min(1)
-  take: number = PAGE_SIZE;
+  take: number = 10;
 }

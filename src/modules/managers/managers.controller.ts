@@ -30,6 +30,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { AppContext } from '../../common/interfaces/context';
 import { CreateManagersDto } from './dto/create-managers.dto';
 import { GetManagersDto } from './dto/get-managers.dto';
+import { IsFromDto } from './dto/isfrom.dto';
 import { UpdateManagersDto } from './dto/update-managers.dto';
 import { IManagersService } from './interfaces/managers.interface';
 
@@ -111,6 +112,16 @@ export class ManagersController {
     @Context() context: AppContext,
   ) {
     return this.managersService.findAll(getManagersDto, paginationDto, context);
+  }
+
+  @Roles([UserRoles.MANAGER])
+  @Post('check-access')
+  isFrom(@Context() context: AppContext, @Body() isFromDto: IsFromDto) {
+    return this.managersService.isFrom(
+      context,
+      isFromDto.fromColonyId,
+      isFromDto.toColonyId,
+    );
   }
 
   @Roles(ManagementRoles)
