@@ -18,7 +18,7 @@ export interface IStationService {
   findOne(id: number);
   update(id: number, updateStationDto: UpdateStationDto);
 
-  remove(id: number);
+  remove(id: number, context: AppContext);
   findAllForTransfer(
     getStationDto: GetStationDto,
     paginationDto: PaginationDto,

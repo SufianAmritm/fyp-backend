@@ -6,15 +6,19 @@ import {
   HttpException,
   Inject,
   Injectable,
+  InternalServerErrorException,
 } from '@nestjs/common';
+import { RESPONSE_MESSAGES } from '../../common/constants';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
+import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { UtilsService } from '../../common/utils/UtilsService';
 import { IS3Service } from '../aws/interface/aws-s3.interface';
 import { IEventsGateway } from '../events/interface/events.interface';
 import { IUserNotificationService } from '../notifications/interfaces/user-notification.interface';
+import { User } from '../user/entities/user.entity';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateManagersDto } from './dto/create-managers.dto';
 import { GetManagersDto } from './dto/get-managers.dto';
@@ -37,6 +41,7 @@ export class ManagersService implements IManagersService {
     @Inject(IS3Service)
     private readonly s3Service: IS3Service,
     private readonly utilService: UtilsService,
+    private readonly transactionFactory: DbTransactionFactory,
     @InjectMapper() private readonly managersMapper: Mapper,
   ) {}
   async isFrom(context: AppContext, fromColonyId: number, toColonyId: number) {
@@ -271,8 +276,36 @@ export class ManagersService implements IManagersService {
     return man;
   }
 
-  // async remove(id: number) {
-  //   await this.managersRepository.softDelete({ id });
-  //   return RESPONSE_MESSAGES.DELETED;
-  // }
+  async remove(id: number, context: AppContext) {
+    const man = await this.findOne(id);
+    if (!man)
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Manager'));
+    const runner = await this.transactionFactory.transactionRunner();
+    try {
+      await runner.start();
+      const { manager } = runner;
+      await this.managersRepository.softDeleteWithTransaction(
+        {
+          id: man.userId,
+        },
+        User,
+        manager,
+      );
+      await this.managersRepository.softDeleteWithTransaction(
+        {
+          id,
+        },
+        Manager,
+        manager,
+      );
+      await runner.end();
+    } catch (error) {
+      if (runner) await runner.rollbackTransaction();
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException(
+        APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      );
+    }
+    return RESPONSE_MESSAGES.DELETED;
+  }
 }

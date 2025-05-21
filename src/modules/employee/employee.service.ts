@@ -6,18 +6,22 @@ import {
   HttpException,
   Inject,
   Injectable,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { RESPONSE_MESSAGES } from '../../common/constants';
 import {
   EMPLOYEE_VERIFICATION_STATUS,
   HISTORY_TYPE,
+  OCCUPATION_STATUS,
   UserRoles,
 } from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
+import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { UtilsService } from '../../common/utils/UtilsService';
+import { Application } from '../applications/entities/applications.entity';
 import { IS3Service } from '../aws/interface/aws-s3.interface';
 import { EmployeeVerification } from '../employee-verification/entities/employee-verification.entity';
 import { IEventsGateway } from '../events/interface/events.interface';
@@ -25,6 +29,10 @@ import { History } from '../history/entities/history.entity';
 import { IHistoryService } from '../history/interfaces/history.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { IUserNotificationService } from '../notifications/interfaces/user-notification.interface';
+import { Occupation } from '../occupations/entities/occupations.entity';
+import { TransferRequest } from '../occupations/entities/transfer-requests.entity';
+import { VacancyRequest } from '../occupations/entities/vacancy-requests.entity';
+import { User } from '../user/entities/user.entity';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { GetEmployeeDto } from './dto/get-employee-dto';
@@ -51,6 +59,7 @@ export class EmployeeService implements IEmployeeService {
     private readonly managerService: IManagersService,
     @Inject(IS3Service)
     private readonly s3Service: IS3Service,
+    private readonly transactionFactory: DbTransactionFactory,
     private readonly utilService: UtilsService,
   ) {}
   downloadCsv(context: AppContext) {
@@ -255,6 +264,7 @@ export class EmployeeService implements IEmployeeService {
         colony: {
           station: true,
         },
+        occupations: true,
       })
       .build();
     const employee =
@@ -338,8 +348,102 @@ export class EmployeeService implements IEmployeeService {
     return this.findOne(id);
   }
 
-  async remove(id: number) {
-    await this.employeeRepository.softDelete({ id });
+  async remove(id: number, context: AppContext) {
+    const employee = await this.findOne(id);
+    if (!employee)
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Manager'));
+    if (context.Role === UserRoles.MANAGER) {
+      const manager = await this.managerService.findOneByUserIdWithColonies(
+        context.UserId,
+      );
+      const canManagerDeleteEmployee = manager.station.colonies.some(
+        (colony) => colony.id === employee.colonyId,
+      );
+      if (!canManagerDeleteEmployee) {
+        throw new BadRequestException(APP_ERROR_MESSAGES.UNAUTHORIZED);
+      }
+    }
+    const runner = await this.transactionFactory.transactionRunner();
+    try {
+      await runner.start();
+      const { manager } = runner;
+      await this.employeeRepository.softDeleteWithTransaction(
+        {
+          employeeId: employee.id,
+        },
+        EmployeeVerification,
+        manager,
+      );
+      await this.employeeRepository.softDeleteWithTransaction(
+        {
+          employeeId: employee.id,
+        },
+        VacancyRequest,
+        manager,
+      );
+      await this.employeeRepository.softDeleteWithTransaction(
+        {
+          employeeId: employee.id,
+        },
+        Application,
+        manager,
+      );
+      await this.employeeRepository.softDeleteWithTransaction(
+        {
+          employeeId: employee.id,
+        },
+        TransferRequest,
+        manager,
+      );
+      await this.employeeRepository.softDeleteWithTransaction(
+        {
+          employeeId: employee.id,
+        },
+        History,
+        manager,
+      );
+      await this.employeeRepository.updateWithTransaction(
+        { occupiedById: employee.id },
+        {
+          occupiedById: null,
+          status: OCCUPATION_STATUS.VACANT,
+          lastOccupiedOn: new Date(),
+          assignedById: null,
+          deAssignedById: null,
+        },
+        Occupation,
+        manager,
+      );
+      await this.employeeRepository.softDeleteWithTransaction(
+        {
+          id: employee.userId,
+        },
+        User,
+        manager,
+      );
+      await this.employeeRepository.softDeleteWithTransaction(
+        {
+          id,
+        },
+        Employee,
+        manager,
+      );
+      if (employee.occupations.length > 0)
+        await this.historyService.bulkCreate(
+          employee.occupations.map((o) => ({
+            apartmentId: o.apartmentId,
+            type: HISTORY_TYPE.APARTMENT,
+            text: `Apartment left by ${employee.user.email}`,
+          })),
+        );
+      await runner.end();
+    } catch (error) {
+      if (runner) await runner.rollbackTransaction();
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException(
+        APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      );
+    }
     return RESPONSE_MESSAGES.DELETED;
   }
 

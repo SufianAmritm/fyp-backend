@@ -116,6 +116,18 @@ export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
       throw new Error(error.message);
     }
   }
+  async softDeleteWithTransaction<T>(
+    where: FindOptionsWhere<T>,
+    target: EntityTarget<T>,
+    transactionManager: EntityManager,
+  ): Promise<DeleteResult> {
+    try {
+      const repo = transactionManager.getRepository(target);
+      return await repo.softDelete(where);
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
 
   async update(
     conditions: FindOptionsWhere<T>,

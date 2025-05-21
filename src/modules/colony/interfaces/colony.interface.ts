@@ -20,4 +20,5 @@ export interface IColonyService {
   update(id: number, updateColonyDto: UpdateColonyDto, userId: number);
   downloadCsv(context: AppContext): Promise<PassThrough>;
   uploadCsv(context: AppContext, file: Express.Multer.File);
+  remove(id: number, context: AppContext);
 }

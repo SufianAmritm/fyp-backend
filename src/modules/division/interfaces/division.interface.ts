@@ -14,7 +14,7 @@ export interface IDivisionService {
   findOne(id: number);
   update(id: number, updateDivisionDto: UpdateDivisionDto);
 
-  remove(id: number);
+  remove(id: number, context: AppContext);
   downloadCsv(context: AppContext): Promise<PassThrough>;
   uploadCsv(context: AppContext, file: Express.Multer.File);
 }

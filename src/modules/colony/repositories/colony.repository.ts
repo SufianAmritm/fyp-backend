@@ -84,7 +84,7 @@ export class ColonyRepository
     const whereAnd = [];
     const params: Record<string, any> = {};
 
-    const { search, orderBy, sortBy } = getColonyDto;
+    const { search, orderBy, sortBy, stationId } = getColonyDto;
     if (search) {
       whereOr.push(`colony.name ILIKE :search`);
       whereOr.push(`station.name ILIKE :search`);
@@ -92,6 +92,10 @@ export class ColonyRepository
       whereOr.push(`colony.description ILIKE :search`);
 
       params.search = `%${search}%`;
+    }
+    if (stationId) {
+      whereAnd.push(`colony.stationId =:stationId`);
+      params.stationId = stationId;
     }
     const res = await this.repository
       .createQueryBuilder('colony')

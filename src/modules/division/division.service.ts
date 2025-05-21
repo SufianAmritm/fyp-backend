@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { PassThrough } from 'stream';
-import { Equal, Not } from 'typeorm';
+import { Equal, In, Not } from 'typeorm';
 import { DefaultCsvSettings, RESPONSE_MESSAGES } from '../../common/constants';
 import { DivisionCsvHeaders } from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
@@ -18,6 +18,12 @@ import { DbTransactionFactory } from '../../common/database/utils/db-transaction
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { UtilsService } from '../../common/utils/UtilsService';
+import { Apartment } from '../apartment/entities/apartment.entity';
+import { Colony } from '../colony/entities/colony.entity';
+import { Employee } from '../employee/entities/employee.entity';
+import { Manager } from '../managers/entities/managers.entity';
+import { Station } from '../station/entities/station.entity';
+import { User } from '../user/entities/user.entity';
 import { CreateDivisionDto } from './dto/create-division.dto';
 import { GetDivisionsDto } from './dto/request/get.dto';
 import { UpdateDivisionDto } from './dto/update-division.dto';
@@ -133,6 +139,28 @@ export class DivisionService implements IDivisionService {
 
     return this.divisionRepository.findOneWithBuilderOption(findOptions);
   }
+  findOneForDelete(id: number) {
+    const findOptions = new FindOptionsBuilder<Division>()
+      .where({
+        id,
+      })
+      .relations({
+        stations: {
+          managers: {
+            user: true,
+          },
+          colonies: {
+            apartments: true,
+            employees: {
+              user: true,
+            },
+          },
+        },
+      })
+      .build();
+
+    return this.divisionRepository.findOneWithBuilderOption(findOptions);
+  }
 
   async update(id: number, updateDivisionDto: UpdateDivisionDto) {
     const { name } = updateDivisionDto;
@@ -159,24 +187,94 @@ export class DivisionService implements IDivisionService {
     return this.divisionRepository.findOne({ id });
   }
 
-  async remove(id: number) {
-    const findOptions = new FindOptionsBuilder<Division>()
-      .where({ id })
-      .relations({
-        stations: true,
-      })
-      .build();
-    const division =
-      await this.divisionRepository.findOneWithBuilderOption(findOptions);
-    if (!division) {
-      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Division'));
-    }
-    if (division.stations.length > 0) {
-      throw new BadRequestException(
-        APP_ERROR_MESSAGES.IN_USE('Division', ['Stations']),
+  async remove(id: number, context: AppContext) {
+    const division = await this.findOneForDelete(id);
+    if (!division)
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Manager'));
+    const runner = await this.transactionFactory.transactionRunner();
+    try {
+      await runner.start();
+      const { manager } = runner;
+      await this.divisionRepository.softDeleteWithTransaction(
+        {
+          divisionId: division.id,
+        },
+        Station,
+        manager,
+      );
+      await this.divisionRepository.softDeleteWithTransaction(
+        {
+          stationId: In(division.stations.map((st) => st.id)),
+        },
+        Manager,
+        manager,
+      );
+
+      await this.divisionRepository.softDeleteWithTransaction(
+        {
+          id: In(
+            division.stations.flatMap((st) =>
+              st.managers.map((man) => man.userId),
+            ),
+          ),
+        },
+        User,
+        manager,
+      );
+      await this.divisionRepository.softDeleteWithTransaction(
+        {
+          colonyId: In(
+            division.stations.flatMap((st) => st.colonies.map((ap) => ap.id)),
+          ),
+        },
+        Employee,
+        manager,
+      );
+
+      await this.divisionRepository.softDeleteWithTransaction(
+        {
+          id: In(
+            division.stations.flatMap((st) =>
+              st.colonies.flatMap((man) => man.employees.map((emp) => emp.id)),
+            ),
+          ),
+        },
+        User,
+        manager,
+      );
+      await this.divisionRepository.softDeleteWithTransaction(
+        {
+          stationId: In(division.stations.map((st) => st.id)),
+        },
+        Colony,
+        manager,
+      );
+
+      await this.divisionRepository.softDeleteWithTransaction(
+        {
+          colonyId: In(
+            division.stations.flatMap((st) => st.colonies.map((ap) => ap.id)),
+          ),
+        },
+        Apartment,
+        manager,
+      );
+
+      await this.divisionRepository.softDeleteWithTransaction(
+        {
+          id,
+        },
+        Division,
+        manager,
+      );
+      await runner.end();
+    } catch (error) {
+      if (runner) await runner.rollbackTransaction();
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException(
+        APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );
     }
-    await this.divisionRepository.softDelete({ id });
     return RESPONSE_MESSAGES.DELETED;
   }
 }

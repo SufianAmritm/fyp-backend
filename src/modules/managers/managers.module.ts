@@ -11,6 +11,7 @@ import { IManagersRepository } from './repositories/interface/managers-repositor
 import { ManagersRepository } from './repositories/managers.repository';
 import { NotificationModule } from '../notifications/notification.module';
 import { EventsModule } from '../events/events.module';
+import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
 
 const managersEntities = [Manager];
 const managersRepositoryProvider = [
@@ -38,6 +39,7 @@ const managersServiceProvider = [
     ...managersServiceProvider,
     ...managersRepositoryProvider,
     ManagersMappingProfile,
+    DbTransactionFactory
   ],
   exports: [...managersServiceProvider],
 })

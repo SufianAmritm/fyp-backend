@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -126,5 +127,11 @@ export class ApartmentController {
       updateApartmentDto,
       context.UserId,
     );
+  }
+  @Roles(ManagementRoles)
+  @Delete(':id')
+  remove(@Param() idDto: IdDto, @Context() context: AppContext) {
+    const { id } = idDto;
+    return this.apartmentService.remove(+id, context);
   }
 }

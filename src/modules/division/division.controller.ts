@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -102,10 +103,10 @@ export class DivisionController {
     return this.divisionService.update(+id, updateDivisionDto);
   }
 
-  // @Delete(':id')
-  // remove(@Param() idDto: IdDto) {
-  //   const { id } = idDto;
-
-  //   return this.divisionService.remove(+id);
-  // }
+  @Roles([UserRoles.ADMIN])
+  @Delete(':id')
+  remove(@Param() idDto: IdDto, @Context() context: AppContext) {
+    const { id } = idDto;
+    return this.divisionService.remove(+id, context);
+  }
 }

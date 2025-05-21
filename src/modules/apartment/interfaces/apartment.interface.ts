@@ -21,4 +21,5 @@ export interface IApartmentService {
   );
   downloadCsv(context: AppContext): Promise<PassThrough>;
   uploadCsv(context: AppContext, file: Express.Multer.File);
+  remove(id: number, context: AppContext): Promise<string>;
 }

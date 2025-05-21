@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -252,11 +253,10 @@ export class EmployeeController {
       picture,
     );
   }
-
-  // @Delete(':id')
-  // remove(@Param() idDto: IdDto) {
-  //   const { id } = idDto;
-
-  //   return this.employeeService.remove(+id);
-  // }
+  @Roles(ManagementRoles)
+  @Delete(':id')
+  remove(@Param() idDto: IdDto, @Context() context: AppContext) {
+    const { id } = idDto;
+    return this.employeeService.remove(+id, context);
+  }
 }

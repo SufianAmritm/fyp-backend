@@ -18,8 +18,14 @@ import { DbTransactionFactory } from '../../common/database/utils/db-transaction
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { UtilsService } from '../../common/utils/UtilsService';
+import { Apartment } from '../apartment/entities/apartment.entity';
+import { ApplicationPriority } from '../applications/entities/application-colonies.entity';
 import { Division } from '../division/entities/division.entity';
+import { EmployeeVerification } from '../employee-verification/entities/employee-verification.entity';
+import { Employee } from '../employee/entities/employee.entity';
 import { IManagersService } from '../managers/interfaces/managers.interface';
+import { Occupation } from '../occupations/entities/occupations.entity';
+import { TransferRequest } from '../occupations/entities/transfer-requests.entity';
 import { Station } from '../station/entities/station.entity';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateColonyDto } from './dto/create-colony.dto';
@@ -42,7 +48,6 @@ export class ColonyService implements IColonyService {
     private readonly utilService: UtilsService,
     private readonly transactionFactory: DbTransactionFactory,
   ) {}
-
 
   async create(createColonyDto: CreateColonyDto) {
     const { name, stationId } = createColonyDto;
@@ -215,7 +220,18 @@ export class ColonyService implements IColonyService {
       .build();
     return this.colonyRepository.findOneWithBuilderOption(findOption);
   }
-
+  findOneWithEmployee(id: number) {
+    const findOption = new FindOptionsBuilder<Colony>()
+      .where({ id })
+      .relations({
+        apartments: {
+          occupation: true,
+        },
+        employees: true,
+      })
+      .build();
+    return this.colonyRepository.findOneWithBuilderOption(findOption);
+  }
   async update(id: number, updateColonyDto: UpdateColonyDto, userId: number) {
     const colony = await this.findOne(id);
     if (!colony)
@@ -249,8 +265,95 @@ export class ColonyService implements IColonyService {
     return this.colonyRepository.findOne({ id });
   }
 
-  async remove(id: number) {
-    await this.colonyRepository.softDelete({ id });
+  async remove(id: number, context: AppContext) {
+    const colony = await this.findOneWithEmployee(id);
+    if (!colony)
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Manager'));
+    if (context.Role === UserRoles.MANAGER) {
+      const manager = await this.managerService.findOneByUserIdWithColonies(
+        context.UserId,
+      );
+      const canManagerDeleteEmployee = manager.station.colonies.some(
+        (col) => col.id === colony.id,
+      );
+      if (!canManagerDeleteEmployee) {
+        throw new BadRequestException(APP_ERROR_MESSAGES.UNAUTHORIZED);
+      }
+    }
+    const runner = await this.transactionFactory.transactionRunner();
+    try {
+      await runner.start();
+      const { manager } = runner;
+      await this.colonyRepository.softDeleteWithTransaction(
+        {
+          colonyId: colony.id,
+        },
+        Apartment,
+        manager,
+      );
+      await this.colonyRepository.softDeleteWithTransaction(
+        {
+          colonyId: colony.id,
+        },
+        ApplicationPriority,
+        manager,
+      );
+      await this.colonyRepository.softDeleteWithTransaction(
+        {
+          fromColonyId: colony.id,
+        },
+        TransferRequest,
+        manager,
+      );
+      await this.colonyRepository.softDeleteWithTransaction(
+        {
+          toColonyId: colony.id,
+        },
+        TransferRequest,
+        manager,
+      );
+      if (colony.apartments.length > 0) {
+        await this.colonyRepository.softDeleteWithTransaction(
+          {
+            apartmentId: In(colony.apartments.map((apartment) => apartment.id)),
+          },
+          Occupation,
+          manager,
+        );
+      }
+      if (colony.employees.length > 0) {
+        await this.colonyRepository.updateWithTransaction(
+          { colonyId: colony.id },
+          {
+            colonyId: null,
+          },
+          Employee,
+          manager,
+        );
+
+        await this.colonyRepository.softDeleteWithTransaction(
+          {
+            employeeId: In(colony.employees.map((employee) => employee.id)),
+          },
+          EmployeeVerification,
+          manager,
+        );
+      }
+      await this.colonyRepository.softDeleteWithTransaction(
+        {
+          id,
+        },
+        Employee,
+        manager,
+      );
+      await runner.end();
+    } catch (error) {
+      if (runner) await runner.rollbackTransaction();
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException(
+        APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      );
+    }
     return RESPONSE_MESSAGES.DELETED;
   }
 }

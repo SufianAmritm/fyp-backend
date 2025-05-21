@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   FileTypeValidator,
   Get,
   Inject,
@@ -181,11 +182,11 @@ export class ManagersController {
 
     return this.managersService.update(+id, updateManagersDto, picture);
   }
+  @Roles([UserRoles.ADMIN])
+  @Delete(':id')
+  remove(@Param() idDto: IdDto, @Context() context: AppContext) {
+    const { id } = idDto;
 
-  // @Delete(':id')
-  // remove(@Param() idDto: IdDto) {
-  //   const { id } = idDto;
-
-  //   return this.managersService.remove(+id);
-  // }
+    return this.managersService.remove(+id, context);
+  }
 }

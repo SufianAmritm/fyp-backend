@@ -22,6 +22,11 @@ export interface IWrite<T> {
     target: EntityTarget<T>,
     transactionManager: EntityManager,
   ): Promise<DeleteResult>;
+  softDeleteWithTransaction<T>(
+    where: FindOptionsWhere<T>,
+    target: EntityTarget<T>,
+    transactionManager: EntityManager,
+  ): Promise<DeleteResult>;
   update(
     conditions: FindOptionsWhere<T>,
     updates: QueryDeepPartialEntity<T>,

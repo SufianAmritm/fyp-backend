@@ -18,7 +18,12 @@ import { DbTransactionFactory } from '../../common/database/utils/db-transaction
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { UtilsService } from '../../common/utils/UtilsService';
+import { Apartment } from '../apartment/entities/apartment.entity';
+import { Colony } from '../colony/entities/colony.entity';
 import { Division } from '../division/entities/division.entity';
+import { Employee } from '../employee/entities/employee.entity';
+import { Manager } from '../managers/entities/managers.entity';
+import { User } from '../user/entities/user.entity';
 import { CreateStationDto } from './dto/create-station.dto';
 import { GetStationDto } from './dto/request/get.dto';
 import { UpdateStationDto } from './dto/update-station.dto';
@@ -172,6 +177,27 @@ export class StationService implements IStationService {
       manager.user.password = undefined;
       return manager;
     });
+    return stations;
+  }
+  async findOneForDelete(id: number) {
+    const findOptions = new FindOptionsBuilder<Station>()
+      .where({
+        id,
+      })
+      .relations({
+        managers: {
+          user: true,
+        },
+      })
+      .build();
+
+    const stations =
+      await this.stationRepository.findOneWithBuilderOption(findOptions);
+    stations.managers = stations.managers.map((manager) => {
+      manager.user.password = undefined;
+      return manager;
+    });
+    return stations;
   }
 
   async update(id: number, updateStationDto: UpdateStationDto) {
@@ -197,17 +223,79 @@ export class StationService implements IStationService {
     return this.stationRepository.findOne({ id });
   }
 
-  async remove(id: number) {
-    const findOptions = new FindOptionsBuilder<Station>()
-      .where({ id })
-      .relations({})
-      .build();
-    const station =
-      await this.stationRepository.findOneWithBuilderOption(findOptions);
-    if (!station) {
+  async remove(id: number, context: AppContext) {
+    const station = await this.findOneForDelete(id);
+    if (!station)
       throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Station'));
+    const runner = await this.transactionFactory.transactionRunner();
+    try {
+      await runner.start();
+      const { manager } = runner;
+      await this.stationRepository.softDeleteWithTransaction(
+        {
+          id,
+        },
+        Station,
+        manager,
+      );
+      await this.stationRepository.softDeleteWithTransaction(
+        {
+          stationId: id,
+        },
+        Manager,
+        manager,
+      );
+
+      await this.stationRepository.softDeleteWithTransaction(
+        {
+          id: In(station.managers.map((man) => man.userId)),
+        },
+        User,
+        manager,
+      );
+      await this.stationRepository.softDeleteWithTransaction(
+        {
+          colonyId: In(station.colonies.map((ap) => ap.id)),
+        },
+        Employee,
+        manager,
+      );
+
+      await this.stationRepository.softDeleteWithTransaction(
+        {
+          id: In(
+            station.colonies.flatMap((man) =>
+              man.employees.map((emp) => emp.id),
+            ),
+          ),
+        },
+        User,
+        manager,
+      );
+      await this.stationRepository.softDeleteWithTransaction(
+        {
+          stationId: id,
+        },
+        Colony,
+        manager,
+      );
+
+      await this.stationRepository.softDeleteWithTransaction(
+        {
+          colonyId: In(station.colonies.map((ap) => ap.id)),
+        },
+        Apartment,
+        manager,
+      );
+
+      await runner.end();
+    } catch (error) {
+      if (runner) await runner.rollbackTransaction();
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException(
+        APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      );
     }
-    await this.stationRepository.softDelete({ id });
     return RESPONSE_MESSAGES.DELETED;
   }
 }

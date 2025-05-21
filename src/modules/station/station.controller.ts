@@ -108,10 +108,11 @@ export class StationController {
     return this.stationService.update(+id, updateStationDto);
   }
 
+  @Roles([UserRoles.ADMIN])
   @Delete(':id')
-  remove(@Param() idDto: IdDto) {
+  remove(@Param() idDto: IdDto, @Context() context: AppContext) {
     const { id } = idDto;
 
-    return this.stationService.remove(+id);
+    return this.stationService.remove(+id, context);
   }
 }

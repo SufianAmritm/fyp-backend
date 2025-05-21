@@ -188,8 +188,16 @@ export class OccupationService implements IOccupationService {
         rejectedByTo: {
           manager: true,
         },
-        fromColony: true,
-        toColony: true,
+        fromColony: {
+          station: {
+            division: true,
+          },
+        },
+        toColony: {
+          station: {
+            division: true,
+          },
+        },
       })
       .order({
         createdAt: 'DESC',

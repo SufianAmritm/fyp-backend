@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -16,18 +17,18 @@ import { Response } from 'express';
 import { DOMAIN_ENTITY, JWT, ManagementRoles } from 'src/common/constants';
 import { SUPPORT_TYPES, UserRoles } from '../../common/constants/enums';
 import { Context } from '../../common/decorators/context';
+import { MultiFile } from '../../common/decorators/multi-file.decorator';
 import { Roles } from '../../common/decorators/role-metadata.decorator';
 import { IdDto } from '../../common/dtos/request/id.dto';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AppContext } from '../../common/interfaces/context';
+import { MultiFileValidatorPipe } from '../../common/pipes/multi-file-validation.pipe';
 import { CreateColonyDto } from './dto/create-colony.dto';
 import { GetColonyDto } from './dto/request/get.dto';
 import { UpdateColonyDto } from './dto/update-colony.dto';
 import { IColonyService } from './interfaces/colony.interface';
-import { MultiFile } from '../../common/decorators/multi-file.decorator';
-import { MultiFileValidatorPipe } from '../../common/pipes/multi-file-validation.pipe';
 
 @ApiTags(DOMAIN_ENTITY.COLONIES)
 @ApiBearerAuth(JWT)
@@ -107,5 +108,11 @@ export class ColonyController {
     const { id } = idDto;
 
     return this.colonyService.update(+id, updateColonyDto, ctx.UserId);
+  }
+  @Roles(ManagementRoles)
+  @Delete(':id')
+  remove(@Param() idDto: IdDto, @Context() context: AppContext) {
+    const { id } = idDto;
+    return this.colonyService.remove(+id, context);
   }
 }

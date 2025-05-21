@@ -28,6 +28,7 @@ import { IHistoryService } from '../history/interfaces/history.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { CreateOccupationDto } from '../occupations/dto/create-occupations.dto';
 import { Occupation } from '../occupations/entities/occupations.entity';
+import { VacancyRequest } from '../occupations/entities/vacancy-requests.entity';
 import { Station } from '../station/entities/station.entity';
 import { IUserService } from '../user/interfaces/user.interface';
 import { CreateApartmentDto } from './dto/create-apartment.dto';
@@ -332,8 +333,61 @@ export class ApartmentService implements IApartmentService {
     return this.apartmentRepository.findOne({ id });
   }
 
-  async remove(id: number) {
-    await this.apartmentRepository.softDelete({ id });
+  async remove(id: number, context: AppContext) {
+    const apartment = await this.findOne(id);
+    if (!apartment)
+      throw new BadRequestException(APP_ERROR_MESSAGES.NOT_FOUND('Apartment'));
+    if (context.Role === UserRoles.MANAGER) {
+      const manager = await this.managerService.findOneByUserIdWithColonies(
+        context.UserId,
+      );
+      const canManagerDeleteApartment = manager.station.colonies.some(
+        (colony) => colony.id === apartment.colony.id,
+      );
+      if (!canManagerDeleteApartment) {
+        throw new BadRequestException(APP_ERROR_MESSAGES.UNAUTHORIZED);
+      }
+    }
+    const runner = await this.transactionFactory.transactionRunner();
+    try {
+      await runner.start();
+      const { manager } = runner;
+      await this.apartmentRepository.softDeleteWithTransaction(
+        {
+          occupationId: apartment.occupation.id,
+        },
+        VacancyRequest,
+        manager,
+      );
+      await this.apartmentRepository.softDeleteWithTransaction(
+        {
+          apartmentId: id,
+        },
+        History,
+        manager,
+      );
+      await this.apartmentRepository.softDeleteWithTransaction(
+        {
+          apartmentId: id,
+        },
+        Occupation,
+        manager,
+      );
+      await this.apartmentRepository.softDeleteWithTransaction(
+        {
+          id,
+        },
+        Apartment,
+        manager,
+      );
+      await runner.end();
+    } catch (error) {
+      if (runner) await runner.rollbackTransaction();
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException(
+        APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
+      );
+    }
     return RESPONSE_MESSAGES.DELETED;
   }
 }

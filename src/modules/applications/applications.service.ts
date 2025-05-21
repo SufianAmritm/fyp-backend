@@ -142,7 +142,7 @@ export class ApplicationService implements IApplicationService {
           updateApplicationDto.colonyPriorities,
           employee,
         );
-        await this.applicationPriorityRepository.deleteWithTransaction(
+        await this.applicationPriorityRepository.softDeleteWithTransaction(
           {
             applicationId: id,
           },
