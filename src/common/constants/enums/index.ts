@@ -1,4 +1,3 @@
-import { Division } from '../../../modules/division/entities/division.entity';
 export enum ENVIRONMENTS {
   DEV = 'dev',
   QA = 'qa',
@@ -127,4 +126,9 @@ export enum StationCsvHeaders {
 export enum DivisionCsvHeaders {
   DIVISION = 'Division*',
   DESCRIPTION = 'Description',
+}
+
+export enum HISTORY_TYPE {
+  APARTMENT = 'apartment',
+  EMPLOYEE = 'employee',
 }

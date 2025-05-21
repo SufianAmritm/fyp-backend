@@ -21,6 +21,7 @@ import { OccupationRepository } from './repositories/occupations.repository';
 import { TransferRequestRepository } from './repositories/transfer-request.repository';
 import { VacancyRequestRepository } from './repositories/vacany-request.repository';
 import { EventsModule } from '../events/events.module';
+import { HistoryModule } from '../history/history.module';
 
 const occupationsEntities = [Occupation, VacancyRequest, TransferRequest];
 const occupationsRepositoryProvider = [
@@ -52,7 +53,8 @@ const occupationsServiceProvider = [
     EmailModule,
     ColonyModule,
     NotificationModule,
-    EventsModule
+    EventsModule,
+    HistoryModule,
   ],
   controllers: [OccupationController],
   providers: [

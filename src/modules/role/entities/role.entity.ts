@@ -6,7 +6,7 @@ import { TABLES } from '../../../common/database/tables';
 
 @Index('roles_name_uk', ['name'], {
   unique: true,
-  where: 'deleted_at IS NOT NULL',
+  where: 'deleted_at IS NULL',
 })
 @Entity(TABLES.ROLES, { schema: 'public' })
 export class Role extends BaseEntity {

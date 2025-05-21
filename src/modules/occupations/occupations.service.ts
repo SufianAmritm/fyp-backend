@@ -9,12 +9,12 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { In, LessThanOrEqual } from 'typeorm';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { RESPONSE_MESSAGES } from '../../common/constants';
 import {
   EMAIL_SUBJECTS,
   EMAIL_TEMPLATES,
   EMPLOYEE_VERIFICATION_STATUS,
+  HISTORY_TYPE,
   OCCUPATION_STATUS,
   UserRoles,
 } from '../../common/constants/enums';
@@ -30,6 +30,8 @@ import { IEmailService } from '../email/interfaces/email.interface';
 import { Employee } from '../employee/entities/employee.entity';
 import { IEmployeeService } from '../employee/interfaces/employee.interface';
 import { IEventsGateway } from '../events/interface/events.interface';
+import { History } from '../history/entities/history.entity';
+import { IHistoryService } from '../history/interfaces/history.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { IUserNotificationService } from '../notifications/interfaces/user-notification.interface';
 import { IUserService } from '../user/interfaces/user.interface';
@@ -67,6 +69,8 @@ export class OccupationService implements IOccupationService {
     private readonly colonyService: IColonyService,
     @Inject(IEmailService)
     private readonly emailService: IEmailService,
+    @Inject(IHistoryService)
+    private readonly historyService: IHistoryService,
     @Inject(IUserNotificationService)
     private readonly notificationService: IUserNotificationService,
     @Inject(IEventsGateway)
@@ -206,15 +210,29 @@ export class OccupationService implements IOccupationService {
     return res;
   }
 
-  async bulkUpdate(updates: QueryDeepPartialEntity<Occupation>[]) {
-    return await this.occupationsRepository.bulkUpdate(updates, 'id', 10);
+  async bulkUpdate(updates: Occupation[]) {
+    await this.occupationsRepository.bulkUpdate(updates, 'id', 10);
+    const creates = updates.map((u) => ({
+      type: HISTORY_TYPE.APARTMENT,
+      text: `Apartment left by ${u.occupiedBy.user.email}.`,
+      apartmentId: u.apartmentId,
+    }));
+    await this.historyService.bulkCreate(creates);
   }
 
   findAllForCronJob(days: Date): Promise<Occupation[]> {
-    return this.occupationsRepository.find({
-      status: OCCUPATION_STATUS.ABOUT_TO_VACANT,
-      lastAboutToVacantOn: LessThanOrEqual(days),
-    });
+    const findOptions = new FindOptionsBuilder<Occupation>()
+      .where({
+        status: OCCUPATION_STATUS.ABOUT_TO_VACANT,
+        lastAboutToVacantOn: LessThanOrEqual(days),
+      })
+      .relations({
+        occupiedBy: {
+          user: true,
+        },
+      })
+      .build();
+    return this.occupationsRepository.findManyWithBuilderOption(findOptions);
   }
 
   async findAllTransferRequest(
@@ -463,6 +481,24 @@ export class OccupationService implements IOccupationService {
           Employee,
           manager,
         );
+        await this.transferRequestRepository.createWithTransaction<History>(
+          {
+            type: HISTORY_TYPE.EMPLOYEE,
+            text: `Transfer Request #${transferRequest.uId} approved by ${user.name} and assigned house ${apartment.houseNo} in colony ${apartment.colony.name}`,
+            employeeId: employee.id,
+          },
+          History,
+          manager,
+        );
+        await this.transferRequestRepository.createWithTransaction<History>(
+          {
+            type: HISTORY_TYPE.APARTMENT,
+            text: `Apartment assigned in colony ${apartment.colony.name}, address: ${apartment.address}.`,
+            apartmentId: apartment.id,
+          },
+          History,
+          manager,
+        );
       }
       if (mapped.status === EMPLOYEE_VERIFICATION_STATUS.REJECTED) {
         await this.emailService.send(
@@ -487,6 +523,11 @@ export class OccupationService implements IOccupationService {
           to: transferRequest.createdById.toString(),
           pub: 'notification',
           data: {},
+        });
+        await this.historyService.create({
+          type: HISTORY_TYPE.EMPLOYEE,
+          text: `Transfer Request #${transferRequest.uId} Rejected by ${user.name}`,
+          employeeId: transferRequest.employee.id,
         });
       }
       if (mapped.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED) {
@@ -662,7 +703,13 @@ export class OccupationService implements IOccupationService {
     if (currentOccupation.apartment.colony.stationId === toColony.stationId) {
       newTransferRequest.withinStation = true;
     }
-    return await this.transferRequestRepository.create(newTransferRequest);
+    const req = await this.transferRequestRepository.create(newTransferRequest);
+    await this.historyService.create({
+      type: HISTORY_TYPE.EMPLOYEE,
+      text: `Transfer Request #${randomId} Created`,
+      employeeId: employee.id,
+    });
+    return req;
   }
 
   async cancelTransferRequest(id: number, userId: number) {
@@ -708,6 +755,11 @@ export class OccupationService implements IOccupationService {
       TransferRequest,
     );
     await this.transferRequestRepository.update({ id }, transferRequestUpdate);
+    await this.historyService.create({
+      type: HISTORY_TYPE.EMPLOYEE,
+      text: `Transfer Request #${exists.uId} cancelled`,
+      employeeId: exists.employeeId,
+    });
     return RESPONSE_MESSAGES.SUCCESSFUL_OPERATION;
   }
 
@@ -719,6 +771,14 @@ export class OccupationService implements IOccupationService {
       })
       .order({
         createdAt: 'DESC',
+      })
+      .relations({
+        occupation: {
+          apartment: {
+            colony: true,
+          },
+        },
+        createdBy: true,
       })
       .build();
     const vacancyRequest =
@@ -750,6 +810,16 @@ export class OccupationService implements IOccupationService {
           vacantById: vacancyRequest.employeeId,
         },
       );
+      await this.historyService.create({
+        type: HISTORY_TYPE.EMPLOYEE,
+        text: `Apartment with house no ${vacancyRequest.occupation.apartment.houseNo}in colony ${vacancyRequest.occupation.apartment.colony.name} has been left.`,
+        employeeId: vacancyRequest.employeeId,
+      });
+      await this.historyService.create({
+        type: HISTORY_TYPE.APARTMENT,
+        text: `Apartment left by ${vacancyRequest.createdBy.email}.`,
+        apartmentId: vacancyRequest.occupation.apartmentId,
+      });
       return RESPONSE_MESSAGES.SUCCESSFUL_OPERATION;
     }
     return RESPONSE_MESSAGES.SUCCESSFUL_OPERATION;
@@ -798,6 +868,11 @@ export class OccupationService implements IOccupationService {
       VacancyRequest,
     );
     await this.vacancyRequestRepository.update({ id }, vacancyRequestUpdate);
+    await this.historyService.create({
+      type: HISTORY_TYPE.EMPLOYEE,
+      text: `Vacancy Request #${exists.uId} cancelled`,
+      employeeId: exists.employeeId,
+    });
     return RESPONSE_MESSAGES.SUCCESSFUL_OPERATION;
   }
 
@@ -864,6 +939,11 @@ export class OccupationService implements IOccupationService {
     newVacancyRequest.uId = randomId;
     const request =
       await this.vacancyRequestRepository.create(newVacancyRequest);
+    await this.historyService.create({
+      type: HISTORY_TYPE.EMPLOYEE,
+      text: `Vacancy Request #${newVacancyRequest.uId} created for apartment with house no ${occupation.apartment.houseNo} in colony ${employee.colony.name}`,
+      employeeId: exists.employeeId,
+    });
     return this.findOneVacancyRequest(request.id);
   }
 
@@ -1016,6 +1096,11 @@ export class OccupationService implements IOccupationService {
           pub: 'notification',
           data: {},
         });
+        await this.historyService.create({
+          type: HISTORY_TYPE.EMPLOYEE,
+          text: `Vacancy Request #${vacancyRequest.uId} rejected for apartment with house no ${vacancyRequest.occupation.apartment.houseNo} in colony ${vacancyRequest.occupation.apartment.colony.name}`,
+          employeeId: vacancyRequest.employeeId,
+        });
       }
       if (
         updateVacancyRequestDto.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED
@@ -1044,6 +1129,11 @@ export class OccupationService implements IOccupationService {
           to: vacancyRequest.createdById.toString(),
           pub: 'notification',
           data: {},
+        });
+        await this.historyService.create({
+          type: HISTORY_TYPE.EMPLOYEE,
+          text: `Vacancy Request #${vacancyRequest.uId} approved for apartment with house no ${vacancyRequest.occupation.apartment.houseNo} in colony ${vacancyRequest.occupation.apartment.colony.name}`,
+          employeeId: vacancyRequest.employeeId,
         });
       }
       await runner.end();
@@ -1262,6 +1352,16 @@ export class OccupationService implements IOccupationService {
           pub: 'notification',
           data: {},
         });
+        await this.historyService.create({
+          type: HISTORY_TYPE.EMPLOYEE,
+          text: `Apartment Deassigned in colony ${employeeCurrentOccupation.apartment.colony.name}, address: ${employeeCurrentOccupation.apartment.address}.`,
+          employeeId: employee.id,
+        });
+        await this.historyService.create({
+          type: HISTORY_TYPE.APARTMENT,
+          text: `Apartment left by ${employee.user.email}.`,
+          apartmentId: employeeCurrentOccupation.apartment.id,
+        });
       }
       const pendingVacancyRequest = employee.vacancyRequests.find(
         (vacancyRequest) =>
@@ -1305,6 +1405,11 @@ export class OccupationService implements IOccupationService {
           pub: 'notification',
           data: {},
         });
+        await this.historyService.create({
+          type: HISTORY_TYPE.EMPLOYEE,
+          text: `Vacancy Request #${pendingVacancyRequest.uId} rejected by ${updator.name} with email: ${updator.email}.`,
+          employeeId: employee.id,
+        });
       }
       const pendingTransferRequest = employee.transferRequests.find(
         (transferRequest) =>
@@ -1345,6 +1450,11 @@ export class OccupationService implements IOccupationService {
           pub: 'notification',
           data: {},
         });
+        await this.historyService.create({
+          type: HISTORY_TYPE.EMPLOYEE,
+          text: `Transfer Request #${pendingTransferRequest.uId} rejected by ${updator.name} with email: ${updator.email}.`,
+          employeeId: employee.id,
+        });
       }
       await this.emailService.send(
         employee.user.email,
@@ -1378,6 +1488,16 @@ export class OccupationService implements IOccupationService {
         Employee,
         manager,
       );
+      await this.historyService.create({
+        type: HISTORY_TYPE.EMPLOYEE,
+        text: `Apartment assigned in colony ${occupation.apartment.colony.name}, address: ${occupation.apartment.address}.`,
+        employeeId: employee.id,
+      });
+      await this.historyService.create({
+        type: HISTORY_TYPE.APARTMENT,
+        text: `Apartment assigned to employee ${employee.user.name}, email: ${employee.user.email}.`,
+        apartmentId: occupation.apartment.id,
+      });
       await runner.end();
       return this.findOne(occupation.id);
     } catch (error) {
@@ -1493,6 +1613,17 @@ export class OccupationService implements IOccupationService {
         pub: 'notification',
         data: {},
       });
+      await this.historyService.create({
+        type: HISTORY_TYPE.EMPLOYEE,
+        text: `Apartment Deassigned in colony ${occupation.apartment.colony.name}, address: ${occupation.apartment.address}.`,
+        employeeId: employee.id,
+      });
+      await this.historyService.create({
+        type: HISTORY_TYPE.APARTMENT,
+        text: `Apartment left by employee ${employee.user.name}, email: ${employee.user.email}.`,
+        apartmentId: occupation.apartment.id,
+      });
+
       await runner.end();
       return this.findOne(occupation.id);
     } catch (error) {

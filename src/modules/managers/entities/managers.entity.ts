@@ -13,7 +13,7 @@ import { Station } from '../../station/entities/station.entity';
 import { User } from '../../user/entities/user.entity';
 @Index('managers_user_id_uk', ['userId'], {
   unique: true,
-  where: 'deleted_at IS NOT NULL',
+  where: 'deleted_at IS NULL',
 })
 @Entity(TABLES.MANAGERS, { schema: 'public' })
 export class Manager extends BaseEntity {

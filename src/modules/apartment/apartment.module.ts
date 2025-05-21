@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
+import { HistoryModule } from '../history/history.module';
 import { ManagersModule } from '../managers/managers.module';
 import { UserModule } from '../user/user.module';
 import { ApartmentController } from './apartment.controller';
@@ -29,6 +30,7 @@ const apartmentServiceProvider = [
     TypeOrmModule.forFeature(apartmentEntities),
     UserModule,
     ManagersModule,
+    HistoryModule,
   ],
   controllers: [ApartmentController],
   providers: [

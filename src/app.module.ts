@@ -25,6 +25,7 @@ import { EmployeeModule } from './modules/employee/employee.module';
 import { envSchema } from './modules/env/env';
 import { EnvModule } from './modules/env/env.module';
 import { EventsModule } from './modules/events/events.module';
+import { HistoryModule } from './modules/history/history.module';
 import { ManagersModule } from './modules/managers/managers.module';
 import { NotificationModule } from './modules/notifications/notification.module';
 import { OccupationModule } from './modules/occupations/occupations.module';
@@ -73,6 +74,7 @@ import { UserModule } from './modules/user/user.module';
     StationModule,
     UserModule,
     NotificationModule,
+    HistoryModule,
     EventsModule,
   ],
   controllers: [AppController],

@@ -16,7 +16,7 @@ import { User } from '../../user/entities/user.entity';
 
 @Index('stations_name_division_id_uk', ['name', 'divisionId'], {
   unique: true,
-  where: 'deleted_at IS NOT NULL',
+  where: 'deleted_at IS NULL',
 })
 @Entity(TABLES.STATIONS, { schema: 'public' })
 export class Station extends BaseEntity {

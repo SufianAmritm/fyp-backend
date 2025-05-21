@@ -1,10 +1,18 @@
 import { AutoMap } from '@automapper/classes';
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 import { TABLES } from '../../../common/database/tables';
 import { Colony } from '../../colony/entities/colony.entity';
 import { Occupation } from '../../occupations/entities/occupations.entity';
 import { User } from '../../user/entities/user.entity';
+import { History } from '../../history/entities/history.entity';
 
 @Entity(TABLES.APARTMENTS, { schema: 'public' })
 export class Apartment extends BaseEntity {
@@ -58,4 +66,7 @@ export class Apartment extends BaseEntity {
 
   @OneToOne(() => Occupation, (i) => i.apartment)
   occupation: Occupation;
+
+  @OneToMany(() => History, (i) => i.apartment)
+  history: History[];
 }

@@ -11,7 +11,11 @@ import { plainToInstance } from 'class-transformer';
 import { PassThrough } from 'stream';
 import { In } from 'typeorm';
 import { DefaultCsvSettings, RESPONSE_MESSAGES } from '../../common/constants';
-import { ApartmentCsvHeaders, UserRoles } from '../../common/constants/enums';
+import {
+  ApartmentCsvHeaders,
+  HISTORY_TYPE,
+  UserRoles,
+} from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
 import { DbTransactionFactory } from '../../common/database/utils/db-transaction-factory';
@@ -19,6 +23,8 @@ import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { UtilsService } from '../../common/utils/UtilsService';
 import { Colony } from '../colony/entities/colony.entity';
+import { History } from '../history/entities/history.entity';
+import { IHistoryService } from '../history/interfaces/history.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { CreateOccupationDto } from '../occupations/dto/create-occupations.dto';
 import { Occupation } from '../occupations/entities/occupations.entity';
@@ -36,6 +42,8 @@ export class ApartmentService implements IApartmentService {
   constructor(
     @Inject(IApartmentRepository)
     private readonly apartmentRepository: IApartmentRepository,
+    @Inject(IHistoryService)
+    private readonly historyService: IHistoryService,
     @Inject(IUserService) private readonly userService: IUserService,
     @Inject(IManagersService) private readonly managerService: IManagersService,
     private readonly transactionFactory: DbTransactionFactory,
@@ -147,14 +155,24 @@ export class ApartmentService implements IApartmentService {
         nw.occupation = occ;
         return nw;
       });
-      await this.apartmentRepository.bulkCreateWithTransaction(
-        recordsMapped,
-        Apartment,
-        manager,
-      );
+      const apartments =
+        await this.apartmentRepository.bulkCreateWithTransaction(
+          recordsMapped,
+          Apartment,
+          manager,
+        );
       await this.apartmentRepository.bulkCreateWithTransaction(
         recordsMapped.map((apartment) => apartment.occupation),
         Occupation,
+        manager,
+      );
+      await this.apartmentRepository.bulkCreateWithTransaction(
+        apartments.map((ap) => ({
+          apartmentId: ap.id,
+          type: HISTORY_TYPE.APARTMENT,
+          text: 'Apartment Created',
+        })),
+        History,
         manager,
       );
       await runner.end();
@@ -228,6 +246,15 @@ export class ApartmentService implements IApartmentService {
         Occupation,
         manager,
       );
+      await this.apartmentRepository.createWithTransaction(
+        {
+          apartmentId: aprtment.id,
+          type: HISTORY_TYPE.APARTMENT,
+          text: 'Apartment Created',
+        },
+        History,
+        manager,
+      );
       await runner.end();
       return this.findOne(newApartment.id);
     } catch (error) {
@@ -297,6 +324,11 @@ export class ApartmentService implements IApartmentService {
       Apartment,
     );
     await this.apartmentRepository.update({ id }, apartmentUpdate);
+    await this.historyService.create({
+      type: HISTORY_TYPE.APARTMENT,
+      text: 'Apartment Updated',
+      apartmentId: id,
+    });
     return this.apartmentRepository.findOne({ id });
   }
 

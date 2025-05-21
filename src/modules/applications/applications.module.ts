@@ -20,6 +20,7 @@ import { IApplicationRepository } from './repositories/interface/applications-re
 import { NotificationModule } from '../notifications/notification.module';
 import { EventsGateway } from '../events/events.gateway';
 import { EventsModule } from '../events/events.module';
+import { HistoryModule } from '../history/history.module';
 
 const applicationsEntities = [Application, ApplicationPriority];
 const applicationsRepositoryProvider = [
@@ -49,6 +50,7 @@ const applicationsServiceProvider = [
     EmailModule,
     NotificationModule,
     EventsModule,
+    HistoryModule,
   ],
   controllers: [ApplicationController],
   providers: [

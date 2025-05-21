@@ -10,6 +10,7 @@ import {
 import { RESPONSE_MESSAGES } from '../../common/constants';
 import {
   EMPLOYEE_VERIFICATION_STATUS,
+  HISTORY_TYPE,
   UserRoles,
 } from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
@@ -20,6 +21,8 @@ import { UtilsService } from '../../common/utils/UtilsService';
 import { IS3Service } from '../aws/interface/aws-s3.interface';
 import { EmployeeVerification } from '../employee-verification/entities/employee-verification.entity';
 import { IEventsGateway } from '../events/interface/events.interface';
+import { History } from '../history/entities/history.entity';
+import { IHistoryService } from '../history/interfaces/history.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { IUserNotificationService } from '../notifications/interfaces/user-notification.interface';
 import { IUserService } from '../user/interfaces/user.interface';
@@ -38,6 +41,8 @@ export class EmployeeService implements IEmployeeService {
     @InjectMapper() private readonly employeeMapper: Mapper,
     @Inject(IUserService)
     private readonly userService: IUserService,
+    @Inject(IHistoryService)
+    private readonly historyService: IHistoryService,
     @Inject(IUserNotificationService)
     private readonly notificationService: IUserNotificationService,
     @Inject(IEventsGateway)
@@ -127,7 +132,9 @@ export class EmployeeService implements IEmployeeService {
         colony: {
           station: true,
         },
-        occupations: true,
+        occupations: {
+          apartment: true,
+        },
       })
       .build();
     return this.employeeRepository.findOneWithBuilderOption(findOptions);
@@ -199,6 +206,15 @@ export class EmployeeService implements IEmployeeService {
       await this.userService.sendEmailForNoPassword(
         user,
         emailData,
+        transactionManager,
+      );
+      await this.employeeRepository.createWithTransaction(
+        {
+          text: `Employee created`,
+          employeeId: employee.id,
+          type: HISTORY_TYPE.EMPLOYEE,
+        },
+        History,
         transactionManager,
       );
       runner.end();
@@ -307,12 +323,17 @@ export class EmployeeService implements IEmployeeService {
     await this.notificationService.create({
       userId: employee.userId,
       title: 'Profile Updated',
-      text: 'Your profile has been updated',
+      text: `Your profile has been updated by ${updator.name} with email: ${updator.email}`,
     });
     await this.eventGateway.sendEvent({
       to: employee.userId.toString(),
       pub: 'notification',
       data: {},
+    });
+    await this.historyService.create({
+      employeeId: id,
+      type: HISTORY_TYPE.EMPLOYEE,
+      text: `Profile updated by ${updator.name} with email: ${updator.email}`,
     });
     return this.findOne(id);
   }

@@ -6,6 +6,7 @@ import {
   EMAIL_SUBJECTS,
   EMAIL_TEMPLATES,
   EMPLOYEE_VERIFICATION_STATUS,
+  HISTORY_TYPE,
   UserRoles,
 } from '../../common/constants/enums';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
@@ -15,6 +16,7 @@ import { AppContext } from '../../common/interfaces/context';
 import { IEmailService } from '../email/interfaces/email.interface';
 import { IEmployeeService } from '../employee/interfaces/employee.interface';
 import { IEventsGateway } from '../events/interface/events.interface';
+import { IHistoryService } from '../history/interfaces/history.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { IUserNotificationService } from '../notifications/interfaces/user-notification.interface';
 import { IUserService } from '../user/interfaces/user.interface';
@@ -36,6 +38,8 @@ export class EmployeeVerificationService
     private readonly managerService: IManagersService,
     @Inject(IEmployeeService)
     private readonly employeeService: IEmployeeService,
+    @Inject(IHistoryService)
+    private readonly historyService: IHistoryService,
     @Inject(IUserNotificationService)
     private readonly notificationService: IUserNotificationService,
     @Inject(IEventsGateway)
@@ -137,7 +141,15 @@ export class EmployeeVerificationService
       CreateEmployeeVerificationDto,
       EmployeeVerification,
     );
-    return this.employeeVerificationRepository.create(newEmployeeVerification);
+    const ver = await this.employeeVerificationRepository.create(
+      newEmployeeVerification,
+    );
+    await this.historyService.create({
+      employeeId: employee.id,
+      type: HISTORY_TYPE.EMPLOYEE,
+      text: `Profile verification requested.`,
+    });
+    return ver;
   }
 
   async findAll(
@@ -238,6 +250,11 @@ export class EmployeeVerificationService
       { id },
       employeeVerificationUpdate,
     );
+    await this.historyService.create({
+      employeeId: exists.employee.id,
+      type: HISTORY_TYPE.EMPLOYEE,
+      text: `Profile verification cancelled.`,
+    });
     return this.findOne(id);
   }
 
@@ -354,6 +371,11 @@ export class EmployeeVerificationService
         pub: 'notification',
         data: {},
       });
+      await this.historyService.create({
+        employeeId: exists.employee.id,
+        type: HISTORY_TYPE.EMPLOYEE,
+        text: `Profile verification approved by ${updator.name} with email: ${updator.email}.`,
+      });
     }
     if (
       employeeVerificationUpdate.status ===
@@ -382,6 +404,11 @@ export class EmployeeVerificationService
         to: exists.employee.userId.toString(),
         pub: 'notification',
         data: {},
+      });
+      await this.historyService.create({
+        employeeId: exists.employee.id,
+        type: HISTORY_TYPE.EMPLOYEE,
+        text: `Profile verification rejected by ${updator.name} with email: ${updator.email}.`,
       });
     }
     return this.findOne(id);

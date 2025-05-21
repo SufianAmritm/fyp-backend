@@ -12,6 +12,7 @@ import {
   EMAIL_SUBJECTS,
   EMAIL_TEMPLATES,
   EMPLOYEE_VERIFICATION_STATUS,
+  HISTORY_TYPE,
   OCCUPATION_STATUS,
   UserRoles,
 } from '../../common/constants/enums';
@@ -26,6 +27,8 @@ import { IEmployeeVerificationService } from '../employee-verification/interface
 import { Employee } from '../employee/entities/employee.entity';
 import { IEmployeeService } from '../employee/interfaces/employee.interface';
 import { IEventsGateway } from '../events/interface/events.interface';
+import { History } from '../history/entities/history.entity';
+import { IHistoryService } from '../history/interfaces/history.interface';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { IUserNotificationService } from '../notifications/interfaces/user-notification.interface';
 import { Occupation } from '../occupations/entities/occupations.entity';
@@ -55,6 +58,8 @@ export class ApplicationService implements IApplicationService {
     private readonly eventGateway: IEventsGateway,
     @Inject(IUserService)
     private readonly userService: IUserService,
+    @Inject(IHistoryService)
+    private readonly historyService: IHistoryService,
     @Inject(IUserNotificationService)
     private readonly notificationService: IUserNotificationService,
     @Inject(IManagersService)
@@ -242,6 +247,15 @@ export class ApplicationService implements IApplicationService {
         ApplicationPriority,
         manager,
       );
+      await this.applicationsRepository.createWithTransaction(
+        {
+          type: HISTORY_TYPE.EMPLOYEE,
+          employeeId,
+          text: `Application for house created with id ${randomId} `,
+        },
+        History,
+        manager,
+      );
       await runner.end();
       return this.findOne(application.id);
     } catch (error) {
@@ -370,6 +384,11 @@ export class ApplicationService implements IApplicationService {
       Application,
     );
     await this.applicationsRepository.update({ id }, applicationUpdate);
+    await this.historyService.create({
+      type: HISTORY_TYPE.EMPLOYEE,
+      text: `Application with id ${exists.uId} cancelled.`,
+      employeeId: id,
+    });
     return this.findOne(id);
   }
 
@@ -472,6 +491,11 @@ export class ApplicationService implements IApplicationService {
           pub: 'notification',
           data: {},
         });
+        await this.historyService.create({
+          type: HISTORY_TYPE.EMPLOYEE,
+          text: `Application Rejected with id ${exists.uId}.`,
+          employeeId: id,
+        });
       }
 
       if (
@@ -548,6 +572,11 @@ export class ApplicationService implements IApplicationService {
           to: employee.user.id.toString(),
           pub: 'notification',
           data: {},
+        });
+        await this.historyService.create({
+          type: HISTORY_TYPE.EMPLOYEE,
+          text: `House No.${occupation.apartment.houseNo} in colony ${occupation.apartment.colony.name} had been assigned`,
+          employeeId: id,
         });
       }
       await runner.end();

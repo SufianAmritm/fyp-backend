@@ -16,6 +16,7 @@ import { Occupation } from '../../occupations/entities/occupations.entity';
 import { TransferRequest } from '../../occupations/entities/transfer-requests.entity';
 import { VacancyRequest } from '../../occupations/entities/vacancy-requests.entity';
 import { User } from '../../user/entities/user.entity';
+import { History } from '../../history/entities/history.entity';
 
 @Entity(TABLES.EMPLOYEES, { schema: 'public' })
 export class Employee extends BaseEntity {
@@ -100,4 +101,7 @@ export class Employee extends BaseEntity {
 
   @OneToMany(() => TransferRequest, (i) => i.employee)
   transferRequests: TransferRequest[];
+
+  @OneToMany(() => History, (i) => i.employee)
+  history: History[];
 }

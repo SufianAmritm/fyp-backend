@@ -12,6 +12,7 @@ import { IEmployeeService } from './interfaces/employee.interface';
 import { EmployeeMappingProfile } from './mapping/employee.mapping';
 import { EmployeeRepository } from './repositories/employee.repository';
 import { IEmployeeRepository } from './repositories/interface/employee-repository.interface';
+import { HistoryModule } from '../history/history.module';
 
 const employeeEntities = [Employee];
 const employeeRepositoryProvider = [
@@ -33,6 +34,7 @@ const employeeServiceProvider = [
     ManagersModule,
     NotificationModule,
     EventsModule,
+    HistoryModule,
   ],
   controllers: [EmployeeController],
   providers: [

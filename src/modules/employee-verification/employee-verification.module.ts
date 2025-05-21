@@ -13,6 +13,7 @@ import { EmployeeVerificationRepository } from './repositories/employee-verifica
 import { IEmployeeVerificationRepository } from './repositories/interface/employee-verification-repository.interface';
 import { NotificationModule } from '../notifications/notification.module';
 import { EventsModule } from '../events/events.module';
+import { HistoryModule } from '../history/history.module';
 
 const employeeVerificationEntities = [EmployeeVerification];
 const employeeVerificationRepositoryProvider = [
@@ -36,6 +37,7 @@ const employeeVerificationServiceProvider = [
     EmployeeModule,
     NotificationModule,
     EventsModule,
+    HistoryModule,
   ],
   controllers: [EmployeeVerificationController],
   providers: [
