@@ -74,7 +74,7 @@ export class DivisionService implements IDivisionService {
       });
     } catch (error) {
       console.error(error);
-      if (error instanceof HttpException) return error;
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException(
         APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );
@@ -114,7 +114,7 @@ export class DivisionService implements IDivisionService {
       if (runner) {
         await runner.rollbackTransaction();
       }
-      if (error instanceof HttpException) return error;
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException(
         APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );

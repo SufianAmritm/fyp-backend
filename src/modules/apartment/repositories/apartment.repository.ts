@@ -88,12 +88,7 @@ export class ApartmentRepository
     );
   }
   async downloadCsv(context: AppContext) {
-    const params: Record<string, any> = {};
-    const whereAnd = [];
-    if (context.Role === UserRoles.MANAGER) {
-      whereAnd.push(`colony.stationId =:stationId`);
-      params.stationId = context.StationId;
-    }
+  
     const res = await this.repository
       .createQueryBuilder('apartment')
       .innerJoinAndSelect('apartment.colony', 'colony')
@@ -101,8 +96,6 @@ export class ApartmentRepository
       .innerJoinAndSelect('apartment.occupation', 'occupation')
       .leftJoinAndSelect('occupation.occupiedBy', 'occupiedBy')
       .leftJoinAndSelect('occupiedBy.user', 'user')
-      .where(buildConditions([], whereAnd))
-      .setParameters(params)
       .orderBy('colony.id', 'ASC')
       .stream();
 

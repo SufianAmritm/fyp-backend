@@ -18,7 +18,6 @@ import { DbTransactionFactory } from '../../common/database/utils/db-transaction
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AppContext } from '../../common/interfaces/context';
 import { UtilsService } from '../../common/utils/UtilsService';
-import { Apartment } from '../apartment/entities/apartment.entity';
 import { Division } from '../division/entities/division.entity';
 import { IManagersService } from '../managers/interfaces/managers.interface';
 import { Station } from '../station/entities/station.entity';
@@ -109,7 +108,7 @@ export class ColonyService implements IColonyService {
       });
     } catch (error) {
       console.error(error);
-      if (error instanceof HttpException) return error;
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException(
         APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );
@@ -171,7 +170,7 @@ export class ColonyService implements IColonyService {
         });
         if (exists) {
           throw new BadRequestException(
-            `Colony ${rec.name} in station:${rec.station} and division:${rec.division} already exists`,
+            `Colony ${rec.name} in station: ${rec.station} and division: ${rec.division} already exists`,
           );
         }
         rec['stationId'] = station.id;
@@ -190,7 +189,7 @@ export class ColonyService implements IColonyService {
       if (runner) {
         await runner.rollbackTransaction();
       }
-      if (error instanceof HttpException) return error;
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException(
         APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );

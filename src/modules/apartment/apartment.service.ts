@@ -75,7 +75,7 @@ export class ApartmentService implements IApartmentService {
       });
     } catch (error) {
       console.error(error);
-      if (error instanceof HttpException) return error;
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException(
         APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );
@@ -145,7 +145,7 @@ export class ApartmentService implements IApartmentService {
         });
         if (exists) {
           throw new BadRequestException(
-            `Apartment streetNo:${rec.streetNo} houseNo:${rec.houseNo} already exists`,
+            `Apartment streetNo: ${rec.streetNo} houseNo: ${rec.houseNo} already exists`,
           );
         }
         rec['colonyId'] = colony.id;
@@ -182,7 +182,7 @@ export class ApartmentService implements IApartmentService {
       if (runner) {
         await runner.rollbackTransaction();
       }
-      if (error instanceof HttpException) return error;
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException(
         APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );

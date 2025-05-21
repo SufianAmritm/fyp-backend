@@ -73,7 +73,7 @@ export class StationService implements IStationService {
       });
     } catch (error) {
       console.error(error);
-      if (error instanceof HttpException) return error;
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException(
         APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );
@@ -114,7 +114,7 @@ export class StationService implements IStationService {
         });
         if (exists) {
           throw new BadRequestException(
-            `Station ${rec.name} already exists in division:${rec.division}`,
+            `Station ${rec.name} already exists in division: ${rec.division}`,
           );
         }
         rec['divisionId'] = division.id;
@@ -133,7 +133,7 @@ export class StationService implements IStationService {
       if (runner) {
         await runner.rollbackTransaction();
       }
-      if (error instanceof HttpException) return error;
+      if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException(
         APP_ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
       );
