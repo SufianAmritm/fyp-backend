@@ -24,6 +24,9 @@ export class Manager extends BaseEntity {
   @Column('character varying', { nullable: true })
   description: string;
   @AutoMap()
+  @Column('timestamp', { nullable: true, name: 'retirement_date' })
+  retirementDate: Date;
+  @AutoMap()
   @Column('integer', { name: 'station_id', nullable: false })
   stationId: number;
   @AutoMap()

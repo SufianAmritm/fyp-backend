@@ -83,6 +83,27 @@ export class EmployeeController {
         description: 'Number of family members',
         minimum: 1,
       },
+      retirementDate: {
+        type: 'date',
+        example: new Date(),
+        description: 'Retirement date',
+      },
+      yearsOfService: {
+        type: 'number',
+        example: 5,
+      },
+      yearOfInduction: {
+        type: 'number',
+        example: 2017,
+      },
+      grade: {
+        type: 'number',
+        example: 5,
+      },
+      serviceNumber: {
+        type: 'string',
+        example: '123',
+      },
     },
     // [
     //   'name',

@@ -69,6 +69,12 @@ export class UserService implements IUserService {
     private readonly utilService: UtilsService,
     @InjectMapper() private readonly mapper: Mapper,
   ) {}
+  async getAdmin(): Promise<User> {
+    const adminRole = await this.roleService.findOneByName(UserRoles.ADMIN);
+    return this.userRepository.findOne({
+      roleId: adminRole.id,
+    });
+  }
 
   async createManager(
     createManagerDto: CreateManagersDto,
@@ -267,8 +273,12 @@ export class UserService implements IUserService {
       .where({ id })
       .relations({
         role: true,
+        employee: {
+          verification: true,
+        },
       })
       .build();
+
     const user =
       await this.userRepository.findOneWithBuilderOption(findOptions);
     if (!user) {
@@ -302,6 +312,19 @@ export class UserService implements IUserService {
       await this.userRepository.updateManagerFromUser(id, dto);
     }
     if (user.role.name === UserRoles.EMPLOYEE) {
+      if (
+        !user.employee.verification.some(
+          (verification) =>
+            verification.status === EMPLOYEE_VERIFICATION_STATUS.APPROVED,
+        )
+      ) {
+        Object.keys(dto).forEach((key) => {
+          if (
+            !['password', 'picture', 'members', 'name', 'address'].includes(key)
+          )
+            dto[key] = undefined;
+        });
+      }
       await this.userRepository.updateEmployeeFromUser(id, dto);
       await this.isEmployeeProfileComplete(id);
     }

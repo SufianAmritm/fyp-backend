@@ -8,6 +8,7 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { And, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { RESPONSE_MESSAGES } from '../../common/constants';
 import {
   EMPLOYEE_VERIFICATION_STATUS,
@@ -463,5 +464,26 @@ export class EmployeeService implements IEmployeeService {
       url: this.utilService.awsPublicUrlBuilder(url.bucket, url.key),
       field,
     };
+  }
+
+  async getTodayRetirements() {
+    const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+    const todayEnd = new Date(new Date().setHours(23, 59, 59, 999));
+
+    const findOptions = new FindOptionsBuilder<Employee>()
+      .where({
+        retirementDate: And(
+          MoreThanOrEqual(todayStart),
+          LessThanOrEqual(todayEnd),
+        ),
+      })
+      .relations({
+
+        colony: true,
+        user:true
+      })
+      .build();
+
+    return this.employeeRepository.findManyWithBuilderOption(findOptions);
   }
 }

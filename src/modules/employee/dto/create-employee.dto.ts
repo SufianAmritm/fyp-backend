@@ -2,6 +2,7 @@ import { AutoMap } from '@automapper/classes';
 import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  IsDate,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -61,4 +62,48 @@ export class CreateEmployeeDto extends OmitType(SignUpDto, ['password']) {
 
   @AutoMap()
   serviceCard: string;
+
+  @AutoMap()
+  @Transform(({ value }) => new Date(value))
+  @IsDate()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: 1,
+  })
+  retirementDate: Date;
+
+  @AutoMap()
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: 1,
+  })
+  serviceNumber: string;
+  @AutoMap()
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
+  @IsPositive()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: 1,
+  })
+  yearsOfService: number;
+  @AutoMap()
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
+  @IsPositive()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: 1,
+  })
+  grade: number;
+  @AutoMap()
+  @Transform(({ value }) => Number(value))
+  @IsNumber()
+  @IsPositive()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: 1,
+  })
+  yearOfInduction: number;
 }

@@ -21,4 +21,6 @@ export interface IManagersService {
   findOneByUserIdWithColoniesAndEmployees(id: number): Promise<Manager>;
   isFrom(context: AppContext, fromColonyId: number, toColonyId: number);
   remove(id: number, context: AppContext): Promise<string>;
+  getTodayRetirements(): Promise<Manager[]>;
+  findByStationIds(stationIds: number[]): Promise<Manager[]>;
 }

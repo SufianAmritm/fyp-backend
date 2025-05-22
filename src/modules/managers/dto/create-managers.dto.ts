@@ -2,6 +2,7 @@ import { AutoMap } from '@automapper/classes';
 import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  IsDate,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -28,7 +29,13 @@ export class CreateManagersDto extends OmitType(SignUpDto, ['password']) {
     example: 1,
   })
   stationId: number;
-
+  @AutoMap()
+  @Transform(({ value }) => new Date(value))
+  @IsDate()
+  @ApiProperty({
+    example: new Date(),
+  })
+  retirementDate: Date;
   @AutoMap()
   @ApiPropertyOptional({})
   @IsString()

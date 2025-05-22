@@ -68,16 +68,5 @@ export class ManagersRepository
       paginationDto.take,
       paginationDto.page,
     );
-    // const findOption = new FindOptionsBuilder<Manager>()
-    //   .where({
-    //     deletedAt: null,
-    //   })
-    //   .relations({
-    //     user: true,
-    //     station: true,
-    //   })
-    //   .order({ id: ORDER_BY.DESC })
-    //   .build();
-    // return this.findWithPagination(paginationDto, findOption);
   }
 }

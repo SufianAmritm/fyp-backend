@@ -42,4 +42,5 @@ export interface IUserService {
     serviceCard?: Express.Multer.File,
     picture?: Express.Multer.File,
   ): Promise<User>;
+  getAdmin(): Promise<User>;
 }

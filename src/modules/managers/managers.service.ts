@@ -8,6 +8,7 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { And, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { RESPONSE_MESSAGES } from '../../common/constants';
 import { APP_ERROR_MESSAGES } from '../../common/constants/errors';
 import { FindOptionsBuilder } from '../../common/database/builder-pattern/find-options.builder';
@@ -44,6 +45,27 @@ export class ManagersService implements IManagersService {
     private readonly transactionFactory: DbTransactionFactory,
     @InjectMapper() private readonly managersMapper: Mapper,
   ) {}
+  findByStationIds(stationIds: number[]): Promise<Manager[]> {
+    return this.managersRepository.find({
+      stationId: In(stationIds),
+    });
+  }
+
+  async getTodayRetirements() {
+    const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+    const todayEnd = new Date(new Date().setHours(23, 59, 59, 999));
+
+    const findOptions = new FindOptionsBuilder<Manager>()
+      .where({
+        retirementDate: And(
+          MoreThanOrEqual(todayStart),
+          LessThanOrEqual(todayEnd),
+        ),
+      })
+      .build();
+
+    return this.managersRepository.findManyWithBuilderOption(findOptions);
+  }
   async isFrom(context: AppContext, fromColonyId: number, toColonyId: number) {
     const manager = await this.managersRepository.findOne(
       {

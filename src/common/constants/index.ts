@@ -104,6 +104,11 @@ export const EmployeeProfileCompleteColumns = [
   'colonyId',
   'address',
   'members',
+  'retirementDate',
+  'yearsOfService',
+  'grade',
+  'serviceNumber',
+  'yearOfInduction',
 ];
 export const DefaultCsvSettings = {
   arbitraryReg: /\(\)/,

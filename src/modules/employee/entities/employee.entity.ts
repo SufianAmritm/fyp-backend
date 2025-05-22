@@ -12,18 +12,32 @@ import { TABLES } from '../../../common/database/tables';
 import { Application } from '../../applications/entities/applications.entity';
 import { Colony } from '../../colony/entities/colony.entity';
 import { EmployeeVerification } from '../../employee-verification/entities/employee-verification.entity';
+import { History } from '../../history/entities/history.entity';
 import { Occupation } from '../../occupations/entities/occupations.entity';
 import { TransferRequest } from '../../occupations/entities/transfer-requests.entity';
 import { VacancyRequest } from '../../occupations/entities/vacancy-requests.entity';
 import { User } from '../../user/entities/user.entity';
-import { History } from '../../history/entities/history.entity';
 
 @Entity(TABLES.EMPLOYEES, { schema: 'public' })
 export class Employee extends BaseEntity {
   @AutoMap()
   @Column('character varying', { nullable: true })
   picture: string;
-
+  @AutoMap()
+  @Column('timestamp', { nullable: true, name: 'retirement_date' })
+  retirementDate: Date;
+  @AutoMap()
+  @Column('integer', { nullable: true })
+  grade: number;
+  @AutoMap()
+  @Column('integer', { name: 'years_of_service', nullable: true })
+  yearsOfService: number;
+  @AutoMap()
+  @Column('integer', { name: 'year_of_induction', nullable: true })
+  yearOfInduction: number;
+  @AutoMap()
+  @Column('character varying', { name: 'service_number', nullable: true })
+  serviceNumber: string;
   @AutoMap()
   @Column('character varying', { name: 'cnic_front', nullable: true })
   cnicFront: string;

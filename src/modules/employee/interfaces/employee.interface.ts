@@ -37,4 +37,5 @@ export interface IEmployeeService {
   getVerificationStatus(id: number): Promise<EmployeeVerification>;
   downloadCsv(context: AppContext);
   remove(id: number, context: AppContext);
+  getTodayRetirements(): Promise<Employee[]>;
 }

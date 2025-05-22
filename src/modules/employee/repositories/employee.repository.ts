@@ -137,7 +137,11 @@ export class EmployeeRepository
         Address: row.employee_address || '',
         FamilyMembers: row.employee_members ?? '',
         ProfileComplete: row.employee_profile_complete ? 'Yes' : 'No',
-
+        RetirementDate: row.employee_retirement_date ?? '',
+        YearsOfService: row.employee_years_of_service ?? '',
+        YearOfInduction: row.employee_year_of_induction ?? '',
+        Grade: row.employee_grade || '',
+        ServiceNumber: row.employee_service_number || '',
         Division: row.division_name || '',
         Station: row.station_name || '',
         Colony: row.colony_name || '',

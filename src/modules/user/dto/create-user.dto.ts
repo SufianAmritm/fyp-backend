@@ -2,6 +2,7 @@ import { AutoMap } from '@automapper/classes';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  IsDate,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -51,9 +52,9 @@ export class CreateUserDto {
     example: 'razabad',
   })
   address?: string;
+  @Transform(({ value }) => Number(value))
   @AutoMap()
   @IsNumber()
-  @Transform(({ value }) => Number(value))
   @IsPositive()
   @IsNotEmpty()
   @IsOptional()
@@ -71,6 +72,15 @@ export class CreateUserDto {
     example: 1,
   })
   members?: number;
+  @AutoMap()
+  @Transform(({ value }) => new Date(value))
+  @IsDate()
+  @IsNotEmpty()
+  @IsOptional()
+  @ApiPropertyOptional({
+    example: new Date(),
+  })
+  retirementDate?: Date;
   @AutoMap()
   picture: string;
   @AutoMap()
