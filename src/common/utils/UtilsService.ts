@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { compare, genSalt, hash } from 'bcryptjs';
+import { Queue } from 'bull';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 import { parse } from 'csv-parse';
 import * as fs from 'fs';
@@ -113,6 +114,16 @@ export class UtilsService {
         }
       }, 2000);
     });
+  }
+
+  async addJob(queue: Queue, processor: string, data: any): Promise<void> {
+    const redisStatus = queue.client.status;
+    if (redisStatus !== 'ready') {
+      console.error('Failed to reconnect to Redis');
+      return;
+    }
+
+    await queue.add(processor, data);
   }
 
   getStateFromUrl(url: string): string | null {

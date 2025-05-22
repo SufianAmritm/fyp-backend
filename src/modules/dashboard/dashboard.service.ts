@@ -18,6 +18,7 @@ import { ITransferRequestRepository } from '../occupations/repositories/interfac
 import { IVacancyRequestRepository } from '../occupations/repositories/interface/vacancy-requests-repository.interface';
 import { IStationRepository } from '../station/repositories/interface/station-repository.interface';
 import { IDashboardService } from './interfaces/dashboard.interface';
+import { GenerateReportDto } from './dto/generate-report.dto';
 
 @Injectable()
 export class DashboardService implements IDashboardService {
@@ -328,4 +329,8 @@ export class DashboardService implements IDashboardService {
         })[0]?.status || null,
     };
   }
+  async generateReport(
+    context: AppContext,
+    generateReportDto: GenerateReportDto,
+  ) {}
 }

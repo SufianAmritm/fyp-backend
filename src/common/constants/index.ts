@@ -114,3 +114,8 @@ export const DefaultCsvSettings = {
   arbitraryVal: '()',
   rowStart: 1,
 };
+
+export const QUEUES = {
+  CSV: { NAME: 'csv', PROCESSOR: 'csvProcessor' },
+  REPORT: { NAME: 'report', PROCESSOR: 'reportProcessor' },
+};

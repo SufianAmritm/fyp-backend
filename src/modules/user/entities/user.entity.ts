@@ -4,11 +4,11 @@ import { Role } from 'src/modules/role/entities/role.entity';
 import {
   Column,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
   OneToOne,
-  Unique
 } from 'typeorm';
 import { TABLES } from '../../../common/database/tables';
 import { Apartment } from '../../apartment/entities/apartment.entity';
@@ -18,15 +18,18 @@ import { Division } from '../../division/entities/division.entity';
 import { EmployeeVerification } from '../../employee-verification/entities/employee-verification.entity';
 import { Employee } from '../../employee/entities/employee.entity';
 import { Manager } from '../../managers/entities/managers.entity';
+import { UserNotification } from '../../notifications/entities/user-notifications.entity';
 import { Occupation } from '../../occupations/entities/occupations.entity';
 import { TransferRequest } from '../../occupations/entities/transfer-requests.entity';
 import { VacancyRequest } from '../../occupations/entities/vacancy-requests.entity';
 import { Otp } from '../../otp/entities/otp.entity';
 import { Station } from '../../station/entities/station.entity';
 import { AppSetting } from './settings.entity';
-import { UserNotification } from '../../notifications/entities/user-notifications.entity';
 
-@Unique('user_email_ukey', ['email'])
+@Index('user_email_ukey', ['email'], {
+  where: 'deleted_at is null',
+  unique: true,
+})
 @Entity(TABLES.USER, { schema: 'public' })
 export class User extends BaseEntity {
   @AutoMap()

@@ -2,7 +2,7 @@ import { classes } from '@automapper/classes';
 import { CamelCaseNamingConvention } from '@automapper/core';
 import { AutomapperModule } from '@automapper/nestjs';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -19,6 +19,7 @@ import { ApplicationModule } from './modules/applications/applications.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ColonyModule } from './modules/colony/colony.module';
 import { CronModule } from './modules/crons/cron.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { DivisionModule } from './modules/division/division.module';
 import { EmployeeVerificationModule } from './modules/employee-verification/employee-verification.module';
 import { EmployeeModule } from './modules/employee/employee.module';
@@ -29,10 +30,11 @@ import { HistoryModule } from './modules/history/history.module';
 import { ManagersModule } from './modules/managers/managers.module';
 import { NotificationModule } from './modules/notifications/notification.module';
 import { OccupationModule } from './modules/occupations/occupations.module';
+import { QueueModule } from './modules/queus/queue.module';
 import { RoleModule } from './modules/role/role.module';
 import { StationModule } from './modules/station/station.module';
 import { UserModule } from './modules/user/user.module';
-import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -50,6 +52,21 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
       dataSourceFactory: async (options: DataSourceOptions) => {
         return new DataSource(options).initialize();
       },
+    }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => {
+        return {
+          redis: {
+            host: configService.get('REDIS_HOST'),
+            port: Number(configService.get('REDIS_PORT')),
+            retryStrategy: () => {
+              throw Error('Unable to connect to Redis');
+            },
+          },
+        };
+      },
+      inject: [ConfigService],
     }),
 
     AutomapperModule.forRoot({
@@ -74,6 +91,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     EventsModule,
     SeederModule,
     StationModule,
+    QueueModule,
     UserModule,
     NotificationModule,
     HistoryModule,
