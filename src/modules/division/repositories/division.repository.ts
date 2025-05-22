@@ -33,8 +33,8 @@ export class DivisionRepository
 
     const { search, orderBy, sortBy } = getDivisionDto;
     if (search) {
-      whereAnd.push(`division.name ILIKE :search`);
-      whereAnd.push(`division.description ILIKE :search`);
+      whereOr.push(`division.name ILIKE :search`);
+      whereOr.push(`division.description ILIKE :search`);
 
       params.search = `%${search}%`;
     }
@@ -48,6 +48,8 @@ export class DivisionRepository
           : `division.${sortBy}`,
         orderBy,
       )
+      .take(paginationDto.take)
+      .skip((paginationDto.page - 1) * paginationDto.take)
       .getManyAndCount();
     return new PagedList(
       res[0],

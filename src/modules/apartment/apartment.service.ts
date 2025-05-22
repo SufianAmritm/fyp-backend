@@ -163,7 +163,10 @@ export class ApartmentService implements IApartmentService {
           manager,
         );
       await this.apartmentRepository.bulkCreateWithTransaction(
-        recordsMapped.map((apartment) => apartment.occupation),
+        recordsMapped.map((apartment) => ({
+          ...apartment.occupation,
+          apartmentId: apartment.id,
+        })),
         Occupation,
         manager,
       );

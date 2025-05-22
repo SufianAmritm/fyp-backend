@@ -170,6 +170,7 @@ export class UserService implements IUserService {
       );
       console.log(userMap, 'userMap');
       userMap.roleId = role.id;
+      userMap.emailVerified = true;
       const user = await this.userRepository.createWithTransaction<User>(
         userMap,
         User,

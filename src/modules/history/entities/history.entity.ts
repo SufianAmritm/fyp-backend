@@ -16,6 +16,7 @@ export class History extends BaseEntity {
   text: string;
 
   @Column('integer', { name: 'employee_id', nullable: true })
+  @AutoMap()
   employeeId: number;
 
   @Column('integer', { name: 'apartment_id', nullable: true })

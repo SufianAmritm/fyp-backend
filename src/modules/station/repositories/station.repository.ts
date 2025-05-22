@@ -7,10 +7,10 @@ import { PagedList } from 'src/common/types/paged-list';
 import { PassThrough } from 'stream';
 import { Repository } from 'typeorm';
 import { buildConditions } from '../../../common/database/builder-pattern/build-condition';
+import { AppContext } from '../../../common/interfaces/context';
 import { GetStationDto } from '../dto/request/get.dto';
 import { Station } from '../entities/station.entity';
 import { IStationRepository } from './interface/station-repository.interface';
-import { AppContext } from '../../../common/interfaces/context';
 @Injectable()
 export class StationRepository
   extends BaseRepository<Station>
@@ -51,8 +51,8 @@ export class StationRepository
       .innerJoinAndSelect('station.division', 'division')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
-      .take(take)
-      .skip(skip)
+      .take(paginationDto.take)
+      .skip((paginationDto.page - 1) * paginationDto.take)
       .orderBy(
         sortBy.includes('.')
           ? sortBy.split('.').slice(-2).join('.')
@@ -86,8 +86,8 @@ export class StationRepository
       .innerJoinAndSelect('station.division', 'division')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
-      .take(take)
-      .skip(skip)
+      .take(paginationDto.take)
+      .skip((paginationDto.page - 1) * paginationDto.take)
       .orderBy(
         sortBy.includes('.')
           ? sortBy.split('.').slice(-2).join('.')

@@ -86,6 +86,8 @@ export class ApartmentRepository
           : `apartment.${sortBy}`,
         orderBy,
       )
+      .take(paginationDto.take)
+      .skip((paginationDto.page - 1) * paginationDto.take)
       .getManyAndCount();
     return new PagedList(
       res[0],
@@ -169,6 +171,8 @@ export class ApartmentRepository
       .innerJoinAndSelect('apartment.occupation', 'occupation')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
+      .take(paginationDto.take)
+      .skip((paginationDto.page - 1) * paginationDto.take)
       .orderBy(
         sortBy.includes('.')
           ? sortBy.split('.').slice(-2).join('.')

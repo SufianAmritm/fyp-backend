@@ -88,6 +88,8 @@ export class EmployeeVerificationRepository
       .leftJoinAndSelect('employeeVerifications.createdBy', 'createdBy')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
+      .take(paginationDto.take)
+      .skip((paginationDto.page - 1) * paginationDto.take)
       .orderBy(
         sortBy.includes('.')
           ? sortBy.split('.').slice(-2).join('.')

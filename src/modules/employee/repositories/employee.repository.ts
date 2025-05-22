@@ -83,6 +83,8 @@ export class EmployeeRepository
       .innerJoinAndSelect('station.division', 'division')
       .where(buildConditions(whereOr, whereAnd))
       .setParameters(params)
+      .take(paginationDto.take)
+      .skip((paginationDto.page - 1) * paginationDto.take)
       .orderBy(
         sortBy.includes('.')
           ? sortBy.split('.').slice(-2).join('.')

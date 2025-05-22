@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import * as dotenv from 'dotenv';
 import { HISTORY_TYPE } from '../../../common/constants/enums';
 import { IEmployeeService } from '../../employee/interfaces/employee.interface';
+import { IEventsGateway } from '../../events/interface/events.interface';
 import { CreateHistoryDto } from '../../history/dto/create-history.dto';
 import { IHistoryService } from '../../history/interfaces/history.interface';
 import { IManagersService } from '../../managers/interfaces/managers.interface';
@@ -25,6 +26,8 @@ export class RetirementCron {
     private readonly historyService: IHistoryService,
     @Inject(IUserService)
     private readonly userService: IUserService,
+    @Inject(IEventsGateway)
+    private readonly eventGateway: IEventsGateway,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
@@ -79,6 +82,14 @@ export class RetirementCron {
     );
 
     await this.notificationService.createBulk(notifications);
+    const uniqueUserIds = [...new Set(notifications.map((n) => n.userId))];
+    uniqueUserIds.forEach((userId) => {
+      this.eventGateway.sendEvent({
+        to: userId.toString(),
+        pub: 'notification',
+        data: {},
+      });
+    });
     await this.historyService.bulkCreate(histories);
   }
 }
