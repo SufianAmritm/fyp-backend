@@ -43,6 +43,6 @@ const employeeServiceProvider = [
     EmployeeMappingProfile,
     DbTransactionFactory,
   ],
-  exports: [...employeeServiceProvider],
+  exports: [...employeeServiceProvider, ...employeeRepositoryProvider],
 })
 export class EmployeeModule {}

@@ -29,6 +29,6 @@ const notificationServiceProvider = [
     ...notificationRepositoryProvider,
     UserNotificationMappingProfile,
   ],
-  exports: [...notificationServiceProvider],
+  exports: [...notificationServiceProvider, ...notificationRepositoryProvider],
 })
 export class NotificationModule {}

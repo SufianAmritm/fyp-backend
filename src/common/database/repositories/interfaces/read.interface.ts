@@ -10,6 +10,7 @@ import {
 import { FindOptions } from '../../builder-pattern/find-options.builder';
 
 export interface IRead<T> {
+  callQuery(query: string, params?: any);
   find(
     whereOptions?: FindOptionsWhere<T>,
     selectOption?: FindOptionsSelect<T>,

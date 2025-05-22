@@ -4,7 +4,10 @@ import { BaseRepository } from 'src/common/database/repositories/base/base.repos
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { Repository } from 'typeorm';
-import { UserRoles } from '../../../common/constants/enums';
+import {
+  EMPLOYEE_VERIFICATION_STATUS,
+  UserRoles,
+} from '../../../common/constants/enums';
 import { buildConditions } from '../../../common/database/builder-pattern/build-condition';
 import { AppContext } from '../../../common/interfaces/context';
 import { GetEmployeeVerificationDto } from '../dto/get-employee-verification.dto';
@@ -21,6 +24,35 @@ export class EmployeeVerificationRepository
     public readonly repository: Repository<EmployeeVerification>,
   ) {
     super(repository);
+  }
+  countMyVerificationsNew(context: AppContext): Promise<number> {
+    return this.repository
+      .createQueryBuilder('employeeVerifications')
+      .innerJoin('employeeVerifications.employee', 'employee')
+      .innerJoin('employee.colony', 'colony')
+      .where(
+        'colony.stationId = :stationId AND employeeVerifications.status = :status AND employeeVerifications.createdAt >= :date',
+        {
+          stationId: context.StationId,
+          status: EMPLOYEE_VERIFICATION_STATUS.PENDING,
+          date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        },
+      )
+      .getCount();
+  }
+  countMyVerifications(context: AppContext): Promise<number> {
+    return this.repository
+      .createQueryBuilder('employeeVerifications')
+      .innerJoin('employeeVerifications.employee', 'employee')
+      .innerJoin('employee.colony', 'colony')
+      .where(
+        'colony.stationId = :stationId AND employeeVerifications.status = :status',
+        {
+          stationId: context.StationId,
+          status: EMPLOYEE_VERIFICATION_STATUS.PENDING,
+        },
+      )
+      .getCount();
   }
 
   async findAll(

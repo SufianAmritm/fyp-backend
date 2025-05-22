@@ -16,7 +16,7 @@ export class Migration1746742050291 implements MigrationInterface {
       `ALTER TABLE "managers" ALTER COLUMN "user_id" SET NOT NULL`,
     );
     await queryRunner.query(
-      `CREATE UNIQUE INDEX "managers_user_id_uk" ON "managers" ("user_id") WHERE deleted_at IS NOT NULL`,
+      `CREATE UNIQUE INDEX "managers_user_id_uk" ON "managers" ("user_id") WHERE deleted_at IS NULL`,
     );
     await queryRunner.query(
       `ALTER TABLE "managers" ADD CONSTRAINT "managers_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
@@ -57,7 +57,7 @@ export class Migration1746742050291 implements MigrationInterface {
     );
     await queryRunner.query(`DROP TABLE "employees"`);
     await queryRunner.query(
-      `CREATE UNIQUE INDEX "managers_user_id_uk" ON "managers" ("userId") WHERE (deleted_at IS NOT NULL)`,
+      `CREATE UNIQUE INDEX "managers_user_id_uk" ON "managers" ("userId") WHERE (deleted_at IS NULL)`,
     );
   }
 }

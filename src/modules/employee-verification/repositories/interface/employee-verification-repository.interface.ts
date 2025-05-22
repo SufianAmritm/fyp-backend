@@ -18,4 +18,6 @@ export interface IEmployeeVerificationRepository<T = DefaultEntity>
     paginationDto: PaginationDto,
     ctx: AppContext,
   ): Promise<PagedList<EmployeeVerification>>;
+  countMyVerifications(context: AppContext): Promise<number>;
+  countMyVerificationsNew(context: AppContext): Promise<number>;
 }

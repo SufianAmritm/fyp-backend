@@ -31,6 +31,6 @@ const divisionServiceProvider = [
     DivisionMappingProfile,
     DbTransactionFactory,
   ],
-  exports: [...divisionServiceProvider],
+  exports: [...divisionServiceProvider, ...divisionRepositoryProvider],
 })
 export class DivisionModule {}

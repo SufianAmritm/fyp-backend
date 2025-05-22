@@ -59,6 +59,6 @@ const applicationsServiceProvider = [
     ApplicationMappingProfile,
     DbTransactionFactory,
   ],
-  exports: [...applicationsServiceProvider],
+  exports: [...applicationsServiceProvider, ...applicationsRepositoryProvider],
 })
 export class ApplicationModule {}

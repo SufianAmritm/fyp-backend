@@ -39,6 +39,6 @@ const apartmentServiceProvider = [
     ApartmentMappingProfile,
     DbTransactionFactory,
   ],
-  exports: [...apartmentServiceProvider],
+  exports: [...apartmentServiceProvider, ...apartmentRepositoryProvider],
 })
 export class ApartmentModule {}

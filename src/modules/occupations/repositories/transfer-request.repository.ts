@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserRoles } from 'src/common/constants/enums';
+import {
+  EMPLOYEE_VERIFICATION_STATUS,
+  UserRoles,
+} from 'src/common/constants/enums';
 import { BaseRepository } from 'src/common/database/repositories/base/base.repository';
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
@@ -21,6 +24,35 @@ export class TransferRequestRepository
     public readonly repository: Repository<TransferRequest>,
   ) {
     super(repository);
+  }
+  countMyTransferRequestsNew(context: AppContext): Promise<number> {
+    return this.repository
+      .createQueryBuilder('transferRequest')
+      .innerJoin('transferRequest.fromColony', 'fromColony')
+      .innerJoin('transferRequest.toColony', 'toColony')
+      .where(
+        '(fromColony.stationId = :stationId OR toColony.stationId = :stationId) AND transferRequest.status = :status AND transferRequest.createdAt >= :date',
+        {
+          stationId: context.StationId,
+          status: EMPLOYEE_VERIFICATION_STATUS.PENDING,
+          date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        },
+      )
+      .getCount();
+  }
+  countMyTransferRequests(context: AppContext): Promise<number> {
+    return this.repository
+      .createQueryBuilder('transferRequest')
+      .innerJoin('transferRequest.fromColony', 'fromColony')
+      .innerJoin('transferRequest.toColony', 'toColony')
+      .where(
+        '(fromColony.stationId = :stationId OR toColony.stationId = :stationId) AND transferRequest.status = :status',
+        {
+          stationId: context.StationId,
+          status: EMPLOYEE_VERIFICATION_STATUS.PENDING,
+        },
+      )
+      .getCount();
   }
 
   async findAll(

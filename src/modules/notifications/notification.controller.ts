@@ -8,8 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { DOMAIN_ENTITY, JWT, X_API_KEY } from 'src/common/constants';
-import { ApiKeyGuard } from 'src/common/guards/api-key.guard';
+import { DOMAIN_ENTITY, JWT } from 'src/common/constants';
 import { Context } from '../../common/decorators/context';
 import { PaginationDto } from '../../common/dtos/request/pagination.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
@@ -18,11 +17,9 @@ import { MarkSeenDto } from './dto/mark-seen.dto';
 import { IUserNotificationService } from './interfaces/user-notification.interface';
 
 @ApiTags(DOMAIN_ENTITY.NOTIFICATIONS)
-@ApiBearerAuth(X_API_KEY)
-@UseGuards(ApiKeyGuard)
 @ApiBearerAuth(JWT)
 @UseGuards(AuthGuard)
-@Controller('notification')
+@Controller('notifications')
 export class NotificationController {
   constructor(
     @Inject(IUserNotificationService)

@@ -32,15 +32,15 @@ const managersServiceProvider = [
     AwsModule,
     UserModule,
     NotificationModule,
-    EventsModule
+    EventsModule,
   ],
   controllers: [ManagersController],
   providers: [
     ...managersServiceProvider,
     ...managersRepositoryProvider,
     ManagersMappingProfile,
-    DbTransactionFactory
+    DbTransactionFactory,
   ],
-  exports: [...managersServiceProvider],
+  exports: [...managersServiceProvider, ...managersRepositoryProvider],
 })
 export class ManagersModule {}

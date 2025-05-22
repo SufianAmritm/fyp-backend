@@ -45,6 +45,9 @@ const employeeVerificationServiceProvider = [
     ...employeeVerificationRepositoryProvider,
     EmployeeVerificationMappingProfile,
   ],
-  exports: [...employeeVerificationServiceProvider],
+  exports: [
+    ...employeeVerificationServiceProvider,
+    ...employeeVerificationRepositoryProvider,
+  ],
 })
 export class EmployeeVerificationModule {}

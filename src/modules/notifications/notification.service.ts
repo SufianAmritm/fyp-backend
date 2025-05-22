@@ -43,8 +43,13 @@ export class UserNotificationService implements IUserNotificationService {
     return RESPONSE_MESSAGES.CREATED;
   }
 
-  findAll(paginationDto: PaginationDto, ctx: AppContext) {
-    return this.notificationRepository.findAll(paginationDto, ctx);
+  async findAll(paginationDto: PaginationDto, ctx: AppContext) {
+    const unreadCount = await this.notificationRepository.count({
+      userId: ctx.UserId,
+      seen: false,
+    });
+    const resp = await this.notificationRepository.findAll(paginationDto, ctx);
+    return { ...resp, unreadCount };
   }
 
   async update(id: number, updateNotificationDto: UpdateNotificationDto) {

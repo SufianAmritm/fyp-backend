@@ -4,7 +4,10 @@ import { BaseRepository } from 'src/common/database/repositories/base/base.repos
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { Repository } from 'typeorm';
-import { UserRoles } from '../../../common/constants/enums';
+import {
+  EMPLOYEE_VERIFICATION_STATUS,
+  UserRoles,
+} from '../../../common/constants/enums';
 import { buildConditions } from '../../../common/database/builder-pattern/build-condition';
 import { AppContext } from '../../../common/interfaces/context';
 import { GetApplicationDto } from '../dto/applications/get-applications.dto';
@@ -21,6 +24,32 @@ export class ApplicationRepository
     public readonly repository: Repository<Application>,
   ) {
     super(repository);
+  }
+  countMyApplicationsNew(ctx: AppContext): Promise<number> {
+    return this.repository
+      .createQueryBuilder('application')
+      .innerJoin('application.employee', 'employee')
+      .innerJoin('employee.colony', 'colony')
+      .where(
+        'colony.stationId = :stationId AND application.status = :status AND application.createdAt >= :date',
+        {
+          stationId: ctx.StationId,
+          status: EMPLOYEE_VERIFICATION_STATUS.PENDING,
+          date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        },
+      )
+      .getCount();
+  }
+  countMyApplications(ctx: AppContext): Promise<number> {
+    return this.repository
+      .createQueryBuilder('application')
+      .innerJoin('application.employee', 'employee')
+      .innerJoin('employee.colony', 'colony')
+      .where('colony.stationId = :stationId AND application.status = :status', {
+        stationId: ctx.StationId,
+        status: EMPLOYEE_VERIFICATION_STATUS.PENDING,
+      })
+      .getCount();
   }
 
   async findAll(

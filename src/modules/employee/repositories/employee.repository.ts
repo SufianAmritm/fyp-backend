@@ -23,6 +23,26 @@ export class EmployeeRepository
   ) {
     super(repository);
   }
+  countMyNewEmployees(context: AppContext): Promise<number> {
+    return this.repository
+      .createQueryBuilder('employee')
+      .innerJoin('employee.colony', 'colony')
+      .where(
+        'colony.stationId = :stationId AND employee.createdAt >= :morethen',
+        {
+          stationId: context.StationId,
+          morethen: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        },
+      )
+      .getCount();
+  }
+  countMyEmployees(context: AppContext): Promise<number> {
+    return this.repository
+      .createQueryBuilder('employee')
+      .innerJoin('employee.colony', 'colony')
+      .where('colony.stationId = :stationId', { stationId: context.StationId })
+      .getCount();
+  }
 
   async findAll(
     getEmployeeDto: GetEmployeeDto,

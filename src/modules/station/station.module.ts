@@ -29,8 +29,8 @@ const stationServiceProvider = [
     ...stationServiceProvider,
     ...stationRepositoryProvider,
     StationMappingProfile,
-    DbTransactionFactory
+    DbTransactionFactory,
   ],
-  exports: [...stationServiceProvider],
+  exports: [...stationServiceProvider, ...stationRepositoryProvider],
 })
 export class StationModule {}

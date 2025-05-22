@@ -32,6 +32,7 @@ import { OccupationModule } from './modules/occupations/occupations.module';
 import { RoleModule } from './modules/role/role.module';
 import { StationModule } from './modules/station/station.module';
 import { UserModule } from './modules/user/user.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { UserModule } from './modules/user/user.module';
     ColonyModule,
     CronModule,
     DivisionModule,
+    DashboardModule,
     EmployeeModule,
     EmployeeVerificationModule,
     EnvModule,

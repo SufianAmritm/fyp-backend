@@ -4,7 +4,10 @@ import { BaseRepository } from 'src/common/database/repositories/base/base.repos
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import { Repository } from 'typeorm';
-import { UserRoles } from '../../../common/constants/enums';
+import {
+  EMPLOYEE_VERIFICATION_STATUS,
+  UserRoles,
+} from '../../../common/constants/enums';
 import { buildConditions } from '../../../common/database/builder-pattern/build-condition';
 import { AppContext } from '../../../common/interfaces/context';
 import { GetVacancyRequestDto } from '../dto/get-vacany-requests.dto';
@@ -21,6 +24,39 @@ export class VacancyRequestRepository
     public readonly repository: Repository<VacancyRequest>,
   ) {
     super(repository);
+  }
+  countMyVacancyRequestsNew(context: AppContext): Promise<number> {
+    return this.repository
+      .createQueryBuilder('vacancyRequest')
+      .innerJoin('vacancyRequest.occupation', 'occupation')
+      .innerJoin('occupation.apartment', 'apartment')
+      .innerJoin('apartment.colony', 'colony')
+
+      .where(
+        'colony.stationId = :stationId AND vacancyRequest.status = :status AND vacancyRequest.createdAt >= :date',
+        {
+          stationId: context.StationId,
+          status: EMPLOYEE_VERIFICATION_STATUS.PENDING,
+          date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        },
+      )
+      .getCount();
+  }
+  countMyVacancyRequests(context: AppContext): Promise<number> {
+    return this.repository
+      .createQueryBuilder('vacancyRequest')
+      .innerJoin('vacancyRequest.occupation', 'occupation')
+      .innerJoin('occupation.apartment', 'apartment')
+      .innerJoin('apartment.colony', 'colony')
+
+      .where(
+        'colony.stationId = :stationId AND vacancyRequest.status = :status',
+        {
+          stationId: context.StationId,
+          status: EMPLOYEE_VERIFICATION_STATUS.PENDING,
+        },
+      )
+      .getCount();
   }
 
   async findAll(

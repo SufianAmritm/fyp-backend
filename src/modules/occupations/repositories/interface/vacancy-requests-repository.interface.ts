@@ -16,4 +16,7 @@ export interface IVacancyRequestRepository<T = DefaultEntity>
     paginationDto: PaginationDto,
     ctx: AppContext,
   ): Promise<PagedList<VacancyRequest>>;
+  countMyVacancyRequests(context: AppContext): Promise<number>;
+
+  countMyVacancyRequestsNew(context: AppContext): Promise<number>;
 }

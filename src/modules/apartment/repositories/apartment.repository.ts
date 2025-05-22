@@ -23,6 +23,13 @@ export class ApartmentRepository
   ) {
     super(repository);
   }
+  countMyApartments(context: AppContext): Promise<number> {
+    return this.repository
+      .createQueryBuilder('apartment')
+      .innerJoin('apartment.colony', 'colony')
+      .where('colony.stationId = :stationId', { stationId: context.StationId })
+      .getCount();
+  }
 
   async findAll(
     getApartmentDto: GetApartmentDto,
@@ -88,7 +95,6 @@ export class ApartmentRepository
     );
   }
   async downloadCsv(context: AppContext) {
-  
     const res = await this.repository
       .createQueryBuilder('apartment')
       .innerJoinAndSelect('apartment.colony', 'colony')

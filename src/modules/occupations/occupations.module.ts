@@ -63,6 +63,6 @@ const occupationsServiceProvider = [
     OccupationMappingProfile,
     DbTransactionFactory,
   ],
-  exports: [...occupationsServiceProvider],
+  exports: [...occupationsServiceProvider, ...occupationsRepositoryProvider],
 })
 export class OccupationModule {}

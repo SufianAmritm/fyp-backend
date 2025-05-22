@@ -27,23 +27,18 @@ export class EventsGateway
   server: Server;
 
   async handleConnection(client: Socket) {
-    const { authorization } = client.handshake.headers;
-
-    if (!authorization || !authorization.startsWith('Bearer ')) {
+    const token = client.handshake.auth.token;
+    if (!token) {
       client.emit(
         'error',
         'Unauthorized: Missing or invalid Authorization header',
       );
+      console.log(`Client disconnected`);
+
       client.disconnect();
       return;
     }
 
-    const token = authorization.split(' ')[1];
-    if (!token) {
-      client.emit('error', 'Unauthorized: Invalid token format');
-      client.disconnect();
-      return;
-    }
     try {
       const verified = await this.verifyToken(token);
       if (!verified) {
@@ -61,6 +56,7 @@ export class EventsGateway
       };
 
       client.handshake[this.CONTEXT] = context;
+      console.log(`Client connected: ${verified.id}`);
       client.join(verified.id.toString());
     } catch (error) {
       client.emit('error', error);
@@ -69,8 +65,8 @@ export class EventsGateway
   }
 
   handleDisconnect(client: Socket) {
-    const { userId } = client.handshake[this.CONTEXT];
-    client.leave(userId.toString());
+    const { id } = client.handshake[this.CONTEXT];
+    client.leave(id.toString());
   }
 
   @ApiOperation({ summary: 'Message recieved from client event' })

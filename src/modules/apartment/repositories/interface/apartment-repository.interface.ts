@@ -9,8 +9,7 @@ import { PassThrough } from 'stream';
 export const IApartmentRepository = Symbol('IApartmentRepository');
 
 type DefaultEntity = Apartment;
-export interface IApartmentRepository<T = DefaultEntity>
-  extends IBaseRepository<T> {
+export interface IApartmentRepository<T = DefaultEntity> extends IBaseRepository<T> {
   findAll(
     getApartmentDto: GetApartmentDto,
     paginationDto: PaginationDto,
@@ -21,5 +20,5 @@ export interface IApartmentRepository<T = DefaultEntity>
     paginationDto: PaginationDto,
   ): Promise<PagedList<Apartment>>;
   downloadCsv(context: AppContext): Promise<PassThrough>;
-
+  countMyApartments(context: AppContext): Promise<number>;
 }

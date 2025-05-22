@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { PaginationDto } from 'src/common/dtos/request/pagination.dto';
 import { PagedList } from 'src/common/types/paged-list';
 import {
@@ -17,7 +18,6 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { FindOptions } from '../../builder-pattern/find-options.builder';
 import { IRead } from '../interfaces/read.interface';
 import { IWrite } from '../interfaces/write.interface';
-import { BadRequestException } from '@nestjs/common';
 
 export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
   public readonly tableName: string;
@@ -112,6 +112,14 @@ export abstract class BaseRepository<T> implements IWrite<T>, IRead<T> {
     try {
       const repo = transactionManager.getRepository(target);
       return await repo.delete(where);
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async callQuery(query: string, params?: any) {
+    try {
+      return await this.repository.query(query, params);
     } catch (error) {
       throw new Error(error.message);
     }

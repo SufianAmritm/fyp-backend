@@ -35,8 +35,8 @@ const colonyServiceProvider = [
     ...colonyServiceProvider,
     ...colonyRepositoryProvider,
     ColonyMappingProfile,
-    DbTransactionFactory
+    DbTransactionFactory,
   ],
-  exports: [...colonyServiceProvider],
+  exports: [...colonyServiceProvider, ...colonyRepositoryProvider],
 })
 export class ColonyModule {}

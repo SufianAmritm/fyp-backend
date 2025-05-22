@@ -15,4 +15,6 @@ export interface IApplicationRepository<T = DefaultEntity>
     paginationDto: PaginationDto,
     ctx: AppContext,
   ): Promise<PagedList<Application>>;
+  countMyApplications(ctx: AppContext): Promise<number>;
+  countMyApplicationsNew(ctx: AppContext): Promise<number>;
 }

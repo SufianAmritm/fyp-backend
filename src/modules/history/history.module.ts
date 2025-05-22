@@ -29,6 +29,6 @@ const historyServiceProvider = [
     ...historyRepositoryProvider,
     HistoryMappingProfile,
   ],
-  exports: [...historyServiceProvider],
+  exports: [...historyServiceProvider, ...historyRepositoryProvider],
 })
 export class HistoryModule {}

@@ -18,6 +18,7 @@ export class MarkSeenDto {
   @ApiProperty({
     example: [1],
   })
+  @IsOptional()
   notificationIds: number[];
   @AutoMap()
   userId: number;

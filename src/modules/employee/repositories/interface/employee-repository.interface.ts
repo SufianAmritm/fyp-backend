@@ -8,12 +8,13 @@ import { Employee } from '../../entities/employee.entity';
 export const IEmployeeRepository = Symbol('IEmployeeRepository');
 
 type DefaultEntity = Employee;
-export interface IEmployeeRepository<T = DefaultEntity>
-  extends IBaseRepository<T> {
+export interface IEmployeeRepository<T = DefaultEntity> extends IBaseRepository<T> {
   findAll(
     getEmployeeDto: GetEmployeeDto,
     paginationDto: PaginationDto,
     ctx: AppContext,
   ): Promise<PagedList<Employee>>;
   downloadCsv(context: AppContext);
+  countMyEmployees(context: AppContext): Promise<number>;
+  countMyNewEmployees(context: AppContext): Promise<number>;
 }
